@@ -1,0 +1,16 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[requires]
+python_version = "3"
+
+[packages]
+"-e ." = "*"
+"local_pyweld" = {path = "/home/dimebag/Workspace/weldr/weld/python/pyweld", editable = true}
+
+[dev-packages]
+sphinx = "*"
+pytest = "*"
+numpydoc = "*"
