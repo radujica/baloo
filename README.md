@@ -9,6 +9,5 @@ and optimizing [Weld](https://github.com/weld-project/weld) framework.
 ## Develop
     // first update path to pyweld in Pipfile
     pipenv install --dev
-    pipenv run setup.py bdist_wheel
-    pipenv run python setup.py install
+    pipenv run pip install -e <path-to-baloo>
     pipenv run pytest

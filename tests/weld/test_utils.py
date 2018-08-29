@@ -28,7 +28,6 @@ class TestUtils(object):
     @pytest.mark.parametrize('np_dtype_str, weld_type', [
         ('S', WeldVec(WeldChar())),
         ('bytes_', WeldVec(WeldChar())),
-        ('byte', WeldChar()),
         ('int16', WeldInt16()),
         ('int32', WeldInt()),
         ('int64', WeldLong()),

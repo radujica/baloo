@@ -4,6 +4,7 @@ from weld.weldobject import *
 
 from .utils import to_shared_lib, to_weld_vec
 
+# TODO: datetime support
 _numpy_to_weld_type_mapping = {
     'S': WeldVec(WeldChar()),
     'h': WeldInt16(),
@@ -38,6 +39,22 @@ def numpy_to_weld_type(np_dtype):
         np_dtype = np.dtype(np_dtype)
 
     return _numpy_to_weld_type_mapping[np_dtype.char]
+
+
+# TODO: feels like this could be implemented more efficiently
+_weld_to_numpy_type_mapping = {
+    str(WeldVec(WeldChar())): 'S',
+    str(WeldInt16()): 'h',
+    str(WeldInt()): 'i',
+    str(WeldLong()): 'l',
+    str(WeldFloat()): 'f',
+    str(WeldDouble()): 'd',
+    str(WeldBit()): '?'
+}
+
+
+def weld_to_numpy_dtype(weld_type):
+    return np.dtype(_weld_to_numpy_type_mapping[str(weld_type)])
 
 
 class NumPyEncoder(WeldObjectEncoder):

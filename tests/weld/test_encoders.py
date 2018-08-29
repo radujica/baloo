@@ -33,6 +33,21 @@ class TestNumPyEncoders(object):
 
         np.testing.assert_array_equal(evaluated, expected)
 
+    @pytest.mark.parametrize('data, weld_type', [
+        (np.array([1, np.nan, 3], dtype=np.float32), WeldFloat()),
+        (np.array([1, np.nan, 3], dtype=np.float64), WeldDouble())
+    ])
+    def test_array_with_missing(self, data, weld_type):
+        weld_obj = WeldObject(self._encoder, self._decoder)
+        obj_id = weld_obj.update(data)
+        weld_obj.weld_code = '{}'.format(obj_id)
+        lazy_result = LazyResult(weld_obj, weld_type, 1)
+
+        evaluated = lazy_result.evaluate()
+        expected = data
+
+        np.testing.assert_array_equal(evaluated, expected)
+
     @pytest.mark.parametrize('data, weld_type, expected', [
         (np.array([1, 2, 3], dtype=np.int16), WeldInt16(), np.int16(6)),
         (np.array([1, 2, 3], dtype=np.int32), WeldInt(), np.int32(6)),

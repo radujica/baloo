@@ -21,8 +21,16 @@ class LazyResult(object):
         self.weld_type = weld_type
         self.ndim = ndim
 
+    def __repr__(self):
+        return "{}(weld_type={}, ndim={})".format(self.__class__.__name__,
+                                                  self.weld_type,
+                                                  self.ndim)
+
+    def __str__(self):
+        return str(self.weld_expr)
+
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1,
-                 apply_experimental_transforms=False):
+                 apply_experimental_transforms=True):
         """Evaluate the stored expression.
 
         Parameters
@@ -52,5 +60,5 @@ class LazyResult(object):
                                            passes,
                                            num_threads,
                                            apply_experimental_transforms)
-
-        return self.weld_expr
+        else:
+            return self.weld_expr
