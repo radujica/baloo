@@ -1,42 +1,13 @@
 import numpy as np
 
-from ..weld import weld_count
+from ..weld import weld_count, WeldObject
 
 
-class Descriptor(object):
-    def __init__(self, name=None, **kwargs):
-        self.name = name
+def check_type(data, expected_types):
+    if data is not None and not isinstance(data, expected_types):
+        raise TypeError('Expected: {}'.format(str(expected_types)))
 
-        for key, value in kwargs.items():
-            setattr(self, key, value)
-
-    def __set__(self, instance, value):
-        instance.__dict__[self.name] = value
-
-
-# by default allows None
-class Typed(Descriptor):
-    def __init__(self, expected_types=None, **kwargs):
-        self.expected_types = expected_types
-
-        super().__init__(**kwargs)
-
-    def __set__(self, instance, value):
-        if value is not None and not isinstance(value, self.expected_types):
-            raise TypeError('Expected: {}'.format(str(self.expected_types)))
-
-        super(Typed, self).__set__(instance, value)
-
-
-def check_attributes(**kwargs):
-    def decorate(cls):
-        for key, value in kwargs.items():
-            if isinstance(value, Descriptor):
-                value.name = key
-
-            setattr(cls, key, value)
-        return cls
-    return decorate
+    return data
 
 
 def infer_dtype(data, arg_dtype):
@@ -45,9 +16,11 @@ def infer_dtype(data, arg_dtype):
     else:
         if isinstance(data, np.ndarray):
             return data.dtype
-        else:
+        elif isinstance(data, WeldObject):
             # if WeldObject data then arg_dtype must have been passed as argument
             raise ValueError('Using WeldObject as data requires the dtype as argument')
+        else:
+            raise ValueError('Unsupported data type: {}'.format(str(type(data))))
 
 
 def default_index(data):
@@ -55,6 +28,8 @@ def default_index(data):
 
     if isinstance(data, np.ndarray):
         return RangeIndex(len(data))
-    else:
+    elif isinstance(data, WeldObject):
         # must be WeldObject then
         return RangeIndex(weld_count(data))
+    else:
+        raise ValueError('Unsupported data type: {}'.format(str(type(data))))

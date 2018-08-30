@@ -3,7 +3,7 @@ from weld.types import WeldLong
 from weld.weldobject import WeldObject
 
 from .base import Index
-from ..utils import Typed
+from ..utils import check_type
 from ...weld import weld_range, LazyResult
 
 
@@ -21,11 +21,7 @@ class RangeIndex(LazyResult):
     pandas.RangeIndex
 
     """
-    start = Typed((int, WeldObject))
-    stop = Typed((int, WeldObject))
-    step = Typed(int)
-
-    def __init__(self, start=None, stop=None, step=1):
+    def __init__(self, start=None, stop=None, step=1, name=None):
         """Initialize a RangeIndex object.
 
         If only 1 value (`start`) is passed, it will be considered the `stop` value.
@@ -46,9 +42,14 @@ class RangeIndex(LazyResult):
             stop = start
             start = 0
 
+        self.start = check_type(start, int)
+        self.stop = check_type(stop, (int, WeldObject))
+        self.step = check_type(step, int)
+        self.name = check_type(name, str)
+
         self._length = len(range(start, stop, step)) if isinstance(stop, int) else None
 
-        super().__init__(weld_range(start, stop, step), WeldLong(), 1)
+        super(RangeIndex, self).__init__(weld_range(start, stop, step), WeldLong(), 1)
 
     @property
     def data(self):
@@ -62,6 +63,17 @@ class RangeIndex(LazyResult):
         """
         return self.weld_expr
 
+    @property
+    def name(self):
+        if self._name is None:
+            return self.__class__.__name__
+        else:
+            return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+
     def __len__(self):
         """Eagerly get the length of the RangeIndex.
 
@@ -74,10 +86,10 @@ class RangeIndex(LazyResult):
             Length of the RangeIndex.
 
         """
-        if self._length is not None:
-            return self._length
-        else:
-            return len(self.evaluate())
+        if self._length is None:
+            self._length = len(self.evaluate())
+
+        return self._length
 
     def __repr__(self):
         return "{}(start={}, stop={}, step={})".format(self.__class__.__name__,

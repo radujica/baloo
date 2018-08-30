@@ -1,13 +1,10 @@
 import numpy as np
 from weld.weldobject import WeldObject, WeldLong
 
-from ...core.utils import check_attributes, Typed, infer_dtype
+from ...core.utils import check_type, infer_dtype
 from ...weld import LazyResult, numpy_to_weld_type, weld_count
 
 
-@check_attributes(data=Typed((np.ndarray, WeldObject)),
-                  dtype=Typed(np.dtype),
-                  name=Typed(str))
 class Index(LazyResult):
     """Weld-ed Pandas Index.
 
@@ -36,29 +33,23 @@ class Index(LazyResult):
             Name of the Index.
 
         """
-        self.data = data
-        self.dtype = infer_dtype(data, dtype)
-        self.name = name
+        self.data = check_type(data, (np.ndarray, WeldObject))
+        self.dtype = infer_dtype(data, check_type(dtype, np.dtype))
+        self.name = check_type(name, str)
         self._length = len(data) if isinstance(data, np.ndarray) else None
 
         super(Index, self).__init__(data, numpy_to_weld_type(self.dtype), 1)
 
     @property
-    def data(self):
-        """Get the data inside this Index.
+    def name(self):
+        if self._name is None:
+            return self.__class__.__name__
+        else:
+            return self._name
 
-        Returns
-        -------
-        np.ndarray or WeldObject
-            Data within this Index.
-
-        """
-        return self.weld_expr
-
-    # to actually allow @property to work after Typed descriptors
-    @data.setter
-    def data(self, value):
-        self.data = value
+    @name.setter
+    def name(self, value):
+        self._name = value
 
     def __len__(self):
         """Eagerly get the length of the Index.

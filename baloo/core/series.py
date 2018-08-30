@@ -2,14 +2,10 @@ import numpy as np
 from weld.weldobject import WeldObject, WeldLong
 
 from .indexes import RangeIndex, Index
-from .utils import check_attributes, Typed, infer_dtype, default_index
+from .utils import infer_dtype, default_index, check_type
 from ..weld import LazyResult, weld_count
 
 
-@check_attributes(data=Typed((np.ndarray, WeldObject)),
-                  index=Typed((RangeIndex, Index)),
-                  dtype=Typed(np.dtype),
-                  name=Typed(str))
 class Series(LazyResult):
     """Weld-ed Pandas Series.
 
@@ -45,31 +41,14 @@ class Series(LazyResult):
             Name of the Series.
 
         """
-        self.data = data
-        self.index = default_index(data) if index is None else index
-        self.dtype = infer_dtype(data, dtype)
-        self.name = name
+        self.data = check_type(data, (np.ndarray, WeldObject))
+        self.index = default_index(data) if index is None else check_type(index, (RangeIndex, Index))
+        self.dtype = infer_dtype(data, check_type(dtype, np.dtype))
+        self.name = check_type(name, str)
         # TODO: this should be used to annotate Weld code for speedups
         self._length = len(data) if isinstance(data, np.ndarray) else None
 
-        super().__init__(data, self.dtype, 1)
-
-    @property
-    def data(self):
-        """Get the data inside this Series.
-
-        Returns
-        -------
-        np.ndarray or WeldObject
-            Data within this Series.
-
-        """
-        return self.weld_expr
-
-    # to actually allow @property to work after Typed descriptors
-    @data.setter
-    def data(self, value):
-        self.data = value
+        super(Series, self).__init__(data, self.dtype, 1)
 
     def __len__(self):
         """Eagerly get the length of the Series.
@@ -83,10 +62,10 @@ class Series(LazyResult):
             Length of the Series.
 
         """
-        if self._length is not None:
-            return self._length
-        else:
-            return LazyResult(weld_count(self.data), WeldLong(), 0).evaluate()
+        if self._length is None:
+            self._length = LazyResult(weld_count(self.data), WeldLong(), 0).evaluate()
+
+        return self._length
 
     def __repr__(self):
         return "{}(name={}, dtype={})".format(self.__class__.__name__,
