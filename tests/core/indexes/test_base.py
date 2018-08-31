@@ -8,7 +8,7 @@ def assert_index_equal(actual, expected):
     actual = actual.evaluate()
     expected = expected.evaluate()
 
-    np.testing.assert_array_equal(actual.data, expected.data)
+    np.testing.assert_array_equal(actual.values, expected.values)
     assert actual.dtype == expected.dtype
     # might seem redundant but testing the __len__ function
     assert len(actual) == len(expected)

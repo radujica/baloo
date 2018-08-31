@@ -29,8 +29,8 @@ class DataFrame(object):
             if isinstance(value, np.ndarray):
                 return len(value)
             # must be a Series then
-            elif isinstance(value.data, np.ndarray):
-                return len(value.data)
+            elif isinstance(value.values, np.ndarray):
+                return len(value.values)
 
         return None
 
@@ -77,6 +77,10 @@ class DataFrame(object):
         self._dtypes = DataFrame._gather_dtypes(data)
         self._length = DataFrame._infer_length(data)
         self.index = DataFrame._default_dataframe_index(data, self._length) if index is None else index
+
+    @property
+    def values(self):
+        return self.data
 
     def __len__(self):
         """Eagerly get the length of the DataFrame.
@@ -131,10 +135,10 @@ class DataFrame(object):
 
         str_data = OrderedDict()
 
-        str_data[self.index.name] = DataFrame._shorten_data(self.index.data)
+        str_data[self.index.name] = DataFrame._shorten_data(self.index.values)
 
         for column_name in self:
-            str_data[column_name] = DataFrame._shorten_data(self[column_name].data)
+            str_data[column_name] = DataFrame._shorten_data(self[column_name].values)
 
         return tabulate(str_data, headers='keys')
 

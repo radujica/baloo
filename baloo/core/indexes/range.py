@@ -52,15 +52,7 @@ class RangeIndex(LazyResult):
         super(RangeIndex, self).__init__(weld_range(start, stop, step), WeldLong(), 1)
 
     @property
-    def data(self):
-        """Get the data representing this RangeIndex.
-
-        Returns
-        -------
-        WeldObject
-            Representation of this RangeIndex as a WeldObject.
-
-        """
+    def values(self):
         return self.weld_expr
 
     @property
@@ -98,7 +90,7 @@ class RangeIndex(LazyResult):
                                                        self.step)
 
     def __str__(self):
-        return str(self.data)
+        return str(self.weld_expr)
 
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
         data = super(RangeIndex, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)

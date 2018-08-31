@@ -41,7 +41,7 @@ class Series(LazyResult):
             Name of the Series.
 
         """
-        self.data = check_type(data, (np.ndarray, WeldObject))
+        data = check_type(data, (np.ndarray, WeldObject))
         self.index = default_index(data) if index is None else check_type(index, (RangeIndex, Index))
         self.dtype = infer_dtype(data, check_type(dtype, np.dtype))
         self.name = check_type(name, str)
@@ -49,6 +49,10 @@ class Series(LazyResult):
         self._length = len(data) if isinstance(data, np.ndarray) else None
 
         super(Series, self).__init__(data, self.dtype, 1)
+
+    @property
+    def values(self):
+        return self.weld_expr
 
     def __len__(self):
         """Eagerly get the length of the Series.
@@ -63,7 +67,7 @@ class Series(LazyResult):
 
         """
         if self._length is None:
-            self._length = LazyResult(weld_count(self.data), WeldLong(), 0).evaluate()
+            self._length = LazyResult(weld_count(self.values), WeldLong(), 0).evaluate()
 
         return self._length
 
@@ -73,7 +77,7 @@ class Series(LazyResult):
                                               self.dtype)
 
     def __str__(self):
-        return str(self.data)
+        return str(self.weld_expr)
 
     # TODO: perhaps skip making a new object if data is raw already?
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):

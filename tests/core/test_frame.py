@@ -21,7 +21,7 @@ def assert_dataframe_equal(actual, expected):
     assert len(actual.data) == len(expected.data)
     assert actual.data.keys() == expected.data.keys()
     for column_name in actual:
-        np.testing.assert_array_equal(actual[column_name].data, expected[column_name].data)
+        np.testing.assert_array_equal(actual[column_name].values, expected[column_name].values)
 
 
 class TestDataFrame(object):
@@ -64,7 +64,7 @@ class TestDataFrame(object):
         size = 10
         df = DataFrame({'a': np.arange(size)})
 
-        np.testing.assert_array_equal(df['a'].data, df.data['a'])
+        np.testing.assert_array_equal(df['a'].values, df.data['a'])
         actual = df['a']
         expected = Series(np.arange(size), RangeIndex(size), np.dtype(np.int64), 'a')
 

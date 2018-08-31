@@ -33,7 +33,7 @@ class Index(LazyResult):
             Name of the Index.
 
         """
-        self.data = check_type(data, (np.ndarray, WeldObject))
+        data = check_type(data, (np.ndarray, WeldObject))
         self.dtype = infer_dtype(data, check_type(dtype, np.dtype))
         self.name = check_type(name, str)
         self._length = len(data) if isinstance(data, np.ndarray) else None
@@ -51,6 +51,10 @@ class Index(LazyResult):
     def name(self, value):
         self._name = value
 
+    @property
+    def values(self):
+        return self.weld_expr
+
     def __len__(self):
         """Eagerly get the length of the Index.
 
@@ -66,7 +70,7 @@ class Index(LazyResult):
         if self._length is not None:
             return self._length
         else:
-            return LazyResult(weld_count(self.data), WeldLong(), 0).evaluate()
+            return LazyResult(weld_count(self.values), WeldLong(), 0).evaluate()
 
     def __repr__(self):
         return "{}(name={}, dtype={})".format(self.__class__.__name__,
@@ -74,7 +78,7 @@ class Index(LazyResult):
                                               self.dtype)
 
     def __str__(self):
-        return str(self.data)
+        return str(self.values)
 
     def evaluate(self, verbose=True, decode=True, passes=None, num_threads=1, apply_experimental=False):
         data = super(Index, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
