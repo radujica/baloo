@@ -9,6 +9,7 @@ python_version = "3"
 [packages]
 "-e ." = "*"
 "local_pyweld" = {path = "/home/dimebag/Workspace/weldr/weld/python/pyweld", editable = true}
+tabulate = "*"
 
 [dev-packages]
 sphinx = "*"

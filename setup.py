@@ -38,6 +38,6 @@ setup(name='baloo',
       url='https://github.com/radujica/baloo',
       author='Radu Jica',
       author_email='radu.jica+code@gmail.com',
-      install_requires=['pandas', 'numpy', 'pyweld'],
+      install_requires=['pandas', 'numpy', 'pyweld', 'tabulate'],
       platforms='any',
       python_requires='>=3.0')

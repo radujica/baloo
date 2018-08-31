@@ -1,10 +1,9 @@
 import pytest
+from weld.types import *
 
-from baloo.weld.convertors.utils import to_weld_vec
 from baloo.weld.convertors import numpy_to_weld_type
 from baloo.weld.convertors.encoders import _numpy_to_weld_type_mapping
-
-from weld.types import *
+from baloo.weld.convertors.utils import to_weld_vec
 
 
 class TestUtils(object):

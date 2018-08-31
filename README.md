@@ -1,6 +1,7 @@
 # Baloo
 
-Implementing the *bare necessities* of [Pandas](https://pandas.pydata.org/) with the *lazy* evaluating
+Implementing the [*bare necessities*](https://www.youtube.com/watch?v=08NlhjpVFsU) 
+of [Pandas](https://pandas.pydata.org/) with the *lazy* evaluating
 and optimizing [Weld](https://github.com/weld-project/weld) framework.
 
 ## Install
