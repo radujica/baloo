@@ -4,11 +4,25 @@ Implementing the [*bare necessities*](https://www.youtube.com/watch?v=08NlhjpVFs
 of [Pandas](https://pandas.pydata.org/) with the *lazy* evaluating
 and optimizing [Weld](https://github.com/weld-project/weld) framework.
 
-## Install
-    python setup.py install
+## Requirements
+Ideally, a `pip install pyweld` would be enough. However, the pyweld package is not currently maintained on pypi 
+so need to build ourselves:
+
+1) Weld. Follow instructions [here](https://github.com/weld-project/weld). Latest work is being done on llvm-st branch.
+2) pyweld. Baloo currently requires [this](https://github.com/radujica/weld/tree/pyweld3) branch for Python 3 support. 
+For Python 2, main Weld repo pyweld should be fine. 
+
+## Install ~ users
+    pip install <path-to-pyweld>
+    git clone https://github.com/radujica/baloo.git
+    cd baloo && python setup.py install
+    
+Shall be later published on pypi.
 
 ## Develop
-    // first update path to pyweld in Pipfile
-    pipenv install --dev
-    pipenv run pip install -e <path-to-baloo>
-    pipenv run pytest
+    git clone https://github.com/radujica/baloo.git
+    // update path to pyweld in Pipfile
+    pipenv install --dev                        // install all requirements
+    pipenv run pip install -e <path-to-baloo>   // install baloo in editable mode
+    pipenv run pytest                           // run tests
+    // making the convertors requires running through, i.e. pipenv shell, for correct python version
