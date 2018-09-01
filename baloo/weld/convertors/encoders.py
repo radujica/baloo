@@ -43,13 +43,13 @@ def numpy_to_weld_type(np_dtype):
 
 # TODO: feels like this could be implemented more efficiently
 _weld_to_numpy_type_mapping = {
-    str(WeldVec(WeldChar())): 'S',
-    str(WeldInt16()): 'h',
-    str(WeldInt()): 'i',
-    str(WeldLong()): 'l',
-    str(WeldFloat()): 'f',
-    str(WeldDouble()): 'd',
-    str(WeldBit()): '?'
+    WeldVec(WeldChar()): 'S',
+    WeldInt16(): 'h',
+    WeldInt(): 'i',
+    WeldLong(): 'l',
+    WeldFloat(): 'f',
+    WeldDouble(): 'd',
+    WeldBit(): '?'
 }
 
 

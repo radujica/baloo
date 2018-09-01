@@ -1,8 +1,8 @@
 import numpy as np
-from weld.weldobject import WeldObject, WeldLong
+from weld.weldobject import WeldObject, WeldLong, WeldBit
 
 from ...core.utils import check_type, infer_dtype
-from ...weld import LazyResult, numpy_to_weld_type, weld_count
+from ...weld import LazyResult, numpy_to_weld_type, weld_count, weld_filter
 
 
 class Index(LazyResult):
@@ -80,7 +80,20 @@ class Index(LazyResult):
     def __str__(self):
         return str(self.values)
 
-    def evaluate(self, verbose=True, decode=True, passes=None, num_threads=1, apply_experimental=False):
-        data = super(Index, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
+    def __getitem__(self, item):
+        if isinstance(item, LazyResult):
+            if item.weld_type != WeldBit():
+                raise ValueError('Expected Series of bool data to filter values')
 
-        return Index(data, self.dtype, self.name)
+            return Index(weld_filter(self.weld_expr,
+                                     self.weld_type,
+                                     item.weld_expr),
+                         self.dtype,
+                         self.name)
+        else:
+            raise TypeError('Expected a Series')
+
+    def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
+        evaluated_data = super(Index, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
+
+        return Index(evaluated_data, self.dtype, self.name)

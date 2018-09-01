@@ -4,7 +4,7 @@ from weld.weldobject import WeldObject
 
 from .base import Index
 from ..utils import check_type
-from ...weld import weld_range, LazyResult
+from ...weld import weld_range, LazyResult, WeldBit, weld_filter
 
 
 class RangeIndex(LazyResult):
@@ -92,7 +92,19 @@ class RangeIndex(LazyResult):
     def __str__(self):
         return str(self.weld_expr)
 
-    def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
-        data = super(RangeIndex, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
+    def __getitem__(self, item):
+        if isinstance(item, LazyResult):
+            if item.weld_type != WeldBit():
+                raise ValueError('Expected Series of bool data to filter values')
 
-        return Index(data, np.dtype(np.int64))
+            return Index(weld_filter(self.weld_expr,
+                                     self.weld_type,
+                                     item.weld_expr),
+                         np.dtype(np.int64))
+        else:
+            raise TypeError('Expected a Series')
+
+    def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
+        evaluated_data = super(RangeIndex, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
+
+        return Index(evaluated_data, np.dtype(np.int64))

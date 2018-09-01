@@ -33,3 +33,7 @@ def default_index(data):
         return RangeIndex(weld_count(data))
     else:
         raise ValueError('Unsupported data type: {}'.format(str(type(data))))
+
+
+def is_scalar(data):
+    return isinstance(data, (int, float, str, bytes, bool))

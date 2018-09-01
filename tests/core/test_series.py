@@ -1,6 +1,7 @@
 import numpy as np
+import pytest
 
-from baloo import Series, RangeIndex
+from baloo import Series, RangeIndex, Index
 from baloo.weld import create_placeholder_weld_object
 from .indexes.utils import assert_indexes_equal
 
@@ -43,3 +44,26 @@ class TestSeries(object):
         expected = 3
 
         assert actual == expected
+
+    @pytest.mark.parametrize('comparison, expected', [
+        ('<', Series(np.array([True, False, False]), Index(np.array([0, 1, 2])), np.dtype(np.bool))),
+        ('<=', Series(np.array([True, True, False]), Index(np.array([0, 1, 2])), np.dtype(np.bool))),
+        ('==', Series(np.array([False, True, False]), Index(np.array([0, 1, 2])), np.dtype(np.bool))),
+        ('!=', Series(np.array([True, False, True]), Index(np.array([0, 1, 2])), np.dtype(np.bool))),
+        ('>=', Series(np.array([False, True, True]), Index(np.array([0, 1, 2])), np.dtype(np.bool))),
+        ('>', Series(np.array([False, False, True]), Index(np.array([0, 1, 2])), np.dtype(np.bool))),
+    ])
+    def test_comparison(self, comparison, expected):
+        sr = Series(np.array([1, 2, 3]))
+
+        actual = eval('sr {} 2'.format(comparison))
+
+        assert_series_equal(actual, expected)
+
+    def test_filter(self):
+        sr = Series(np.array([1, 2, 3]))
+
+        actual = sr[sr != 2]
+        expected = Series(np.array([1, 3]), Index(np.array([0, 2])), np.dtype(np.int64))
+
+        assert_series_equal(actual, expected)

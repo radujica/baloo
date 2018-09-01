@@ -1,9 +1,9 @@
 import numpy as np
-from weld.weldobject import WeldObject, WeldLong
+from weld.weldobject import WeldObject, WeldLong, WeldBit
 
 from .indexes import RangeIndex, Index
-from .utils import infer_dtype, default_index, check_type
-from ..weld import LazyResult, weld_count
+from .utils import infer_dtype, default_index, check_type, is_scalar
+from ..weld import LazyResult, weld_count, weld_compare, numpy_to_weld_type, weld_filter
 
 
 class Series(LazyResult):
@@ -48,7 +48,7 @@ class Series(LazyResult):
         # TODO: this should be used to annotate Weld code for speedups
         self._length = len(data) if isinstance(data, np.ndarray) else None
 
-        super(Series, self).__init__(data, self.dtype, 1)
+        super(Series, self).__init__(data, numpy_to_weld_type(self.dtype), 1)
 
     @property
     def values(self):
@@ -79,8 +79,55 @@ class Series(LazyResult):
     def __str__(self):
         return str(self.weld_expr)
 
+    def _comparison(self, other, comparison):
+        if is_scalar(other):
+            return Series(weld_compare(self.weld_expr,
+                                       other,
+                                       comparison,
+                                       self.weld_type),
+                          self.index,
+                          np.dtype(np.bool),
+                          self.name)
+        else:
+            raise TypeError('Can currently only compare with scalars')
+
+    def __lt__(self, other):
+        return self._comparison(other, '<')
+
+    def __le__(self, other):
+        return self._comparison(other, '<=')
+
+    def __eq__(self, other):
+        return self._comparison(other, '==')
+
+    def __ne__(self, other):
+        return self._comparison(other, '!=')
+
+    def __ge__(self, other):
+        return self._comparison(other, '>=')
+
+    def __gt__(self, other):
+        return self._comparison(other, '>')
+
+    def __getitem__(self, item):
+        if isinstance(item, Series):
+            if item.weld_type != WeldBit():
+                raise ValueError('Expected Series of bool data to filter values')
+
+            new_index = self.index[item]
+
+            return Series(weld_filter(self.weld_expr,
+                                      self.weld_type,
+                                      item.weld_expr),
+                          new_index,
+                          self.dtype,
+                          self.name)
+        else:
+            raise TypeError('Expected a Series')
+
     # TODO: perhaps skip making a new object if data is raw already?
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
-        data = super(Series, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
+        evaluated_data = super(Series, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
+        evaluated_index = self.index.evaluate(verbose, decode, passes, num_threads, apply_experimental)
 
-        return Series(data, self.index, self.dtype, self.name)
+        return Series(evaluated_data, evaluated_index, self.dtype, self.name)

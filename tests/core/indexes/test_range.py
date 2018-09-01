@@ -10,9 +10,9 @@ from .test_base import assert_index_equal
 def assert_range_equal(actual, expected):
     assert actual.start == expected.start
     if isinstance(actual.stop, WeldObject):
-        actual.stop = actual.stop.evaluate(WeldLong())
+        actual.stop = actual.stop.evaluate(WeldLong(), verbose=False)
     if isinstance(expected.stop, WeldObject):
-        expected.stop = expected.stop.evaluate(WeldLong())
+        expected.stop = expected.stop.evaluate(WeldLong(), verbose=False)
     assert actual.stop == expected.stop
     assert actual.step == expected.step
 
