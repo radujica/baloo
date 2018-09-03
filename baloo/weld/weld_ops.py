@@ -195,10 +195,11 @@ def weld_compare(array, scalar, operation, weld_type):
 
     scalar = _to_weld_literal(scalar, weld_type)
 
+    # TODO: there should be no casting! requires Weld fix
     weld_template = """map(
     {array},
     |a: {type}| 
-        a {operation} {scalar}
+        a {operation} {type}({scalar})
 )"""
 
     weld_obj.weld_code = weld_template.format(array=obj_id,

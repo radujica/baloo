@@ -72,7 +72,6 @@ class TestDataFrame(object):
         with pytest.raises(KeyError):
             column = df['b']
 
-    # TODO: there is a bug with numpy bool array decoding of len > 3; if not evaluated, works fine with filtering etc
     def test_comparison(self):
         df = DataFrame({'a': np.arange(0, 4),
                         'b': np.arange(4, 8)})
