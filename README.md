@@ -25,4 +25,6 @@ Shall be later published on pypi.
     pipenv install --dev                        // install all requirements
     pipenv run pip install -e <path-to-baloo>   // install baloo in editable mode
     pipenv run pytest                           // run tests
-    // making the convertors requires running through, i.e. pipenv shell, for correct python version
+    // making the convertors requires running through correct python version, i.e. through pipenv shell
+    // documentation: https://gisellezeno.com/tutorials/sphinx-for-python-documentation.html
+    cd doc && make html
