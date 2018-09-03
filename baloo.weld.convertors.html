@@ -15,6 +15,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="baloo.weld package" href="baloo.weld.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -42,18 +43,6 @@
 <dt id="baloo.weld.convertors.encoders.NumPyDecoder">
 <em class="property">class </em><code class="descclassname">baloo.weld.convertors.encoders.</code><code class="descname">NumPyDecoder</code><a class="reference internal" href="_modules/baloo/weld/convertors/encoders.html#NumPyDecoder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.convertors.encoders.NumPyDecoder" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">weld.weldobject.WeldObjectDecoder</span></code></p>
-<p class="rubric">Methods</p>
-<table border="1" class="longtable docutils">
-<colgroup>
-<col width="10%" />
-<col width="90%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#baloo.weld.convertors.encoders.NumPyDecoder.decode" title="baloo.weld.convertors.encoders.NumPyDecoder.decode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decode</span></code></a>(obj,&nbsp;restype[,&nbsp;raw_ptr])</td>
-<td>Decodes obj, assuming object is of type <cite>restype</cite>.</td>
-</tr>
-</tbody>
-</table>
 <dl class="method">
 <dt id="baloo.weld.convertors.encoders.NumPyDecoder.decode">
 <code class="descname">decode</code><span class="sig-paren">(</span><em>obj</em>, <em>restype</em>, <em>raw_ptr=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/convertors/encoders.html#NumPyDecoder.decode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.convertors.encoders.NumPyDecoder.decode" title="Permalink to this definition">¶</a></dt>
@@ -67,21 +56,6 @@ type is ctypes.POINTER(restype.ctype_class).</p>
 <dt id="baloo.weld.convertors.encoders.NumPyEncoder">
 <em class="property">class </em><code class="descclassname">baloo.weld.convertors.encoders.</code><code class="descname">NumPyEncoder</code><a class="reference internal" href="_modules/baloo/weld/convertors/encoders.html#NumPyEncoder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.convertors.encoders.NumPyEncoder" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">weld.weldobject.WeldObjectEncoder</span></code></p>
-<p class="rubric">Methods</p>
-<table border="1" class="longtable docutils">
-<colgroup>
-<col width="10%" />
-<col width="90%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#baloo.weld.convertors.encoders.NumPyEncoder.encode" title="baloo.weld.convertors.encoders.NumPyEncoder.encode"><code class="xref py py-obj docutils literal notranslate"><span class="pre">encode</span></code></a>(obj)</td>
-<td>Encodes an object.</td>
-</tr>
-<tr class="row-even"><td><a class="reference internal" href="#baloo.weld.convertors.encoders.NumPyEncoder.py_to_weld_type" title="baloo.weld.convertors.encoders.NumPyEncoder.py_to_weld_type"><code class="xref py py-obj docutils literal notranslate"><span class="pre">py_to_weld_type</span></code></a>(obj)</td>
-<td>Returns a WeldType corresponding to a Python object</td>
-</tr>
-</tbody>
-</table>
 <dl class="method">
 <dt id="baloo.weld.convertors.encoders.NumPyEncoder.encode">
 <code class="descname">encode</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/convertors/encoders.html#NumPyEncoder.encode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.convertors.encoders.NumPyEncoder.encode" title="Permalink to this definition">¶</a></dt>
@@ -100,7 +74,7 @@ a valid Weld type using py_to_weld_type.</p>
 <dl class="function">
 <dt id="baloo.weld.convertors.encoders.numpy_to_weld_type">
 <code class="descclassname">baloo.weld.convertors.encoders.</code><code class="descname">numpy_to_weld_type</code><span class="sig-paren">(</span><em>np_dtype</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/convertors/encoders.html#numpy_to_weld_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.convertors.encoders.numpy_to_weld_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert from np.dtype to WeldType.</p>
+<dd><p>Convert from NumPy dtype to Weld type.</p>
 <p>Note that support for strings is intended to be only for
 Python 2 str and Python 3 bytes. No unicode.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -108,7 +82,7 @@ Python 2 str and Python 3 bytes. No unicode.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>np_dtype</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.dtype or str</span></dt>
+<dt><strong>np_dtype</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.dtype or str</span></dt>
 <dd><p class="first last">NumPy dtype.</p>
 </dd>
 </dl>
@@ -128,58 +102,23 @@ Python 2 str and Python 3 bytes. No unicode.</p>
 <dl class="function">
 <dt id="baloo.weld.convertors.encoders.weld_to_numpy_dtype">
 <code class="descclassname">baloo.weld.convertors.encoders.</code><code class="descname">weld_to_numpy_dtype</code><span class="sig-paren">(</span><em>weld_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/convertors/encoders.html#weld_to_numpy_dtype"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.convertors.encoders.weld_to_numpy_dtype" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</div>
-<div class="section" id="module-baloo.weld.convertors.utils">
-<span id="baloo-weld-convertors-utils-module"></span><h2>baloo.weld.convertors.utils module<a class="headerlink" href="#module-baloo.weld.convertors.utils" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="baloo.weld.convertors.utils.to_shared_lib">
-<code class="descclassname">baloo.weld.convertors.utils.</code><code class="descname">to_shared_lib</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/convertors/utils.html#to_shared_lib"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.convertors.utils.to_shared_lib" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return library name depending on platform.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">Name of library.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>str</strong></dt>
-<dd><p class="first last">Name of library with extension.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="baloo.weld.convertors.utils.to_weld_vec">
-<code class="descclassname">baloo.weld.convertors.utils.</code><code class="descname">to_weld_vec</code><span class="sig-paren">(</span><em>weld_type</em>, <em>ndim</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/convertors/utils.html#to_weld_vec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.convertors.utils.to_weld_vec" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert multi-dimensional data to WeldVec types.</p>
+<dd><p>Convert from Weld type to NumPy dtype.</p>
+<p>Note that support for strings is intended to be only for
+Python 2 str and Python 3 bytes. No unicode.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
 <dt><strong>weld_type</strong> <span class="classifier-delimiter">:</span> <span class="classifier">WeldType</span></dt>
-<dd><p class="first last">WeldType of data.</p>
-</dd>
-<dt><strong>ndim</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">Number of dimensions.</p>
+<dd><p class="first last">Weld type.</p>
 </dd>
 </dl>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>WeldVec</strong></dt>
-<dd><p class="first last">WeldVec of 1 or more dimensions.</p>
+<dt><strong>numpy.dtype</strong></dt>
+<dd><p class="first last">Corresponding Numpy dtype.</p>
 </dd>
 </dl>
 </td>
@@ -188,9 +127,6 @@ Python 2 str and Python 3 bytes. No unicode.</p>
 </table>
 </dd></dl>
 
-</div>
-<div class="section" id="module-baloo.weld.convertors">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-baloo.weld.convertors" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -211,11 +147,26 @@ Python 2 str and Python 3 bytes. No unicode.</p>
 
 
 <h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="baloo.html">baloo package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="baloo.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="baloo.core.html">baloo.core package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="baloo.weld.html">baloo.weld package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="baloo.html">baloo package</a><ul>
+  <li><a href="baloo.weld.html">baloo.weld package</a><ul>
+      <li>Previous: <a href="baloo.weld.html" title="previous chapter">baloo.weld package</a></li>
+  </ul></li>
+  </ul></li>
   </ul></li>
 </ul>
 </div>

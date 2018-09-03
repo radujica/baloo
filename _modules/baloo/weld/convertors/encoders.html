@@ -51,20 +51,21 @@
 
 
 <div class="viewcode-block" id="numpy_to_weld_type"><a class="viewcode-back" href="../../../../baloo.weld.convertors.html#baloo.weld.convertors.encoders.numpy_to_weld_type">[docs]</a><span class="k">def</span> <span class="nf">numpy_to_weld_type</span><span class="p">(</span><span class="n">np_dtype</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Convert from np.dtype to WeldType.</span>
+    <span class="sd">&quot;&quot;&quot;Convert from NumPy dtype to Weld type.</span>
 
 <span class="sd">    Note that support for strings is intended to be only for</span>
 <span class="sd">    Python 2 str and Python 3 bytes. No unicode.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    np_dtype : np.dtype or str</span>
+<span class="sd">    np_dtype : numpy.dtype or str</span>
 <span class="sd">        NumPy dtype.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    WeldType</span>
 <span class="sd">        Corresponding WeldType.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">np_dtype</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">)):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Can only convert np.dtype or str&#39;</span><span class="p">)</span>
@@ -88,6 +89,22 @@
 
 
 <div class="viewcode-block" id="weld_to_numpy_dtype"><a class="viewcode-back" href="../../../../baloo.weld.convertors.html#baloo.weld.convertors.encoders.weld_to_numpy_dtype">[docs]</a><span class="k">def</span> <span class="nf">weld_to_numpy_dtype</span><span class="p">(</span><span class="n">weld_type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert from Weld type to NumPy dtype.</span>
+
+<span class="sd">    Note that support for strings is intended to be only for</span>
+<span class="sd">    Python 2 str and Python 3 bytes. No unicode.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    weld_type : WeldType</span>
+<span class="sd">        Weld type.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    numpy.dtype</span>
+<span class="sd">        Corresponding Numpy dtype.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">_weld_to_numpy_type_mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">weld_type</span><span class="p">)])</span></div>
 
 
@@ -275,6 +292,9 @@
 
 
 <h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../baloo.html">baloo package</a></li>
+</ul>
 
 <div class="relations">
 <h3>Related Topics</h3>

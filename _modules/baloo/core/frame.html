@@ -45,15 +45,16 @@
 
 
 <div class="viewcode-block" id="DataFrame"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame">[docs]</a><span class="k">class</span> <span class="nc">DataFrame</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Weld-ed pandas DataFrame</span>
+    <span class="sd">&quot;&quot;&quot; Weld-ed pandas DataFrame.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
 <span class="sd">    data : dict</span>
-<span class="sd">        column names -&gt; np.array or Series</span>
+<span class="sd">        Data as a dict of column names -&gt; numpy.ndarray or Series.</span>
 <span class="sd">    index : Index or RangeIndex</span>
+<span class="sd">        Index of the data.</span>
 
-<span class="sd">    See also</span>
+<span class="sd">    See Also</span>
 <span class="sd">    --------</span>
 <span class="sd">    pandas.DataFrame</span>
 
@@ -96,13 +97,13 @@
 
                 <span class="k">return</span> <span class="n">RangeIndex</span><span class="p">(</span><span class="n">weld_count</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]]))</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="DataFrame.__init__"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Initialize a DataFrame object.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        data : dict</span>
-<span class="sd">            str -&gt; np.ndarray or Series.</span>
+<span class="sd">            Data as a dict of str -&gt; np.ndarray or Series.</span>
 <span class="sd">        index : Index or RangeIndex, optional</span>
 <span class="sd">            Index linked to the data; it is assumed to be of the same length.</span>
 <span class="sd">            RangeIndex by default.</span>
@@ -111,13 +112,21 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_check_data_types</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dtypes</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_gather_dtypes</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_infer_length</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_default_dataframe_index</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span><span class="p">)</span> <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_default_dataframe_index</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span><span class="p">)</span> <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">index</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Alias for `data` attribute.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            The internal dict data representation.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
 
-    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="DataFrame.__len__"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.__len__">[docs]</a>    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Eagerly get the length of the DataFrame.</span>
 
 <span class="sd">        Note that if the length is unknown (such as for WeldObjects),</span>
@@ -146,7 +155,7 @@
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="n">length</span>
 
-            <span class="k">return</span> <span class="n">length</span>
+            <span class="k">return</span> <span class="n">length</span></div>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">(index=</span><span class="si">{}</span><span class="s2">, columns=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
@@ -177,27 +186,6 @@
 
         <span class="k">return</span> <span class="n">tabulate</span><span class="p">(</span><span class="n">str_data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="s1">&#39;keys&#39;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="DataFrame.evaluate"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">passes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_threads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Evaluates by creating a str representation of the DataFrame.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        see LazyResult</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        str</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">evaluated_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="n">decode</span><span class="p">,</span> <span class="n">passes</span><span class="p">,</span> <span class="n">num_threads</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="p">)</span>
-
-        <span class="n">evaluated_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-            <span class="n">evaluated_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="n">decode</span><span class="p">,</span> <span class="n">passes</span><span class="p">,</span>
-                                                                     <span class="n">num_threads</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">evaluated_data</span><span class="p">,</span> <span class="n">evaluated_index</span><span class="p">)</span></div>
-
     <span class="k">def</span> <span class="nf">_comparison</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">comparison</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">is_scalar</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
             <span class="n">new_data</span> <span class="o">=</span> <span class="p">{</span><span class="n">column_name</span><span class="p">:</span> <span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">comparison</span><span class="p">)</span>
@@ -226,7 +214,15 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;&gt;&#39;</span><span class="p">)</span>
 
     <span class="c1"># TODO: handle empty</span>
-    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+<div class="viewcode-block" id="DataFrame.__getitem__"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Select from the DataFrame.</span>
+
+<span class="sd">        Supported functionality:</span>
+
+<span class="sd">        - Select column: df[&lt;column-name&gt;]</span>
+<span class="sd">        - Filter: df[df[&lt;column&gt;] &lt;comparison&gt; &lt;scalar&gt;]</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
 
@@ -246,11 +242,31 @@
 
             <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected a column name as a string&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected a column name as a string&#39;</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
-            <span class="k">yield</span> <span class="n">column_name</span></div>
+            <span class="k">yield</span> <span class="n">column_name</span>
+
+<div class="viewcode-block" id="DataFrame.evaluate"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">passes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_threads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Evaluates by creating a DataFrame containing evaluated data and index.</span>
+
+<span class="sd">        See `LazyResult`</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataFrame</span>
+<span class="sd">            DataFrame with evaluated data and index.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">evaluated_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="n">decode</span><span class="p">,</span> <span class="n">passes</span><span class="p">,</span> <span class="n">num_threads</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="p">)</span>
+
+        <span class="n">evaluated_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">evaluated_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="n">decode</span><span class="p">,</span> <span class="n">passes</span><span class="p">,</span>
+                                                                     <span class="n">num_threads</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">evaluated_data</span><span class="p">,</span> <span class="n">evaluated_index</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>
@@ -269,6 +285,9 @@
 
 
 <h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../baloo.html">baloo package</a></li>
+</ul>
 
 <div class="relations">
 <h3>Related Topics</h3>

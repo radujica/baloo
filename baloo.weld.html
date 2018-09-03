@@ -15,6 +15,8 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="baloo.weld.convertors package" href="baloo.weld.convertors.html" />
+    <link rel="prev" title="baloo.core.indexes package" href="baloo.core.indexes.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -39,11 +41,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="baloo.weld.convertors.html">baloo.weld.convertors package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="baloo.weld.convertors.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="baloo.weld.convertors.html#module-baloo.weld.convertors.encoders">baloo.weld.convertors.encoders module</a><ul class="simple">
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="baloo.weld.convertors.html#module-baloo.weld.convertors.utils">baloo.weld.convertors.utils module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="baloo.weld.convertors.html#module-baloo.weld.convertors">Module contents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="baloo.weld.convertors.html#module-baloo.weld.convertors.encoders">baloo.weld.convertors.encoders module</a></li>
 </ul>
 </li>
 </ul>
@@ -57,8 +55,7 @@
 <dl class="class">
 <dt id="baloo.weld.lazy_result.LazyResult">
 <em class="property">class </em><code class="descclassname">baloo.weld.lazy_result.</code><code class="descname">LazyResult</code><span class="sig-paren">(</span><em>weld_expr</em>, <em>weld_type</em>, <em>ndim</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/lazy_result.html#LazyResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.lazy_result.LazyResult" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Wrapper class around a yet un-evaluated Weld result.</p>
+<dd><p>Wrapper class around a yet un-evaluated Weld result.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -75,18 +72,6 @@
 </dd>
 </dl>
 </td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Methods</p>
-<table border="1" class="longtable docutils">
-<colgroup>
-<col width="10%" />
-<col width="90%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#baloo.weld.lazy_result.LazyResult.evaluate" title="baloo.weld.lazy_result.LazyResult.evaluate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate</span></code></a>([verbose,&nbsp;decode,&nbsp;passes,&nbsp;…])</td>
-<td>Evaluate the stored expression.</td>
 </tr>
 </tbody>
 </table>
@@ -131,162 +116,6 @@
 </dd></dl>
 
 </div>
-<div class="section" id="module-baloo.weld.weld_ops">
-<span id="baloo-weld-weld-ops-module"></span><h2>baloo.weld.weld_ops module<a class="headerlink" href="#module-baloo.weld.weld_ops" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="baloo.weld.weld_ops.create_placeholder_weld_object">
-<code class="descclassname">baloo.weld.weld_ops.</code><code class="descname">create_placeholder_weld_object</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/weld_ops.html#create_placeholder_weld_object"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.weld_ops.create_placeholder_weld_object" title="Permalink to this definition">¶</a></dt>
-<dd><p>Helper method that creates a WeldObject that evaluates to itself.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.ndarray or WeldObject</span></dt>
-<dd><p class="first last">Data to wrap around.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>WeldObject</strong></dt>
-<dd><p class="first last">WeldObject wrapped around data.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="baloo.weld.weld_ops.weld_compare">
-<code class="descclassname">baloo.weld.weld_ops.</code><code class="descname">weld_compare</code><span class="sig-paren">(</span><em>array</em>, <em>scalar</em>, <em>operation</em>, <em>weld_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/weld_ops.html#weld_compare"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.weld_ops.weld_compare" title="Permalink to this definition">¶</a></dt>
-<dd><p>Applies comparison operation between each element in the array with scalar.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>array</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.ndarray or WeldObject</span></dt>
-<dd><p class="first last">Input data.</p>
-</dd>
-<dt><strong>scalar</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{int, float, str, bool, bytes}</span></dt>
-<dd><p class="first last">Value to compare with; must be same type as the values in the array. If not a str,
-it is casted to weld_type (allowing one to write e.g. native Python int).</p>
-</dd>
-<dt><strong>operation</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">Operation to do out of: {&lt;, &lt;=, ==, !=, &gt;=, &gt;}.</p>
-</dd>
-<dt><strong>weld_type</strong> <span class="classifier-delimiter">:</span> <span class="classifier">WeldType</span></dt>
-<dd><p class="first last">Type of the elements in the input array.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>WeldObject</strong></dt>
-<dd><p class="first last">Representation of this computation.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="baloo.weld.weld_ops.weld_count">
-<code class="descclassname">baloo.weld.weld_ops.</code><code class="descname">weld_count</code><span class="sig-paren">(</span><em>array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/weld_ops.html#weld_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.weld_ops.weld_count" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the length of the array.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>array</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.ndarray or WeldObject</span></dt>
-<dd><p class="first last">Input array.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>WeldObject</strong></dt>
-<dd><p class="first last">Representation of this computation.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="baloo.weld.weld_ops.weld_filter">
-<code class="descclassname">baloo.weld.weld_ops.</code><code class="descname">weld_filter</code><span class="sig-paren">(</span><em>array</em>, <em>weld_type</em>, <em>bool_array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/weld_ops.html#weld_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.weld_ops.weld_filter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a new array only with the elements with a corresponding True in bool_array.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>array</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.ndarray or WeldObject</span></dt>
-<dd><p class="first last">Input data.</p>
-</dd>
-<dt><strong>weld_type</strong> <span class="classifier-delimiter">:</span> <span class="classifier">WeldType</span></dt>
-<dd><p class="first last">Type of the elements in the input array.</p>
-</dd>
-<dt><strong>bool_array</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.ndarray or WeldObject</span></dt>
-<dd><p class="first last">Array of bool with True for elements in array desired in the result array.</p>
-</dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>WeldObject</strong></dt>
-<dd><p class="first last">Representation of this computation.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="baloo.weld.weld_ops.weld_range">
-<code class="descclassname">baloo.weld.weld_ops.</code><code class="descname">weld_range</code><span class="sig-paren">(</span><em>start</em>, <em>stop</em>, <em>step</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/weld_ops.html#weld_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.weld_ops.weld_range" title="Permalink to this definition">¶</a></dt>
-<dd><p>Create a vector for the range parameters above.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>start</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd></dd>
-<dt><strong>stop</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or WeldObject</span></dt>
-<dd><p class="first last">Could be the lazily computed length of a WeldObject vec.</p>
-</dd>
-<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd></dd>
-</dl>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>WeldObject</strong></dt>
-<dd><p class="first last">Representation of this computation.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</div>
-<div class="section" id="module-baloo.weld">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-baloo.weld" title="Permalink to this headline">¶</a></h2>
-</div>
 </div>
 
 
@@ -306,11 +135,25 @@ it is casted to weld_type (allowing one to write e.g. native Python int).</p>
 
 
 <h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="baloo.html">baloo package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="baloo.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="baloo.core.html">baloo.core package</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">baloo.weld package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
 
 <div class="relations">
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="baloo.html">baloo package</a><ul>
+      <li>Previous: <a href="baloo.core.indexes.html" title="previous chapter">baloo.core.indexes package</a></li>
+      <li>Next: <a href="baloo.weld.convertors.html" title="next chapter">baloo.weld.convertors package</a></li>
+  </ul></li>
   </ul></li>
 </ul>
 </div>
