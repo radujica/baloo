@@ -1,0 +1,281 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>baloo.core.indexes package &#8212; Baloo 0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="baloo-core-indexes-package">
+<h1>baloo.core.indexes package<a class="headerlink" href="#baloo-core-indexes-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-baloo.core.indexes.base">
+<span id="baloo-core-indexes-base-module"></span><h2>baloo.core.indexes.base module<a class="headerlink" href="#module-baloo.core.indexes.base" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="baloo.core.indexes.base.Index">
+<em class="property">class </em><code class="descclassname">baloo.core.indexes.base.</code><code class="descname">Index</code><span class="sig-paren">(</span><em>data</em>, <em>dtype=None</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/base.html#Index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.base.Index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="baloo.weld.html#baloo.weld.lazy_result.LazyResult" title="baloo.weld.lazy_result.LazyResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.weld.lazy_result.LazyResult</span></code></a></p>
+<p>Weld-ed Pandas Index.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pandas.Index</span></code></p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>dtype</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.dtype</span></dt>
+<dd><p class="first last">Numpy dtype of the elements.</p>
+</dd>
+<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Name of the series.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#baloo.core.indexes.base.Index.evaluate" title="baloo.core.indexes.base.Index.evaluate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate</span></code></a>([verbose,&nbsp;decode,&nbsp;passes,&nbsp;…])</td>
+<td>Evaluate the stored expression.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="baloo.core.indexes.base.Index.evaluate">
+<code class="descname">evaluate</code><span class="sig-paren">(</span><em>verbose=False</em>, <em>decode=True</em>, <em>passes=None</em>, <em>num_threads=1</em>, <em>apply_experimental=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/base.html#Index.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.base.Index.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the stored expression.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>verbose</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">Whether to print output for each Weld compilation step.</p>
+</dd>
+<dt><strong>decode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">Whether to decode the result</p>
+</dd>
+<dt><strong>passes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list, optional</span></dt>
+<dd><p class="first last">Which Weld optimization passes to apply</p>
+</dd>
+<dt><strong>num_threads</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">On how many threads to run Weld</p>
+</dd>
+<dt><strong>apply_experimental_transforms</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Whether to apply the experimental Weld transforms.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>numpy.ndarray</strong></dt>
+<dd><p class="first last">Output of the evaluated expression.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="baloo.core.indexes.base.Index.name">
+<code class="descname">name</code><a class="headerlink" href="#baloo.core.indexes.base.Index.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="baloo.core.indexes.base.Index.values">
+<code class="descname">values</code><a class="headerlink" href="#baloo.core.indexes.base.Index.values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-baloo.core.indexes.range">
+<span id="baloo-core-indexes-range-module"></span><h2>baloo.core.indexes.range module<a class="headerlink" href="#module-baloo.core.indexes.range" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="baloo.core.indexes.range.RangeIndex">
+<em class="property">class </em><code class="descclassname">baloo.core.indexes.range.</code><code class="descname">RangeIndex</code><span class="sig-paren">(</span><em>start=None</em>, <em>stop=None</em>, <em>step=1</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/range.html#RangeIndex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.range.RangeIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="baloo.weld.html#baloo.weld.lazy_result.LazyResult" title="baloo.weld.lazy_result.LazyResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.weld.lazy_result.LazyResult</span></code></a></p>
+<p>Weld-ed Pandas RangeIndex.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pandas.RangeIndex</span></code></p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>start</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd></dd>
+<dt><strong>stop</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int or WeldObject</span></dt>
+<dd></dd>
+<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#baloo.core.indexes.range.RangeIndex.evaluate" title="baloo.core.indexes.range.RangeIndex.evaluate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate</span></code></a>([verbose,&nbsp;decode,&nbsp;passes,&nbsp;…])</td>
+<td>Evaluate the stored expression.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="baloo.core.indexes.range.RangeIndex.evaluate">
+<code class="descname">evaluate</code><span class="sig-paren">(</span><em>verbose=False</em>, <em>decode=True</em>, <em>passes=None</em>, <em>num_threads=1</em>, <em>apply_experimental=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/range.html#RangeIndex.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.range.RangeIndex.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the stored expression.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>verbose</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">Whether to print output for each Weld compilation step.</p>
+</dd>
+<dt><strong>decode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">Whether to decode the result</p>
+</dd>
+<dt><strong>passes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list, optional</span></dt>
+<dd><p class="first last">Which Weld optimization passes to apply</p>
+</dd>
+<dt><strong>num_threads</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">On how many threads to run Weld</p>
+</dd>
+<dt><strong>apply_experimental_transforms</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Whether to apply the experimental Weld transforms.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>numpy.ndarray</strong></dt>
+<dd><p class="first last">Output of the evaluated expression.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="baloo.core.indexes.range.RangeIndex.name">
+<code class="descname">name</code><a class="headerlink" href="#baloo.core.indexes.range.RangeIndex.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="baloo.core.indexes.range.RangeIndex.values">
+<code class="descname">values</code><a class="headerlink" href="#baloo.core.indexes.range.RangeIndex.values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-baloo.core.indexes">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-baloo.core.indexes" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Baloo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Radu Jica.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      
+      |
+      <a href="_sources/baloo.core.indexes.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
