@@ -109,21 +109,26 @@ class Series(LazyResult):
     def __gt__(self, other):
         return self._comparison(other, '>')
 
+    @staticmethod
+    def _filter_series(series, item, index):
+        # shortcut of Series.__getitem__ when index is known and item is checked
+        return Series(weld_filter(series.weld_expr,
+                                  series.weld_type,
+                                  item.weld_expr),
+                      index,
+                      series.dtype,
+                      series.name)
+
     def __getitem__(self, item):
-        if isinstance(item, Series):
+        if isinstance(item, LazyResult):
             if item.weld_type != WeldBit():
-                raise ValueError('Expected Series of bool data to filter values')
+                raise ValueError('Expected LazyResult of bool data to filter values')
 
             new_index = self.index[item]
 
-            return Series(weld_filter(self.weld_expr,
-                                      self.weld_type,
-                                      item.weld_expr),
-                          new_index,
-                          self.dtype,
-                          self.name)
+            return Series._filter_series(self, item, new_index)
         else:
-            raise TypeError('Expected a Series')
+            raise TypeError('Expected a LazyResult')
 
     # TODO: perhaps skip making a new object if data is raw already?
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):

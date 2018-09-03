@@ -83,7 +83,7 @@ class Index(LazyResult):
     def __getitem__(self, item):
         if isinstance(item, LazyResult):
             if item.weld_type != WeldBit():
-                raise ValueError('Expected Series of bool data to filter values')
+                raise ValueError('Expected LazyResult of bool data to filter values')
 
             return Index(weld_filter(self.weld_expr,
                                      self.weld_type,
@@ -91,7 +91,7 @@ class Index(LazyResult):
                          self.dtype,
                          self.name)
         else:
-            raise TypeError('Expected a Series')
+            raise TypeError('Expected a LazyResult')
 
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
         evaluated_data = super(Index, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)

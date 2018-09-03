@@ -2,11 +2,12 @@ from collections import OrderedDict
 
 import numpy as np
 from tabulate import tabulate
+from weld.types import WeldBit
 
-from ..weld import weld_count
+from ..weld import weld_count, LazyResult
 from .indexes import RangeIndex, Index
 from .series import Series
-from .utils import check_type
+from .utils import check_type, is_scalar
 
 
 class DataFrame(object):
@@ -163,14 +164,53 @@ class DataFrame(object):
 
         return DataFrame(evaluated_data, evaluated_index)
 
+    def _comparison(self, other, comparison):
+        if is_scalar(other):
+            new_data = {column_name: self[column_name]._comparison(other, comparison)
+                        for column_name in self}
+
+            return DataFrame(new_data, self.index)
+        else:
+            raise TypeError('Can currently only compare with scalars')
+
+    def __lt__(self, other):
+        return self._comparison(other, '<')
+
+    def __le__(self, other):
+        return self._comparison(other, '<=')
+
+    def __eq__(self, other):
+        return self._comparison(other, '==')
+
+    def __ne__(self, other):
+        return self._comparison(other, '!=')
+
+    def __ge__(self, other):
+        return self._comparison(other, '>=')
+
+    def __gt__(self, other):
+        return self._comparison(other, '>')
+
+    # TODO: handle empty
     def __getitem__(self, item):
         if isinstance(item, str):
             value = self.data[item]
 
             if isinstance(value, np.ndarray):
                 value = Series(value, self.index, value.dtype, item)
+                # store the newly created Series to avoid remaking it
+                self.data[item] = value
 
             return value
+        elif isinstance(item, LazyResult):
+            if item.weld_type != WeldBit():
+                raise ValueError('Expected LazyResult of bool data to filter values')
+
+            new_index = self.index[item]
+            new_data = {column_name: Series._filter_series(self[column_name], item, new_index)
+                        for column_name in self}
+
+            return DataFrame(new_data, new_index)
         else:
             raise TypeError('Expected a column name as a string')
 

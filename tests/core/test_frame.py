@@ -64,7 +64,6 @@ class TestDataFrame(object):
         size = 10
         df = DataFrame({'a': np.arange(size)})
 
-        np.testing.assert_array_equal(df['a'].values, df.data['a'])
         actual = df['a']
         expected = Series(np.arange(size), RangeIndex(size), np.dtype(np.int64), 'a')
 
@@ -72,3 +71,26 @@ class TestDataFrame(object):
 
         with pytest.raises(KeyError):
             column = df['b']
+
+    # TODO: there is a bug with numpy bool array decoding of len > 3; if not evaluated, works fine with filtering etc
+    def test_comparison(self):
+        df = DataFrame({'a': np.arange(0, 4),
+                        'b': np.arange(4, 8)})
+
+        actual = df < 3
+        expected = DataFrame({'a': np.array([True, True, True, False]),
+                              'b': np.array([False, False, False, False])},
+                             RangeIndex(4))
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_filter(self):
+        df = DataFrame({'a': np.arange(0, 4),
+                        'b': np.arange(4, 8)})
+
+        actual = df[Series(np.array([False, True, True, False]))]
+        expected = DataFrame({'a': np.array([1, 2]),
+                              'b': np.array([5, 6])},
+                             Index(np.array([1, 2])))
+
+        assert_dataframe_equal(actual, expected)
