@@ -16,7 +16,7 @@ class RangeIndex(LazyResult):
     stop : int or WeldObject
     step : int
 
-    See also
+    See Also
     --------
     pandas.RangeIndex
 
@@ -53,10 +53,26 @@ class RangeIndex(LazyResult):
 
     @property
     def values(self):
+        """The internal data representation.
+
+        Returns
+        -------
+        numpy.ndarray or WeldObject
+            The internal data representation.
+
+        """
         return self.weld_expr
 
     @property
     def name(self):
+        """The name of the RangeIndex.
+
+        Returns
+        -------
+        str
+            The name of the RangeIndex.
+
+        """
         if self._name is None:
             return self.__class__.__name__
         else:
@@ -93,6 +109,13 @@ class RangeIndex(LazyResult):
         return str(self.weld_expr)
 
     def __getitem__(self, item):
+        """Select from the RangeIndex. Currently used internally through DataFrame and Series.
+
+        Supported functionality:
+
+        - Filter: ind[ind <comparison> <scalar>]
+
+        """
         if isinstance(item, LazyResult):
             if item.weld_type != WeldBit():
                 raise ValueError('Expected LazyResult of bool data to filter values')
@@ -105,6 +128,16 @@ class RangeIndex(LazyResult):
             raise TypeError('Expected a LazyResult')
 
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
+        """Evaluates by creating an Index containing evaluated data.
+
+        See `LazyResult`
+
+        Returns
+        -------
+        Index
+            Index with evaluated data.
+
+        """
         evaluated_data = super(RangeIndex, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
 
         return Index(evaluated_data, np.dtype(np.int64))

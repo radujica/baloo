@@ -17,20 +17,21 @@ _numpy_to_weld_type_mapping = {
 
 
 def numpy_to_weld_type(np_dtype):
-    """Convert from np.dtype to WeldType.
+    """Convert from NumPy dtype to Weld type.
 
     Note that support for strings is intended to be only for
     Python 2 str and Python 3 bytes. No unicode.
 
     Parameters
     ----------
-    np_dtype : np.dtype or str
+    np_dtype : numpy.dtype or str
         NumPy dtype.
 
     Returns
     -------
     WeldType
         Corresponding WeldType.
+
     """
     if not isinstance(np_dtype, (str, np.dtype)):
         raise TypeError('Can only convert np.dtype or str')
@@ -54,6 +55,22 @@ _weld_to_numpy_type_mapping = {
 
 
 def weld_to_numpy_dtype(weld_type):
+    """Convert from Weld type to NumPy dtype.
+
+    Note that support for strings is intended to be only for
+    Python 2 str and Python 3 bytes. No unicode.
+
+    Parameters
+    ----------
+    weld_type : WeldType
+        Weld type.
+
+    Returns
+    -------
+    numpy.dtype
+        Corresponding Numpy dtype.
+
+    """
     return np.dtype(_weld_to_numpy_type_mapping[str(weld_type)])
 
 

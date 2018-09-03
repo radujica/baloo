@@ -11,15 +11,16 @@ from .utils import check_type, is_scalar
 
 
 class DataFrame(object):
-    """ Weld-ed pandas DataFrame
+    """ Weld-ed pandas DataFrame.
 
     Attributes
     ----------
     data : dict
-        column names -> np.array or Series
+        Data as a dict of column names -> numpy.ndarray or Series.
     index : Index or RangeIndex
+        Index of the data.
 
-    See also
+    See Also
     --------
     pandas.DataFrame
 
@@ -68,7 +69,7 @@ class DataFrame(object):
         Parameters
         ----------
         data : dict
-            str -> np.ndarray or Series.
+            Data as a dict of str -> np.ndarray or Series.
         index : Index or RangeIndex, optional
             Index linked to the data; it is assumed to be of the same length.
             RangeIndex by default.
@@ -81,6 +82,14 @@ class DataFrame(object):
 
     @property
     def values(self):
+        """Alias for `data` attribute.
+
+        Returns
+        -------
+        dict
+            The internal dict data representation.
+
+        """
         return self.data
 
     def __len__(self):
@@ -143,27 +152,6 @@ class DataFrame(object):
 
         return tabulate(str_data, headers='keys')
 
-    def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
-        """ Evaluates by creating a str representation of the DataFrame.
-
-        Parameters
-        ----------
-        see LazyResult
-
-        Returns
-        -------
-        str
-
-        """
-        evaluated_index = self.index.evaluate(verbose, decode, passes, num_threads, apply_experimental)
-
-        evaluated_data = OrderedDict()
-        for column_name in self:
-            evaluated_data[column_name] = self[column_name].evaluate(verbose, decode, passes,
-                                                                     num_threads, apply_experimental)
-
-        return DataFrame(evaluated_data, evaluated_index)
-
     def _comparison(self, other, comparison):
         if is_scalar(other):
             new_data = {column_name: self[column_name]._comparison(other, comparison)
@@ -193,6 +181,14 @@ class DataFrame(object):
 
     # TODO: handle empty
     def __getitem__(self, item):
+        """Select from the DataFrame.
+
+        Supported functionality:
+
+        - Select column: df[<column-name>]
+        - Filter: df[df[<column>] <comparison> <scalar>]
+
+        """
         if isinstance(item, str):
             value = self.data[item]
 
@@ -217,3 +213,23 @@ class DataFrame(object):
     def __iter__(self):
         for column_name in self.data:
             yield column_name
+
+    def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
+        """Evaluates by creating a DataFrame containing evaluated data and index.
+
+        See `LazyResult`
+
+        Returns
+        -------
+        DataFrame
+            DataFrame with evaluated data and index.
+
+        """
+        evaluated_index = self.index.evaluate(verbose, decode, passes, num_threads, apply_experimental)
+
+        evaluated_data = OrderedDict()
+        for column_name in self:
+            evaluated_data[column_name] = self[column_name].evaluate(verbose, decode, passes,
+                                                                     num_threads, apply_experimental)
+
+        return DataFrame(evaluated_data, evaluated_index)

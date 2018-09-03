@@ -44,8 +44,17 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.intersphinx',
     'numpydoc'
 ]
+
+numpydoc_show_class_members = False
+
+intersphinx_mappings = {
+    'Python 3.5': ('https://docs.python.org/3.5', None),
+    'NumPy [latest]': ('http://docs.scipy.org/doc/numpy/', None),
+    'Pandas [latest]': ('http://pandas.pydata.org/pandas-docs/stable/', None)
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

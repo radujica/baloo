@@ -20,11 +20,12 @@ For Python 2, main Weld repo pyweld should be fine.
 Shall be later published on pypi.
 
 ## Develop
-    git clone https://github.com/radujica/baloo.git
+    git clone https://github.com/radujica/baloo.git && cd baloo
     // update path to pyweld in Pipfile
     pipenv install --dev                        // install all requirements
     pipenv run pip install -e <path-to-baloo>   // install baloo in editable mode
-    pipenv run pytest                           // run tests
     // making the convertors requires running through correct python version, i.e. through pipenv shell
-    // documentation: https://gisellezeno.com/tutorials/sphinx-for-python-documentation.html
-    cd doc && make html
+    
+    pipenv run pytest                           // run tests
+    
+    cd doc && make html                         // generate documentation in baloo-adjacent dir baloo-docs

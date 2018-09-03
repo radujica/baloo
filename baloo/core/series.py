@@ -13,12 +13,12 @@ class Series(LazyResult):
     ----------
     index : Index or RangeIndex
         Index linked to the data; it is assumed to be of the same length.
-    dtype : np.dtype
+    dtype : numpy.dtype
         Numpy dtype of the elements.
     name : str
-        Name of the series.
+        Name of the Series.
 
-    See also
+    See Also
     --------
     pandas.Series
 
@@ -30,12 +30,12 @@ class Series(LazyResult):
 
         Parameters
         ----------
-        data : np.ndarray or WeldObject
+        data : numpy.ndarray or WeldObject
             Raw data or Weld expression.
         index : Index or RangeIndex, optional
             Index linked to the data; it is assumed to be of the same length.
             RangeIndex by default.
-        dtype : np.dtype, optional
+        dtype : numpy.dtype, optional
             Numpy dtype of the elements. Inferred from `data` by default.
         name : str, optional
             Name of the Series.
@@ -52,6 +52,14 @@ class Series(LazyResult):
 
     @property
     def values(self):
+        """Alias for `data` attribute.
+
+        Returns
+        -------
+        numpy.ndarray or WeldObject
+            The internal data representation.
+
+        """
         return self.weld_expr
 
     def __len__(self):
@@ -120,6 +128,13 @@ class Series(LazyResult):
                       series.name)
 
     def __getitem__(self, item):
+        """Select from the Series.
+
+        Supported functionality:
+
+        - Filter: sr[sr <comparison> <scalar>]
+
+        """
         if isinstance(item, LazyResult):
             if item.weld_type != WeldBit():
                 raise ValueError('Expected LazyResult of bool data to filter values')
@@ -132,6 +147,16 @@ class Series(LazyResult):
 
     # TODO: perhaps skip making a new object if data is raw already?
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
+        """Evaluates by creating a Series containing evaluated data and index.
+
+        See `LazyResult`
+
+        Returns
+        -------
+        Series
+            Series with evaluated data and index.
+
+        """
         evaluated_data = super(Series, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
         evaluated_index = self.index.evaluate(verbose, decode, passes, num_threads, apply_experimental)
 

@@ -15,7 +15,7 @@ class Index(LazyResult):
     name : str
         Name of the series.
 
-    See also
+    See Also
     --------
     pandas.Index
 
@@ -42,6 +42,14 @@ class Index(LazyResult):
 
     @property
     def name(self):
+        """The name of the Index.
+
+        Returns
+        -------
+        str
+            The name of the Index.
+
+        """
         if self._name is None:
             return self.__class__.__name__
         else:
@@ -53,6 +61,14 @@ class Index(LazyResult):
 
     @property
     def values(self):
+        """The internal data representation.
+
+        Returns
+        -------
+        numpy.ndarray or WeldObject
+            The internal data representation.
+
+        """
         return self.weld_expr
 
     def __len__(self):
@@ -81,6 +97,13 @@ class Index(LazyResult):
         return str(self.values)
 
     def __getitem__(self, item):
+        """Select from the Index. Currently used internally through DataFrame and Series.
+
+        Supported functionality:
+
+        - Filter: ind[ind <comparison> <scalar>]
+
+        """
         if isinstance(item, LazyResult):
             if item.weld_type != WeldBit():
                 raise ValueError('Expected LazyResult of bool data to filter values')
@@ -94,6 +117,16 @@ class Index(LazyResult):
             raise TypeError('Expected a LazyResult')
 
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
+        """Evaluates by creating an Index containing evaluated data.
+
+        See `LazyResult`
+
+        Returns
+        -------
+        Index
+            Index with evaluated data.
+
+        """
         evaluated_data = super(Index, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
 
         return Index(evaluated_data, self.dtype, self.name)
