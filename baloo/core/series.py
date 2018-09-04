@@ -3,7 +3,7 @@ from weld.weldobject import WeldObject, WeldLong, WeldBit
 
 from .indexes import RangeIndex, Index
 from .utils import infer_dtype, default_index, check_type, is_scalar, valid_int_slice
-from ..weld import LazyResult, weld_count, weld_compare, numpy_to_weld_type, weld_filter, weld_slice
+from ..weld import LazyResult, weld_count, weld_compare, numpy_to_weld_type, weld_filter, weld_slice, weld_array_op
 
 
 class Series(LazyResult):
@@ -143,6 +143,7 @@ class Series(LazyResult):
         Supported functionality:
 
         - Filter: sr[sr <comparison> <scalar>]
+        - Multiple filters: sr[(sr <comp> <scalar>) {&, |} (sr <comp> <scalar>)]
         - Slice: sr[<start>:<stop>:<step>]
 
         """
@@ -158,6 +159,26 @@ class Series(LazyResult):
             return Series._slice_series(self, item, self.index[item])
         else:
             raise TypeError('Expected a LazyResult or a slice')
+
+    def _bitwise_operation(self, other, operation):
+        if not isinstance(other, Series):
+            raise TypeError('Expected another Series')
+        elif self.dtype.char != '?' or other.dtype.char != '?':
+            raise TypeError('Binary operations currently supported only on bool Series')
+
+        return Series(weld_array_op(self.weld_expr,
+                                    other.weld_expr,
+                                    self.weld_type,
+                                    operation),
+                      self.index,
+                      self.dtype,
+                      self.name)
+
+    def __and__(self, other):
+        return self._bitwise_operation(other, '&&')
+
+    def __or__(self, other):
+        return self._bitwise_operation(other, '||')
 
     # TODO: perhaps skip making a new object if data is raw already?
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):

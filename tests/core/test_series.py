@@ -68,10 +68,30 @@ class TestSeries(object):
 
         assert_series_equal(actual, expected)
 
+    def test_filter_combined(self):
+        sr = Series(np.arange(4))
+
+        actual = sr[(sr != 0) & (sr != 3)]
+        expected = Series(np.array([1, 2]), Index(np.array([1, 2])), np.dtype(np.int64))
+
+        assert_series_equal(actual, expected)
+
     def test_slice(self):
         sr = Series(np.array([1, 2, 3, 4, 5], dtype=np.float32))
 
         actual = sr[1:3]
         expected = Series(np.array([2, 3]), Index(np.array([1, 2])), np.dtype(np.float32))
+
+        assert_series_equal(actual, expected)
+
+    @pytest.mark.parametrize('operation, expected', [
+        ('&', Series(np.array([True, False, False, False]), Index(np.arange(4)), np.dtype(np.bool))),
+        ('|', Series(np.array([True, True, True, False]), Index(np.arange(4)), np.dtype(np.bool)))
+    ])
+    def test_bool_operations(self, operation, expected):
+        sr1 = Series(np.array([True, True, False, False]))
+        sr2 = Series(np.array([True, False, True, False]))
+
+        actual = eval('sr1 {} sr2'.format(operation))
 
         assert_series_equal(actual, expected)

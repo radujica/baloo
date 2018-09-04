@@ -316,3 +316,45 @@ def weld_slice(array, weld_type, slice_, default_start=0, default_step=1):
                                               slice_step='{}L'.format(slice_.step))
 
     return weld_obj
+
+
+def weld_array_op(array1, array2, result_type, operation):
+    """Applies operation to each pair of elements in the arrays.
+
+    Their lengths and types are assumed to be the same.
+    TODO: what happens if not?
+
+    Parameters
+    ----------
+    array1 : numpy.ndarray or WeldObject
+        Input array.
+    array2 : numpy.ndarray or WeldObject
+        Second input array.
+    result_type : WeldType
+        Weld type of the result. Expected to be the same as both input arrays.
+    operation : {'+', '-', '*', '/', '&&', '||'}
+        Which operation to apply. Note bitwise operations (not included) seem to be bugged at the LLVM level.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    obj_id1, weld_obj = _create_weld_object(array1)
+    obj_id2 = _get_weld_obj_id(weld_obj, array2)
+
+    weld_template = """result(
+    for(zip({array1}, {array2}), 
+        appender[{type}], 
+        |b: appender[{type}], i: i64, n: {{{type}, {type}}}| 
+            merge(b, n.$0 {operation} n.$1)
+    )
+)"""
+
+    weld_obj.weld_code = weld_template.format(array1=obj_id1,
+                                              array2=obj_id2,
+                                              type=result_type,
+                                              operation=operation)
+
+    return weld_obj
