@@ -219,6 +219,28 @@ class DataFrame(object):
         else:
             raise TypeError('Expected a column name as a string')
 
+    def __setitem__(self, key, value):
+        """Add/update DataFrame column.
+
+        Parameters
+        ----------
+        key : str
+            Column name.
+        value : numpy.ndarray or Series
+            Note that it does NOT check for the same length as the other columns due to possibly not knowing
+            the length before evaluation. Also note that for Series, it currently does NOT match Index as in a join but
+            the Series inherits the index of the DataFrame.
+
+        """
+        key = check_type(key, str)
+        value = check_type(value, (np.ndarray, Series))
+
+        # inherit the index, no join atm
+        if isinstance(value, Series):
+            value.index = self.index
+
+        self.data[key] = value
+
     def __iter__(self):
         for column_name in self.data:
             yield column_name

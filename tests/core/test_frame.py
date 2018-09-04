@@ -104,3 +104,24 @@ class TestDataFrame(object):
                              Index(np.array([1, 2])))
 
         assert_dataframe_equal(actual, expected)
+
+    def test_setitem_new_col(self):
+        df = DataFrame({'a': np.arange(0, 4)})
+
+        df['b'] = np.arange(4, 8)
+        actual = df
+        expected = DataFrame({'a': np.arange(0, 4),
+                              'b': np.arange(4, 8)})
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_setitem_existing_col(self):
+        df = DataFrame({'a': np.arange(0, 4),
+                        'b': np.arange(8, 12)})
+
+        df['b'] = np.arange(4, 8)
+        actual = df
+        expected = DataFrame({'a': np.arange(0, 4),
+                              'b': np.arange(4, 8)})
+
+        assert_dataframe_equal(actual, expected)
