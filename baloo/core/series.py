@@ -3,7 +3,8 @@ from weld.weldobject import WeldObject, WeldLong, WeldBit
 
 from .indexes import RangeIndex, Index
 from .utils import infer_dtype, default_index, check_type, is_scalar, valid_int_slice
-from ..weld import LazyResult, weld_count, weld_compare, numpy_to_weld_type, weld_filter, weld_slice, weld_array_op
+from ..weld import LazyResult, weld_count, weld_compare, numpy_to_weld_type, weld_filter, weld_slice, weld_array_op, \
+    weld_invert
 
 
 class Series(LazyResult):
@@ -143,7 +144,7 @@ class Series(LazyResult):
         Supported functionality:
 
         - Filter: sr[sr <comparison> <scalar>]
-        - Multiple filters: sr[(sr <comp> <scalar>) {&, |} (sr <comp> <scalar>)]
+        - Multiple filters: sr[(sr <comp> <scalar>) {&, |} ~(sr <comp> <scalar>)]
         - Slice: sr[<start>:<stop>:<step>]
 
         """
@@ -179,6 +180,15 @@ class Series(LazyResult):
 
     def __or__(self, other):
         return self._bitwise_operation(other, '||')
+
+    def __invert__(self):
+        if self.weld_type != WeldBit():
+            raise TypeError('Can only invert bool Series')
+
+        return Series(weld_invert(self.weld_expr),
+                      self.index,
+                      self.dtype,
+                      self.name)
 
     # TODO: perhaps skip making a new object if data is raw already?
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):

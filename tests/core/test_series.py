@@ -95,3 +95,11 @@ class TestSeries(object):
         actual = eval('sr1 {} sr2'.format(operation))
 
         assert_series_equal(actual, expected)
+
+    def test_invert(self):
+        sr = Series(np.array([True, False, True, False]))
+
+        actual = ~sr
+        expected = Series(np.array([False, True, False, True]), Index(np.arange(4)), np.dtype(np.bool))
+
+        assert_series_equal(actual, expected)

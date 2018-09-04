@@ -358,3 +358,32 @@ def weld_array_op(array1, array2, result_type, operation):
                                               operation=operation)
 
     return weld_obj
+
+
+def weld_invert(array):
+    """Inverts a bool array.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input data. Assumed to be bool data.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    obj_id, weld_obj = _create_weld_object(array)
+
+    weld_template = """result(
+    for({array},
+        appender[bool],
+        |b: appender[bool], i: i64, n: bool|
+            if(n, merge(b, false), merge(b, true))
+    )
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=obj_id)
+
+    return weld_obj
