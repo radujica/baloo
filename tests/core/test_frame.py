@@ -3,8 +3,8 @@ import pytest
 
 from baloo import DataFrame, Index, Series, RangeIndex
 from baloo.weld import create_placeholder_weld_object
-from .test_series import assert_series_equal
 from .indexes.utils import assert_indexes_equal
+from .test_series import assert_series_equal
 
 
 def assert_dataframe_equal(actual, expected):
@@ -88,6 +88,17 @@ class TestDataFrame(object):
                         'b': np.arange(4, 8)})
 
         actual = df[Series(np.array([False, True, True, False]))]
+        expected = DataFrame({'a': np.array([1, 2]),
+                              'b': np.array([5, 6])},
+                             Index(np.array([1, 2])))
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_slice(self):
+        df = DataFrame({'a': np.arange(0, 4),
+                        'b': np.arange(4, 8)})
+
+        actual = df[1:3]
         expected = DataFrame({'a': np.array([1, 2]),
                               'b': np.array([5, 6])},
                              Index(np.array([1, 2])))

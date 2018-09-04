@@ -7,6 +7,9 @@ _encoder = NumPyEncoder()
 _decoder = NumPyDecoder()
 
 
+# Weld types can be inferred in many places however were included for performance reasons.
+
+
 def _get_weld_obj_id(weld_obj, data):
     """Helper method to update WeldObject with some data.
 
@@ -245,5 +248,71 @@ def weld_filter(array, weld_type, bool_array):
     weld_obj.weld_code = weld_template.format(array=obj_id,
                                               bool_array=bool_obj_id,
                                               type=weld_type)
+
+    return weld_obj
+
+
+def _replace_slice_defaults(slice_, default_start, default_step):
+    start = slice_.start
+    stop = slice_.stop
+    step = slice_.step
+
+    if start is None:
+        start = default_start
+
+    # stop is required when making a slice, no need to replace
+
+    if step is None:
+        step = default_step
+
+    return slice(start, stop, step)
+
+
+def weld_slice(array, weld_type, slice_, default_start=0, default_step=1):
+    """Returns a new array according to the given slice.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        1-dimensional array.
+    weld_type : WeldType
+        Type of the elements in the input array.
+    slice_ : slice
+        Subset to return. Assumed valid slice.
+    default_start : int, optional
+        Default value to slice start.
+    default_step : int, optional
+        Default value to slice step.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    slice_ = _replace_slice_defaults(slice_, default_start, default_step)
+    obj_id, weld_obj = _create_weld_object(array)
+
+    if slice_.step == 1:
+        weld_template = """slice(
+    {array},
+    {slice_start},
+    {slice_stop}
+)"""
+    else:
+        weld_template = """result(
+    for(
+        iter({array}, {slice_start}, {slice_stop}, {slice_step}),
+        appender[{type}],
+        |b: appender[{type}], i: i64, n: {type}| 
+            merge(b, n)
+    )  
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=obj_id,
+                                              type=weld_type,
+                                              slice_start='{}L'.format(slice_.start),
+                                              slice_stop='{}L'.format(slice_.stop - slice_.start),
+                                              slice_step='{}L'.format(slice_.step))
 
     return weld_obj

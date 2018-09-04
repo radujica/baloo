@@ -2,8 +2,8 @@ import numpy as np
 from weld.weldobject import WeldObject, WeldLong, WeldBit
 
 from .indexes import RangeIndex, Index
-from .utils import infer_dtype, default_index, check_type, is_scalar
-from ..weld import LazyResult, weld_count, weld_compare, numpy_to_weld_type, weld_filter
+from .utils import infer_dtype, default_index, check_type, is_scalar, valid_int_slice
+from ..weld import LazyResult, weld_count, weld_compare, numpy_to_weld_type, weld_filter, weld_slice
 
 
 class Series(LazyResult):
@@ -127,23 +127,37 @@ class Series(LazyResult):
                       series.dtype,
                       series.name)
 
+    @staticmethod
+    def _slice_series(series, item, index):
+        # shortcut of Series.__getitem__ when index is known and item is checked
+        return Series(weld_slice(series.weld_expr,
+                                 series.weld_type,
+                                 item),
+                      index,
+                      series.dtype,
+                      series.name)
+
     def __getitem__(self, item):
         """Select from the Series.
 
         Supported functionality:
 
         - Filter: sr[sr <comparison> <scalar>]
+        - Slice: sr[<start>:<stop>:<step>]
 
         """
         if isinstance(item, LazyResult):
             if item.weld_type != WeldBit():
                 raise ValueError('Expected LazyResult of bool data to filter values')
 
-            new_index = self.index[item]
+            return Series._filter_series(self, item, self.index[item])
+        elif isinstance(item, slice):
+            if not valid_int_slice(item):
+                raise ValueError('Can currently only slice with integers')
 
-            return Series._filter_series(self, item, new_index)
+            return Series._slice_series(self, item, self.index[item])
         else:
-            raise TypeError('Expected a LazyResult')
+            raise TypeError('Expected a LazyResult or a slice')
 
     # TODO: perhaps skip making a new object if data is raw already?
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):

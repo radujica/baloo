@@ -1,8 +1,8 @@
 import numpy as np
 from weld.weldobject import WeldObject, WeldLong, WeldBit
 
-from ...core.utils import check_type, infer_dtype
-from ...weld import LazyResult, numpy_to_weld_type, weld_count, weld_filter
+from ...core.utils import check_type, infer_dtype, valid_int_slice
+from ...weld import LazyResult, numpy_to_weld_type, weld_count, weld_filter, weld_slice
 
 
 class Index(LazyResult):
@@ -102,6 +102,7 @@ class Index(LazyResult):
         Supported functionality:
 
         - Filter: ind[ind <comparison> <scalar>]
+        - Slice: ind[<start>:<stop>:<step>]
 
         """
         if isinstance(item, LazyResult):
@@ -113,8 +114,17 @@ class Index(LazyResult):
                                      item.weld_expr),
                          self.dtype,
                          self.name)
+        elif isinstance(item, slice):
+            if not valid_int_slice(item):
+                raise ValueError('Can currently only slice with integers')
+
+            return Index(weld_slice(self.weld_expr,
+                                    self.weld_type,
+                                    item),
+                         self.dtype,
+                         self.name)
         else:
-            raise TypeError('Expected a LazyResult')
+            raise TypeError('Expected a LazyResult or a slice')
 
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
         """Evaluates by creating an Index containing evaluated data.

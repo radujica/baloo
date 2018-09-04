@@ -37,3 +37,11 @@ def default_index(data):
 
 def is_scalar(data):
     return isinstance(data, (int, float, str, bytes, bool))
+
+
+def _is_int_or_none(value):
+    return value is None or isinstance(value, int)
+
+
+def valid_int_slice(slice_):
+    return all([_is_int_or_none(v) for v in [slice_.start, slice_.stop, slice_.step]])

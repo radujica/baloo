@@ -28,4 +28,4 @@ Shall be later published on pypi.
     
     pipenv run pytest                           // run tests
     
-    cd doc && make html                         // generate documentation in baloo-adjacent dir baloo-docs
+    cd doc && make html                         // generate documentation in baloo-adjacent dir baloo-docs; run under pipenv shell!

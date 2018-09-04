@@ -3,8 +3,8 @@ from weld.types import WeldLong
 from weld.weldobject import WeldObject
 
 from .base import Index
-from ..utils import check_type
-from ...weld import weld_range, LazyResult, WeldBit, weld_filter
+from ..utils import check_type, valid_int_slice
+from ...weld import weld_range, LazyResult, WeldBit, weld_filter, weld_slice
 
 
 class RangeIndex(LazyResult):
@@ -114,6 +114,7 @@ class RangeIndex(LazyResult):
         Supported functionality:
 
         - Filter: ind[ind <comparison> <scalar>]
+        - Slice: ind[<start>:<stop>:<step>]
 
         """
         if isinstance(item, LazyResult):
@@ -124,8 +125,16 @@ class RangeIndex(LazyResult):
                                      self.weld_type,
                                      item.weld_expr),
                          np.dtype(np.int64))
+        elif isinstance(item, slice):
+            if not valid_int_slice(item):
+                raise ValueError('Can currently only slice with integers')
+
+            return Index(weld_slice(self.weld_expr,
+                                    self.weld_type,
+                                    item),
+                         np.dtype(np.int64))
         else:
-            raise TypeError('Expected a LazyResult')
+            raise TypeError('Expected a LazyResult or a slice')
 
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
         """Evaluates by creating an Index containing evaluated data.

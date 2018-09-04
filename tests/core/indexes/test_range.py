@@ -64,3 +64,11 @@ class TestRangeIndex(object):
         expected = 3
 
         assert actual == expected
+
+    def test_slice(self):
+        ind = RangeIndex(1, 6)
+
+        actual = ind[1:3]
+        expected = Index(np.array([2, 3]), np.dtype(np.int64))
+
+        assert_index_equal(actual, expected)

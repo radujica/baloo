@@ -4,10 +4,10 @@ import numpy as np
 from tabulate import tabulate
 from weld.types import WeldBit
 
-from ..weld import weld_count, LazyResult
 from .indexes import RangeIndex, Index
 from .series import Series
-from .utils import check_type, is_scalar
+from .utils import check_type, is_scalar, valid_int_slice
+from ..weld import weld_count, LazyResult
 
 
 class DataFrame(object):
@@ -204,6 +204,15 @@ class DataFrame(object):
 
             new_index = self.index[item]
             new_data = {column_name: Series._filter_series(self[column_name], item, new_index)
+                        for column_name in self}
+
+            return DataFrame(new_data, new_index)
+        elif isinstance(item, slice):
+            if not valid_int_slice(item):
+                raise ValueError('Can currently only slice with integers')
+
+            new_index = self.index[item]
+            new_data = {column_name: Series._slice_series(self[column_name], item, new_index)
                         for column_name in self}
 
             return DataFrame(new_data, new_index)
