@@ -1,8 +1,8 @@
 import numpy as np
 from weld.weldobject import WeldObject, WeldLong, WeldBit
 
-from ...core.utils import check_type, infer_dtype, valid_int_slice
-from ...weld import LazyResult, numpy_to_weld_type, weld_count, weld_filter, weld_slice
+from ...core.utils import check_type, infer_dtype, valid_int_slice, is_scalar
+from ...weld import LazyResult, numpy_to_weld_type, weld_count, weld_filter, weld_slice, weld_compare
 
 
 class Index(LazyResult):
@@ -95,6 +95,35 @@ class Index(LazyResult):
 
     def __str__(self):
         return str(self.values)
+
+    def _comparison(self, other, comparison):
+        if is_scalar(other):
+            return Index(weld_compare(self.weld_expr,
+                                      other,
+                                      comparison,
+                                      self.weld_type),
+                         np.dtype(np.bool),
+                         self.name)
+        else:
+            raise TypeError('Can currently only compare with scalars')
+
+    def __lt__(self, other):
+        return self._comparison(other, '<')
+
+    def __le__(self, other):
+        return self._comparison(other, '<=')
+
+    def __eq__(self, other):
+        return self._comparison(other, '==')
+
+    def __ne__(self, other):
+        return self._comparison(other, '!=')
+
+    def __ge__(self, other):
+        return self._comparison(other, '>=')
+
+    def __gt__(self, other):
+        return self._comparison(other, '>')
 
     def __getitem__(self, item):
         """Select from the Index. Currently used internally through DataFrame and Series.

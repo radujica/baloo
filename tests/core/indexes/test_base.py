@@ -41,6 +41,22 @@ class TestBaseIndex(object):
 
         assert actual == expected
 
+    def test_comparison(self):
+        ind = Index(np.array([1, 2, 3, 4, 5], dtype=np.float32))
+
+        actual = ind < 3.0
+        expected = Index(np.array([True, True, False, False, False]))
+
+        assert_index_equal(actual, expected)
+
+    def test_filter(self):
+        ind = Index(np.array([1, 2, 3, 4, 5], dtype=np.float32))
+
+        actual = ind[Index(np.array([False, True, True, False, False]))]
+        expected = Index(np.array([2, 3]), np.dtype(np.float32))
+
+        assert_index_equal(actual, expected)
+
     def test_slice(self):
         sr = Index(np.array([1, 2, 3, 4, 5], dtype=np.float32))
 

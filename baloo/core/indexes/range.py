@@ -4,7 +4,7 @@ from weld.weldobject import WeldObject
 
 from .base import Index
 from ..utils import check_type, valid_int_slice
-from ...weld import weld_range, LazyResult, WeldBit, weld_filter, weld_slice
+from ...weld import weld_range, LazyResult, WeldBit, weld_filter, weld_slice, weld_compare
 
 
 class RangeIndex(LazyResult):
@@ -107,6 +107,34 @@ class RangeIndex(LazyResult):
 
     def __str__(self):
         return str(self.weld_expr)
+
+    def _comparison(self, other, comparison):
+        if isinstance(other, int):
+            return Index(weld_compare(self.weld_expr,
+                                      other,
+                                      comparison,
+                                      self.weld_type),
+                         np.dtype(np.bool))
+        else:
+            raise TypeError('Can only compare with integers')
+
+    def __lt__(self, other):
+        return self._comparison(other, '<')
+
+    def __le__(self, other):
+        return self._comparison(other, '<=')
+
+    def __eq__(self, other):
+        return self._comparison(other, '==')
+
+    def __ne__(self, other):
+        return self._comparison(other, '!=')
+
+    def __ge__(self, other):
+        return self._comparison(other, '>=')
+
+    def __gt__(self, other):
+        return self._comparison(other, '>')
 
     def __getitem__(self, item):
         """Select from the RangeIndex. Currently used internally through DataFrame and Series.

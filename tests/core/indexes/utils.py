@@ -2,9 +2,6 @@ from baloo import RangeIndex, Index
 
 
 def assert_indexes_equal(actual, expected):
-    if actual == expected:
-        return
-
     if type(actual) != type(expected):
         raise AssertionError('Expected indexes of the same type')
 

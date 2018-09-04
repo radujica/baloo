@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from weld.types import WeldLong
 from weld.weldobject import WeldObject
 
@@ -64,6 +65,25 @@ class TestRangeIndex(object):
         expected = 3
 
         assert actual == expected
+
+    def test_comparison(self):
+        ind = RangeIndex(1, 6)
+
+        actual = ind < 3
+        expected = Index(np.array([True, True, False, False, False]))
+
+        assert_index_equal(actual, expected)
+
+        with pytest.raises(TypeError):
+            ind < 3.0
+
+    def test_filter(self):
+        ind = RangeIndex(1, 6)
+
+        actual = ind[Index(np.array([False, True, True, False, False]))]
+        expected = Index(np.array([2, 3]), np.dtype(np.int64))
+
+        assert_index_equal(actual, expected)
 
     def test_slice(self):
         ind = RangeIndex(1, 6)
