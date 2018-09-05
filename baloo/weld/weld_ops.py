@@ -423,3 +423,29 @@ def weld_invert(array):
     weld_obj.weld_code = weld_template.format(array=obj_id)
 
     return weld_obj
+
+
+def weld_iloc_int(array, index):
+    """Retrieves the value at index.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input data. Assumed to be bool data.
+    index : int
+        The array index from which to retrieve value.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    obj_id, weld_obj = _create_weld_object(array)
+
+    weld_template = 'lookup({array}, {index}L)'
+
+    weld_obj.weld_code = weld_template.format(array=obj_id,
+                                              index=index)
+
+    return weld_obj

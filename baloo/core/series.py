@@ -63,6 +63,21 @@ class Series(LazyResult):
         """
         return self.weld_expr
 
+    # TODO: maybe worthwhile to cache; chose not to init in __init__ for lazy approach
+    @property
+    def iloc(self):
+        """Retrieve Indexer by index.
+
+        Supported functionality:
+
+        - int: sr.iloc[<index>]
+        - slice: sr.iloc[<slice>] ~ same as sr[<slice>]
+
+        """
+        from .indexing import _ILocIndexer
+
+        return _ILocIndexer(self)
+
     def __len__(self):
         """Eagerly get the length of the Series.
 

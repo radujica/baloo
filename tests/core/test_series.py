@@ -119,3 +119,19 @@ class TestSeries(object):
         expected = Series(np.array([4, 5]), Index(np.array([3, 4])), np.dtype(np.float32))
 
         assert_series_equal(actual, expected)
+
+    def test_iloc_int(self):
+        sr = Series(np.array([1, 2, 3, 4, 5], dtype=np.float32))
+
+        actual = sr.iloc[2].evaluate()
+        expected = 3
+
+        assert actual == expected
+
+    def test_iloc_slice(self):
+        sr = Series(np.array([1, 2, 3, 4, 5], dtype=np.float32))
+
+        actual = sr.iloc[1:3]
+        expected = Series(np.array([2, 3]), Index(np.array([1, 2])), np.dtype(np.float32))
+
+        assert_series_equal(actual, expected)
