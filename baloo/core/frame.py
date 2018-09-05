@@ -22,7 +22,26 @@ class DataFrame(object):
 
     See Also
     --------
-    pandas.DataFrame
+    pandas.DataFrame : https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html
+
+    Examples
+    --------
+    >>> import baloo as bl
+    >>> import numpy as np
+    >>> from collections import OrderedDict
+    >>> df = bl.DataFrame(OrderedDict([('a', np.arange(5, 8)), ('b', np.arange(3))]))
+    >>> df.index  # repr
+    RangeIndex(start=0, stop=3, step=1)
+    >>> df  # repr
+    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=['a', 'b'])
+    >>> print(df.evaluate())  # omitting evaluate would trigger exception as index is now an unevaluated RangeIndex
+      Index    a    b
+    -------  ---  ---
+          0    5    0
+          1    6    1
+          2    7    2
+    >>> print(len(df))
+    3
 
     """
     @staticmethod
@@ -126,7 +145,7 @@ class DataFrame(object):
     def __repr__(self):
         return "{}(index={}, columns={})".format(self.__class__.__name__,
                                                  repr(self.index),
-                                                 repr(self.data.keys()))
+                                                 repr(list(self.data.keys())))
 
     @staticmethod
     def _shorten_data(data):
@@ -183,10 +202,18 @@ class DataFrame(object):
     def __getitem__(self, item):
         """Select from the DataFrame.
 
-        Supported functionality:
+        Supported functionality exemplified below.
 
-        - Select column: df[<column-name>]
-        - Filter: df[df[<column>] <comparison> <scalar>]
+        Examples
+        --------
+        >>> df = bl.DataFrame(OrderedDict({'a': np.arange(5, 8)}))
+        >>> print(df['a'])
+        [5 6 7]
+        >>> print(df[df['a'] < 7].evaluate())
+          Index    a
+        -------  ---
+              0    5
+              1    6
 
         """
         if isinstance(item, str):
@@ -203,8 +230,8 @@ class DataFrame(object):
                 raise ValueError('Expected LazyResult of bool data to filter values')
 
             new_index = self.index[item]
-            new_data = {column_name: Series._filter_series(self[column_name], item, new_index)
-                        for column_name in self}
+            new_data = OrderedDict(((column_name, Series._filter_series(self[column_name], item, new_index))
+                                    for column_name in self))
 
             return DataFrame(new_data, new_index)
         elif isinstance(item, slice):
@@ -212,8 +239,8 @@ class DataFrame(object):
                 raise ValueError('Can currently only slice with integers')
 
             new_index = self.index[item]
-            new_data = {column_name: Series._slice_series(self[column_name], item, new_index)
-                        for column_name in self}
+            new_data = OrderedDict(((column_name, Series._slice_series(self[column_name], item, new_index))
+                                    for column_name in self))
 
             return DataFrame(new_data, new_index)
         else:
@@ -230,6 +257,17 @@ class DataFrame(object):
             Note that it does NOT check for the same length as the other columns due to possibly not knowing
             the length before evaluation. Also note that for Series, it currently does NOT match Index as in a join but
             the Series inherits the index of the DataFrame.
+
+        Examples
+        --------
+        >>> df = bl.DataFrame(OrderedDict({'a': np.arange(5, 8)}))
+        >>> df['b'] = np.arange(3)
+        >>> print(df.evaluate())
+          Index    a    b
+        -------  ---  ---
+              0    5    0
+              1    6    1
+              2    7    2
 
         """
         key = check_type(key, str)
@@ -278,6 +316,15 @@ class DataFrame(object):
         DataFrame
             DataFrame containing the first n values per column.
 
+        Examples
+        --------
+        >>> df = bl.DataFrame(OrderedDict([('a', np.arange(5, 8)), ('b', np.arange(3))]))
+        >>> print(df.head(2).evaluate())
+          Index    a    b
+        -------  ---  ---
+              0    5    0
+              1    6    1
+
         """
         return self[:n]
 
@@ -294,6 +341,15 @@ class DataFrame(object):
         DataFrame
             DataFrame containing the last n values per column.
 
+        Examples
+        --------
+        >>> df = bl.DataFrame(OrderedDict([('a', np.arange(5, 8)), ('b', np.arange(3))]))
+        >>> print(df.tail(2).evaluate())
+          Index    a    b
+        -------  ---  ---
+              1    6    1
+              2    7    2
+
         """
         if self._length is not None:
             length = self._length
@@ -306,8 +362,8 @@ class DataFrame(object):
                 length = LazyResult(weld_count(self[keys[0]]), WeldLong(), 0)
 
         new_index = self.index.tail(n)
-        new_data = {column_name: Series._tail_series(self[column_name], new_index, length, n)
-                    for column_name in self}
+        new_data = OrderedDict(((column_name, Series._tail_series(self[column_name], new_index, length, n))
+                                for column_name in self))
 
         return DataFrame(new_data, new_index)
 

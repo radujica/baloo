@@ -18,7 +18,22 @@ class RangeIndex(LazyResult):
 
     See Also
     --------
-    pandas.RangeIndex
+    pandas.RangeIndex : https://pandas.pydata.org/pandas-docs/stable/generated/pandas.RangeIndex.html#pandas.RangeIndex
+
+    Examples
+    --------
+    >>> import baloo as bl
+    >>> import numpy as np
+    >>> ind = bl.RangeIndex(3)
+    >>> ind  # repr
+    RangeIndex(start=0, stop=3, step=1)
+    >>> weld_code = str(ind)  # weld_code
+    >>> ind.evaluate()
+    Index(name=Index, dtype=int64)
+    >>> print(ind.evaluate())
+    [0 1 2]
+    >>> len(ind)  # eager
+    3
 
     """
     def __init__(self, start=None, stop=None, step=1, name=None):
@@ -139,10 +154,13 @@ class RangeIndex(LazyResult):
     def __getitem__(self, item):
         """Select from the RangeIndex. Currently used internally through DataFrame and Series.
 
-        Supported functionality:
-
-        - Filter: ind[ind <comparison> <scalar>]
-        - Slice: ind[<start>:<stop>:<step>]
+        Examples
+        --------
+        >>> ind = bl.RangeIndex(3)
+        >>> print(ind[ind < 2].evaluate())
+        [0 1]
+        >>> print(ind[1:2].evaluate())
+        [1]
 
         """
         if isinstance(item, LazyResult):
@@ -192,6 +210,12 @@ class RangeIndex(LazyResult):
         Series
             Index containing the first n values.
 
+        Examples
+        --------
+        >>> ind = bl.RangeIndex(3)
+        >>> print(ind.head(2).evaluate())
+        [0 1]
+
         """
         return self[:n]
 
@@ -207,6 +231,12 @@ class RangeIndex(LazyResult):
         -------
         Series
             Index containing the last n values.
+
+        Examples
+        --------
+        >>> ind = bl.RangeIndex(3)
+        >>> print(ind.tail(2).evaluate())
+        [1 2]
 
         """
         if self._length is not None:

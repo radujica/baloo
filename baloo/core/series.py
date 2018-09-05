@@ -21,7 +21,30 @@ class Series(LazyResult):
 
     See Also
     --------
-    pandas.Series
+    pandas.Series : https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html
+
+    Examples
+    --------
+    >>> import baloo as bl
+    >>> import numpy as np
+    >>> sr = bl.Series(np.arange(3))
+    >>> sr
+    Series(name=None, dtype=int64)
+    >>> sr.index
+    RangeIndex(start=0, stop=3, step=1)
+    >>> sr = sr.evaluate()
+    >>> sr  # repr
+    Series(name=None, dtype=int64)
+    >>> print(sr)  # str
+    [0 1 2]
+    >>> sr.index
+    Index(name=Index, dtype=int64)
+    >>> print(sr.index)
+    [0 1 2]
+    >>> len(sr)  # eager computation
+    3
+    >>> sr.values
+    array([0, 1, 2])
 
     """
 
@@ -68,10 +91,15 @@ class Series(LazyResult):
     def iloc(self):
         """Retrieve Indexer by index.
 
-        Supported functionality:
+        Supported iloc functionality exemplified below.
 
-        - int: sr.iloc[<index>]
-        - slice: sr.iloc[<slice>] ~ same as sr[<slice>]
+        Examples
+        --------
+        >>> sr = bl.Series(np.arange(3))
+        >>> print(sr.iloc[2].evaluate())
+        2
+        >>> print(sr.iloc[0:2].evaluate())
+        [0 1]
 
         """
         from .indexing import _ILocIndexer
@@ -156,11 +184,21 @@ class Series(LazyResult):
     def __getitem__(self, item):
         """Select from the Series.
 
-        Supported functionality:
+        Supported selection functionality exemplified below.
 
-        - Filter: sr[sr <comparison> <scalar>]
-        - Multiple filters: sr[(sr <comp> <scalar>) {&, |} ~(sr <comp> <scalar>)]
-        - Slice: sr[<start>:<stop>:<step>]
+        Examples
+        --------
+        >>> sr = bl.Series(np.arange(5, dtype=np.float32), name='Test')
+        >>> sr = sr[sr > 0]
+        >>> sr
+        Series(name=Test, dtype=float32)
+        >>> print(sr.evaluate())
+        [1. 2. 3. 4.]
+        >>> sr = sr[(sr != 1) & ~(sr > 3)]
+        >>> print(sr.evaluate())
+        [2. 3.]
+        >>> print(sr[:1].evaluate())
+        [2.]
 
         """
         if isinstance(item, LazyResult):
@@ -216,6 +254,14 @@ class Series(LazyResult):
         Series
             Series with evaluated data and index.
 
+        Examples
+        --------
+        >>> sr = bl.Series(np.arange(3)) > 0
+        >>> weld_code = sr.values  # accessing values now returns the weld code as a string
+        >>> sr = sr.evaluate()
+        >>> sr.values  # now it is evaluated to raw data
+        array([False,  True,  True])
+
         """
         evaluated_data = super(Series, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
         evaluated_index = self.index.evaluate(verbose, decode, passes, num_threads, apply_experimental)
@@ -234,6 +280,12 @@ class Series(LazyResult):
         -------
         Series
             Series containing the first n values.
+
+        Examples
+        --------
+        >>> sr = bl.Series(np.arange(3))
+        >>> print(sr.head(2).evaluate())
+        [0 1]
 
         """
         return self[:n]
@@ -257,6 +309,12 @@ class Series(LazyResult):
         -------
         Series
             Series containing the last n values.
+
+        Examples
+        --------
+        >>> sr = bl.Series(np.arange(3))
+        >>> print(sr.tail(2).evaluate())
+        [1 2]
 
         """
         if self._length is not None:

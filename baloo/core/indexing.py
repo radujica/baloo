@@ -1,6 +1,6 @@
-from .utils import check_type
-from .series import Series
 from .frame import DataFrame
+from .series import Series
+from .utils import check_type
 from ..weld import LazyResult, weld_iloc_int
 
 

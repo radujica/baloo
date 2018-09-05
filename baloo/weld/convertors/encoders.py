@@ -32,6 +32,16 @@ def numpy_to_weld_type(np_dtype):
     WeldType
         Corresponding WeldType.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from baloo.weld import numpy_to_weld_type
+    >>> str(numpy_to_weld_type(np.dtype(np.int64)))
+    'i64'
+    >>> str(numpy_to_weld_type('?'))
+    'bool'
+
+
     """
     if not isinstance(np_dtype, (str, np.dtype)):
         raise TypeError('Can only convert np.dtype or str')
@@ -70,8 +80,15 @@ def weld_to_numpy_dtype(weld_type):
     numpy.dtype
         Corresponding Numpy dtype.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from baloo.weld import weld_to_numpy_dtype, WeldFloat
+    >>> weld_to_numpy_dtype(WeldFloat())
+    dtype('float32')
+
     """
-    return np.dtype(_weld_to_numpy_type_mapping[str(weld_type)])
+    return np.dtype(_weld_to_numpy_type_mapping[weld_type])
 
 
 class NumPyEncoder(WeldObjectEncoder):

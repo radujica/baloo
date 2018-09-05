@@ -17,7 +17,21 @@ class Index(LazyResult):
 
     See Also
     --------
-    pandas.Index
+    pandas.Index : https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Index.html
+
+    Examples
+    --------
+    >>> import baloo as bl
+    >>> import numpy as np
+    >>> ind = bl.Index(np.array(['a', 'b', 'c'], dtype=np.dtype(np.bytes_)))
+    >>> ind  # repr
+    Index(name=Index, dtype=|S1)
+    >>> print(ind)  # str
+    [b'a' b'b' b'c']
+    >>> ind.values
+    array([b'a', b'b', b'c'], dtype='|S1')
+    >>> len(ind)  # eager
+    3
 
     """
     def __init__(self, data, dtype=None, name=None):
@@ -128,10 +142,15 @@ class Index(LazyResult):
     def __getitem__(self, item):
         """Select from the Index. Currently used internally through DataFrame and Series.
 
-        Supported functionality:
+        Supported selection functionality exemplified below.
 
-        - Filter: ind[ind <comparison> <scalar>]
-        - Slice: ind[<start>:<stop>:<step>]
+        Examples
+        --------
+        >>> ind = bl.Index(np.arange(3))
+        >>> print(ind[ind < 2].evaluate())
+        [0 1]
+        >>> print(ind[1:2].evaluate())
+        [1]
 
         """
         if isinstance(item, LazyResult):
@@ -183,6 +202,12 @@ class Index(LazyResult):
         Series
             Index containing the first n values.
 
+        Examples
+        --------
+        >>> ind = bl.Index(np.arange(3, dtype=np.float64))
+        >>> print(ind.head(2).evaluate())
+        [0. 1.]
+
         """
         return self[:n]
 
@@ -198,6 +223,12 @@ class Index(LazyResult):
         -------
         Series
             Index containing the last n values.
+
+        Examples
+        --------
+        >>> ind = bl.Index(np.arange(3, dtype=np.float64))
+        >>> print(ind.tail(2).evaluate())
+        [1. 2.]
 
         """
         if self._length is not None:

@@ -24,8 +24,10 @@ Shall be later published on pypi.
     // update path to pyweld in Pipfile
     pipenv install --dev                        // install all requirements
     pipenv run pip install -e <path-to-baloo>   // install baloo in editable mode
-    // making the convertors requires running through correct python version, i.e. through pipenv shell
     
     pipenv run pytest                           // run tests
     
-    cd doc && make html                         // generate documentation in baloo-adjacent dir baloo-docs; run under pipenv shell!
+    // the following require running through pipenv shell for correct python and path
+    cd baloo/weld/convertors && make            // make the convertors
+    cd doc && make html                         // generate documentation in baloo-adjacent dir baloo-docs
+    cd doc && make doctest                      // run doc examples
