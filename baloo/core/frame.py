@@ -7,7 +7,7 @@ from weld.types import WeldBit
 from .indexes import RangeIndex, Index
 from .series import Series
 from .utils import check_type, is_scalar, valid_int_slice
-from ..weld import weld_count, LazyResult
+from ..weld import weld_count, LazyResult, WeldLong
 
 
 class DataFrame(object):
@@ -264,3 +264,49 @@ class DataFrame(object):
                                                                      num_threads, apply_experimental)
 
         return DataFrame(evaluated_data, evaluated_index)
+
+    def head(self, n=5):
+        """Return DataFrame with first n values per column.
+
+        Parameters
+        ----------
+        n : int
+            Number of values.
+
+        Returns
+        -------
+        DataFrame
+            DataFrame containing the first n values per column.
+
+        """
+        return self[:n]
+
+    def tail(self, n=5):
+        """Return DataFrame with last n values per column.
+
+        Parameters
+        ----------
+        n : int
+            Number of values.
+
+        Returns
+        -------
+        DataFrame
+            DataFrame containing the last n values per column.
+
+        """
+        if self._length is not None:
+            length = self._length
+        else:
+            # first check again for raw data
+            length = DataFrame._infer_length(self.data)
+            # if still None, get a random column and encode length
+            if length is None:
+                keys = list(self.data.keys())
+                length = LazyResult(weld_count(self[keys[0]]), WeldLong(), 0)
+
+        new_index = self.index.tail(n)
+        new_data = {column_name: Series._tail_series(self[column_name], new_index, length, n)
+                    for column_name in self}
+
+        return DataFrame(new_data, new_index)

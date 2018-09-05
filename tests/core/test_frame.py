@@ -125,3 +125,25 @@ class TestDataFrame(object):
                               'b': np.arange(4, 8)})
 
         assert_dataframe_equal(actual, expected)
+
+    def test_head(self):
+        df = DataFrame({'a': np.array([1, 2, 3, 4, 5], dtype=np.float32),
+                        'b': Series(np.arange(5))})
+
+        actual = df.head(2)
+        expected = DataFrame({'a': np.array([1, 2], dtype=np.float32),
+                              'b': np.array([0, 1])},
+                             Index(np.array([0, 1])))
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_tail(self):
+        df = DataFrame({'a': np.array([1, 2, 3, 4, 5], dtype=np.float32),
+                        'b': Series(np.arange(5))})
+
+        actual = df.tail(2)
+        expected = DataFrame({'a': np.array([4, 5], dtype=np.float32),
+                              'b': np.array([3, 4])},
+                             Index(np.array([3, 4])))
+
+        assert_dataframe_equal(actual, expected)

@@ -92,3 +92,19 @@ class TestRangeIndex(object):
         expected = Index(np.array([2, 3]), np.dtype(np.int64))
 
         assert_index_equal(actual, expected)
+
+    def test_head(self):
+        ind = RangeIndex(5)
+
+        actual = ind.head(2)
+        expected = Index(np.array([0, 1]))
+
+        assert_index_equal(actual, expected)
+
+    def test_tail(self):
+        ind = RangeIndex(5)
+
+        actual = ind.tail(2)
+        expected = Index(np.array([3, 4]))
+
+        assert_index_equal(actual, expected)

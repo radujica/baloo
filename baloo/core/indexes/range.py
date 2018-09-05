@@ -4,7 +4,7 @@ from weld.weldobject import WeldObject
 
 from .base import Index
 from ..utils import check_type, valid_int_slice
-from ...weld import weld_range, LazyResult, WeldBit, weld_filter, weld_slice, weld_compare
+from ...weld import weld_range, LazyResult, WeldBit, weld_filter, weld_slice, weld_compare, weld_count, weld_tail
 
 
 class RangeIndex(LazyResult):
@@ -178,3 +178,41 @@ class RangeIndex(LazyResult):
         evaluated_data = super(RangeIndex, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
 
         return Index(evaluated_data, np.dtype(np.int64))
+
+    def head(self, n=5):
+        """Return Index with first n values.
+
+        Parameters
+        ----------
+        n : int
+            Number of values.
+
+        Returns
+        -------
+        Series
+            Index containing the first n values.
+
+        """
+        return self[:n]
+
+    def tail(self, n=5):
+        """Return Index with the last n values.
+
+        Parameters
+        ----------
+        n : int
+            Number of values.
+
+        Returns
+        -------
+        Series
+            Index containing the last n values.
+
+        """
+        if self._length is not None:
+            length = self._length
+        else:
+            length = LazyResult(weld_count(self.weld_expr), WeldLong(), 0)
+
+        return Index(weld_tail(self.weld_expr, length, n),
+                     np.dtype(np.int64))

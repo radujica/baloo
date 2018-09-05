@@ -103,3 +103,19 @@ class TestSeries(object):
         expected = Series(np.array([False, True, False, True]), Index(np.arange(4)), np.dtype(np.bool))
 
         assert_series_equal(actual, expected)
+
+    def test_head(self):
+        sr = Series(np.array([1, 2, 3, 4, 5], dtype=np.float32))
+
+        actual = sr.head(2)
+        expected = Series(np.array([1, 2]), RangeIndex(2), np.dtype(np.float32))
+
+        assert_series_equal(actual, expected)
+
+    def test_tail(self):
+        sr = Series(np.array([1, 2, 3, 4, 5], dtype=np.float32))
+
+        actual = sr.tail(2)
+        expected = Series(np.array([4, 5]), Index(np.array([3, 4])), np.dtype(np.float32))
+
+        assert_series_equal(actual, expected)

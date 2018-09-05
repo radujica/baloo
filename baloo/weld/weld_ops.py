@@ -318,6 +318,42 @@ def weld_slice(array, weld_type, slice_, default_start=0, default_step=1):
     return weld_obj
 
 
+# TODO: could generalize weld_slice to accept slice with possible WeldObjects
+def weld_tail(array, length, n):
+    """Return the last n elements.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Array to select from.
+    length : int or WeldObject
+        Length of the array. Int if already known can simplify the computation.
+    n : int
+        How many values.
+
+    Returns
+    -------
+    WeldObject
+        Representation of the computation.
+
+    """
+    obj_id, weld_obj = _create_weld_object(array)
+    if isinstance(length, WeldObject):
+        length = _get_weld_obj_id(weld_obj, length)
+
+    weld_template = """slice(
+    {array},
+    {slice_start},
+    {slice_stop}
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=obj_id,
+                                              slice_start='{}L - {}L'.format(length, n),
+                                              slice_stop='{}L'.format(length))
+
+    return weld_obj
+
+
 def weld_array_op(array1, array2, result_type, operation):
     """Applies operation to each pair of elements in the arrays.
 

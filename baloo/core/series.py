@@ -4,7 +4,7 @@ from weld.weldobject import WeldObject, WeldLong, WeldBit
 from .indexes import RangeIndex, Index
 from .utils import infer_dtype, default_index, check_type, is_scalar, valid_int_slice
 from ..weld import LazyResult, weld_count, weld_compare, numpy_to_weld_type, weld_filter, weld_slice, weld_array_op, \
-    weld_invert
+    weld_invert, weld_tail
 
 
 class Series(LazyResult):
@@ -76,7 +76,7 @@ class Series(LazyResult):
 
         """
         if self._length is None:
-            self._length = LazyResult(weld_count(self.values), WeldLong(), 0).evaluate()
+            self._length = LazyResult(weld_count(self.weld_expr), WeldLong(), 0).evaluate()
 
         return self._length
 
@@ -206,3 +206,47 @@ class Series(LazyResult):
         evaluated_index = self.index.evaluate(verbose, decode, passes, num_threads, apply_experimental)
 
         return Series(evaluated_data, evaluated_index, self.dtype, self.name)
+
+    def head(self, n=5):
+        """Return Series with first n values.
+
+        Parameters
+        ----------
+        n : int
+            Number of values.
+
+        Returns
+        -------
+        Series
+            Series containing the first n values.
+
+        """
+        return self[:n]
+
+    @staticmethod
+    def _tail_series(series, index, length, n):
+        return Series(weld_tail(series.weld_expr, length, n),
+                      index,
+                      series.dtype,
+                      series.name)
+
+    def tail(self, n=5):
+        """Return Series with the last n values.
+
+        Parameters
+        ----------
+        n : int
+            Number of values.
+
+        Returns
+        -------
+        Series
+            Series containing the last n values.
+
+        """
+        if self._length is not None:
+            length = self._length
+        else:
+            length = LazyResult(weld_count(self.weld_expr), WeldLong(), 0)
+
+        return Series._tail_series(self, self.index.tail(n), length, n)

@@ -58,9 +58,25 @@ class TestBaseIndex(object):
         assert_index_equal(actual, expected)
 
     def test_slice(self):
-        sr = Index(np.array([1, 2, 3, 4, 5], dtype=np.float32))
+        ind = Index(np.array([1, 2, 3, 4, 5], dtype=np.float32))
 
-        actual = sr[1:3]
+        actual = ind[1:3]
         expected = Index(np.array([2, 3]), np.dtype(np.float32))
+
+        assert_index_equal(actual, expected)
+
+    def test_head(self):
+        ind = Index(np.array([1, 2, 3, 4, 5], dtype=np.float32))
+
+        actual = ind.head(2)
+        expected = Index(np.array([1, 2]), np.dtype(np.float32))
+
+        assert_index_equal(actual, expected)
+
+    def test_tail(self):
+        ind = Index(np.array([1, 2, 3, 4, 5], dtype=np.float32))
+
+        actual = ind.tail(2)
+        expected = Index(np.array([4, 5]), np.dtype(np.float32))
 
         assert_index_equal(actual, expected)

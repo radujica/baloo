@@ -2,7 +2,7 @@ import numpy as np
 from weld.weldobject import WeldObject, WeldLong, WeldBit
 
 from ...core.utils import check_type, infer_dtype, valid_int_slice, is_scalar
-from ...weld import LazyResult, numpy_to_weld_type, weld_count, weld_filter, weld_slice, weld_compare
+from ...weld import LazyResult, numpy_to_weld_type, weld_count, weld_filter, weld_slice, weld_compare, weld_tail
 
 
 class Index(LazyResult):
@@ -169,3 +169,42 @@ class Index(LazyResult):
         evaluated_data = super(Index, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
 
         return Index(evaluated_data, self.dtype, self.name)
+
+    def head(self, n=5):
+        """Return Index with first n values.
+
+        Parameters
+        ----------
+        n : int
+            Number of values.
+
+        Returns
+        -------
+        Series
+            Index containing the first n values.
+
+        """
+        return self[:n]
+
+    def tail(self, n=5):
+        """Return Index with the last n values.
+
+        Parameters
+        ----------
+        n : int
+            Number of values.
+
+        Returns
+        -------
+        Series
+            Index containing the last n values.
+
+        """
+        if self._length is not None:
+            length = self._length
+        else:
+            length = LazyResult(weld_count(self.weld_expr), WeldLong(), 0)
+
+        return Index(weld_tail(self.weld_expr, length, n),
+                     self.dtype,
+                     self.name)
