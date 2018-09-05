@@ -310,3 +310,16 @@ class DataFrame(object):
                     for column_name in self}
 
         return DataFrame(new_data, new_index)
+
+    def keys(self):
+        """Retrieve column names as Index, i.e. for axis=1.
+
+        Returns
+        -------
+        Index
+             Column names as an Index.
+
+        """
+        data = np.array(list(self.data.keys()), dtype=np.bytes_)
+
+        return Index(data, np.dtype(np.bytes_))

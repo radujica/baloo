@@ -147,3 +147,14 @@ class TestDataFrame(object):
                              Index(np.array([3, 4])))
 
         assert_dataframe_equal(actual, expected)
+
+    def test_keys(self):
+        df = DataFrame({'a': np.array([1, 2, 3, 4, 5], dtype=np.float32),
+                        'b': Series(np.arange(5))})
+
+        actual = df.keys()
+        expected = Index(np.array(['b', 'a'], dtype=np.bytes_))
+
+        assert type(actual) == type(expected)
+        np.testing.assert_array_equal(np.sort(actual.values),
+                                      np.sort(expected.values))
