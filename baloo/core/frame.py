@@ -4,13 +4,14 @@ import numpy as np
 from tabulate import tabulate
 from weld.types import WeldBit
 
+from .generic import BinaryOps
 from .indexes import RangeIndex, Index
 from .series import Series
 from .utils import check_type, is_scalar, valid_int_slice
 from ..weld import weld_count, LazyResult, WeldLong
 
 
-class DataFrame(object):
+class DataFrame(BinaryOps):
     """ Weld-ed pandas DataFrame.
 
     Attributes
@@ -179,24 +180,6 @@ class DataFrame(object):
             return DataFrame(new_data, self.index)
         else:
             raise TypeError('Can currently only compare with scalars')
-
-    def __lt__(self, other):
-        return self._comparison(other, '<')
-
-    def __le__(self, other):
-        return self._comparison(other, '<=')
-
-    def __eq__(self, other):
-        return self._comparison(other, '==')
-
-    def __ne__(self, other):
-        return self._comparison(other, '!=')
-
-    def __ge__(self, other):
-        return self._comparison(other, '>=')
-
-    def __gt__(self, other):
-        return self._comparison(other, '>')
 
     # TODO: handle empty
     def __getitem__(self, item):

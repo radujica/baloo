@@ -2,12 +2,14 @@ import numpy as np
 from weld.types import WeldLong
 from weld.weldobject import WeldObject
 
+from ..generic import BinaryOps
 from .base import Index
 from ..utils import check_type, valid_int_slice
-from ...weld import weld_range, LazyResult, WeldBit, weld_filter, weld_slice, weld_compare, weld_count, weld_tail
+from ...weld import weld_range, LazyResult, WeldBit, weld_filter, weld_slice, weld_compare, weld_count, weld_tail, \
+    weld_array_op
 
 
-class RangeIndex(LazyResult):
+class RangeIndex(LazyResult, BinaryOps):
     """Weld-ed Pandas RangeIndex.
 
     Attributes
@@ -15,6 +17,8 @@ class RangeIndex(LazyResult):
     start : int
     stop : int or WeldObject
     step : int
+    dtype : np.dtype
+        Always int64.
 
     See Also
     --------
@@ -61,6 +65,7 @@ class RangeIndex(LazyResult):
         self.stop = check_type(stop, (int, WeldObject))
         self.step = check_type(step, int)
         self.name = check_type(name, str)
+        self.dtype = np.dtype(np.int64)
 
         self._length = len(range(start, stop, step)) if isinstance(stop, int) else None
 
@@ -133,23 +138,18 @@ class RangeIndex(LazyResult):
         else:
             raise TypeError('Can only compare with integers')
 
-    def __lt__(self, other):
-        return self._comparison(other, '<')
+    def _bitwise_operation(self, other, operation):
+        if not isinstance(other, Index):
+            raise TypeError('Expected another Series')
+        elif self.dtype.char != '?' or other.dtype.char != '?':
+            raise TypeError('Binary operations currently supported only on bool Series')
 
-    def __le__(self, other):
-        return self._comparison(other, '<=')
-
-    def __eq__(self, other):
-        return self._comparison(other, '==')
-
-    def __ne__(self, other):
-        return self._comparison(other, '!=')
-
-    def __ge__(self, other):
-        return self._comparison(other, '>=')
-
-    def __gt__(self, other):
-        return self._comparison(other, '>')
+        return Index(weld_array_op(self.weld_expr,
+                                   other.weld_expr,
+                                   self.weld_type,
+                                   operation),
+                     self.dtype,
+                     self.name)
 
     def __getitem__(self, item):
         """Select from the RangeIndex. Currently used internally through DataFrame and Series.

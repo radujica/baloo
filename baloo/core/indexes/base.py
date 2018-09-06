@@ -1,11 +1,13 @@
 import numpy as np
 from weld.weldobject import WeldObject, WeldLong, WeldBit
 
+from ..generic import BinaryOps
 from ...core.utils import check_type, infer_dtype, valid_int_slice, is_scalar
-from ...weld import LazyResult, numpy_to_weld_type, weld_count, weld_filter, weld_slice, weld_compare, weld_tail
+from ...weld import LazyResult, numpy_to_weld_type, weld_count, weld_filter, weld_slice, weld_compare, weld_tail, \
+    weld_array_op
 
 
-class Index(LazyResult):
+class Index(LazyResult, BinaryOps):
     """Weld-ed Pandas Index.
 
     Attributes
@@ -121,23 +123,18 @@ class Index(LazyResult):
         else:
             raise TypeError('Can currently only compare with scalars')
 
-    def __lt__(self, other):
-        return self._comparison(other, '<')
+    def _bitwise_operation(self, other, operation):
+        if not isinstance(other, Index):
+            raise TypeError('Expected another Series')
+        elif self.dtype.char != '?' or other.dtype.char != '?':
+            raise TypeError('Binary operations currently supported only on bool Series')
 
-    def __le__(self, other):
-        return self._comparison(other, '<=')
-
-    def __eq__(self, other):
-        return self._comparison(other, '==')
-
-    def __ne__(self, other):
-        return self._comparison(other, '!=')
-
-    def __ge__(self, other):
-        return self._comparison(other, '>=')
-
-    def __gt__(self, other):
-        return self._comparison(other, '>')
+        return Index(weld_array_op(self.weld_expr,
+                                   other.weld_expr,
+                                   self.weld_type,
+                                   operation),
+                     self.dtype,
+                     self.name)
 
     def __getitem__(self, item):
         """Select from the Index. Currently used internally through DataFrame and Series.

@@ -1,13 +1,14 @@
 import numpy as np
 from weld.weldobject import WeldObject, WeldLong, WeldBit
 
+from .generic import BinaryOps
 from .indexes import RangeIndex, Index
 from .utils import infer_dtype, default_index, check_type, is_scalar, valid_int_slice
 from ..weld import LazyResult, weld_count, weld_compare, numpy_to_weld_type, weld_filter, weld_slice, weld_array_op, \
     weld_invert, weld_tail
 
 
-class Series(LazyResult):
+class Series(LazyResult, BinaryOps):
     """Weld-ed Pandas Series.
 
     Attributes
@@ -143,23 +144,19 @@ class Series(LazyResult):
         else:
             raise TypeError('Can currently only compare with scalars')
 
-    def __lt__(self, other):
-        return self._comparison(other, '<')
+    def _bitwise_operation(self, other, operation):
+        if not isinstance(other, Series):
+            raise TypeError('Expected another Series')
+        elif self.dtype.char != '?' or other.dtype.char != '?':
+            raise TypeError('Binary operations currently supported only on bool Series')
 
-    def __le__(self, other):
-        return self._comparison(other, '<=')
-
-    def __eq__(self, other):
-        return self._comparison(other, '==')
-
-    def __ne__(self, other):
-        return self._comparison(other, '!=')
-
-    def __ge__(self, other):
-        return self._comparison(other, '>=')
-
-    def __gt__(self, other):
-        return self._comparison(other, '>')
+        return Series(weld_array_op(self.weld_expr,
+                                    other.weld_expr,
+                                    self.weld_type,
+                                    operation),
+                      self.index,
+                      self.dtype,
+                      self.name)
 
     @staticmethod
     def _filter_series(series, item, index):
@@ -213,26 +210,6 @@ class Series(LazyResult):
             return Series._slice_series(self, item, self.index[item])
         else:
             raise TypeError('Expected a LazyResult or a slice')
-
-    def _bitwise_operation(self, other, operation):
-        if not isinstance(other, Series):
-            raise TypeError('Expected another Series')
-        elif self.dtype.char != '?' or other.dtype.char != '?':
-            raise TypeError('Binary operations currently supported only on bool Series')
-
-        return Series(weld_array_op(self.weld_expr,
-                                    other.weld_expr,
-                                    self.weld_type,
-                                    operation),
-                      self.index,
-                      self.dtype,
-                      self.name)
-
-    def __and__(self, other):
-        return self._bitwise_operation(other, '&&')
-
-    def __or__(self, other):
-        return self._bitwise_operation(other, '||')
 
     def __invert__(self):
         if self.weld_type != WeldBit():
