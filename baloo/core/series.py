@@ -4,11 +4,11 @@ from weld.weldobject import WeldObject, WeldLong, WeldBit
 from .generic import BinaryOps
 from .indexes import RangeIndex, Index
 from .utils import infer_dtype, default_index, check_type, is_scalar, valid_int_slice
-from ..weld import LazyResult, weld_count, weld_compare, numpy_to_weld_type, weld_filter, weld_slice, weld_array_op, \
-    weld_invert, weld_tail
+from ..weld import LazyArrayResult, LazyScalarResult, weld_count, weld_compare, numpy_to_weld_type, weld_filter, \
+    weld_slice, weld_array_op, weld_invert, weld_tail
 
 
-class Series(LazyResult, BinaryOps):
+class Series(LazyArrayResult, BinaryOps):
     """Weld-ed Pandas Series.
 
     Attributes
@@ -73,19 +73,15 @@ class Series(LazyResult, BinaryOps):
         # TODO: this should be used to annotate Weld code for speedups
         self._length = len(data) if isinstance(data, np.ndarray) else None
 
-        super(Series, self).__init__(data, numpy_to_weld_type(self.dtype), 1)
+        super(Series, self).__init__(data, numpy_to_weld_type(self.dtype))
 
     @property
-    def values(self):
-        """Alias for `data` attribute.
+    def name(self):
+        return self._name
 
-        Returns
-        -------
-        numpy.ndarray or WeldObject
-            The internal data representation.
-
-        """
-        return self.weld_expr
+    @name.setter
+    def name(self, value):
+        self._name = value
 
     # TODO: maybe worthwhile to cache; chose not to init in __init__ for lazy approach
     @property
@@ -120,7 +116,7 @@ class Series(LazyResult, BinaryOps):
 
         """
         if self._length is None:
-            self._length = LazyResult(weld_count(self.weld_expr), WeldLong(), 0).evaluate()
+            self._length = LazyScalarResult(weld_count(self.weld_expr), WeldLong()).evaluate()
 
         return self._length
 
@@ -128,9 +124,6 @@ class Series(LazyResult, BinaryOps):
         return "{}(name={}, dtype={})".format(self.__class__.__name__,
                                               self.name,
                                               self.dtype)
-
-    def __str__(self):
-        return str(self.weld_expr)
 
     def _comparison(self, other, comparison):
         if is_scalar(other):
@@ -145,7 +138,7 @@ class Series(LazyResult, BinaryOps):
             raise TypeError('Can currently only compare with scalars')
 
     def _bitwise_operation(self, other, operation):
-        if not isinstance(other, Series):
+        if not isinstance(other, LazyArrayResult):
             raise TypeError('Expected another Series')
         elif self.dtype.char != '?' or other.dtype.char != '?':
             raise TypeError('Binary operations currently supported only on bool Series')
@@ -198,7 +191,7 @@ class Series(LazyResult, BinaryOps):
         [2.]
 
         """
-        if isinstance(item, LazyResult):
+        if isinstance(item, LazyArrayResult):
             if item.weld_type != WeldBit():
                 raise ValueError('Expected LazyResult of bool data to filter values')
 
@@ -297,6 +290,6 @@ class Series(LazyResult, BinaryOps):
         if self._length is not None:
             length = self._length
         else:
-            length = LazyResult(weld_count(self.weld_expr), WeldLong(), 0)
+            length = LazyScalarResult(weld_count(self.weld_expr), WeldLong())
 
         return Series._tail_series(self, self.index.tail(n), length, n)

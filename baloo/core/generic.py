@@ -1,5 +1,7 @@
 import abc
 
+# TODO: maybe write generic class to enforce values, len, repr, str, evaluate?
+
 
 class BinaryOps(abc.ABC):
     # not abstractmethod because implementation in DataFrame is ambiguous atm

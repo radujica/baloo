@@ -29,6 +29,18 @@ class LazyResult(object):
     def __str__(self):
         return str(self.weld_expr)
 
+    @property
+    def values(self):
+        """The internal data representation.
+
+        Returns
+        -------
+        numpy.ndarray or WeldObject
+            The internal data representation.
+
+        """
+        return self.weld_expr
+
     def is_raw(self):
         return not isinstance(self.weld_expr, WeldObject)
 
@@ -65,3 +77,13 @@ class LazyResult(object):
                                            apply_experimental_transforms)
         else:
             return self.weld_expr
+
+
+class LazyArrayResult(LazyResult):
+    def __init__(self, weld_expr, weld_type):
+        super(LazyArrayResult, self).__init__(weld_expr, weld_type, 1)
+
+
+class LazyScalarResult(LazyResult):
+    def __init__(self, weld_expr, weld_type):
+        super(LazyScalarResult, self).__init__(weld_expr, weld_type, 0)

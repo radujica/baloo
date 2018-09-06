@@ -1,7 +1,7 @@
 from .frame import DataFrame
 from .series import Series
 from .utils import check_type
-from ..weld import LazyResult, weld_iloc_int
+from ..weld import LazyScalarResult, weld_iloc_int
 
 
 class _ILocIndexer(object):
@@ -19,10 +19,9 @@ class _ILocIndexer(object):
     def __getitem__(self, item):
         if isinstance(item, int):
             if isinstance(self.data, Series):
-                return LazyResult(weld_iloc_int(self.data.weld_expr,
-                                                item),
-                                  self.data.weld_type,
-                                  0)
+                return LazyScalarResult(weld_iloc_int(self.data.weld_expr,
+                                                      item),
+                                        self.data.weld_type)
             elif isinstance(self.data, DataFrame):
                 # np.array of WeldObjects is not supported, so cannot just do the above for each column/Series. We also
                 # don't want to eagerly compute this so need to have all columns in Weld (e.g. as a struct) and select

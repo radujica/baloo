@@ -2,14 +2,14 @@ import numpy as np
 from weld.types import WeldLong
 from weld.weldobject import WeldObject
 
-from ..generic import BinaryOps
 from .base import Index
+from ..generic import BinaryOps
 from ..utils import check_type, valid_int_slice
-from ...weld import weld_range, LazyResult, WeldBit, weld_filter, weld_slice, weld_compare, weld_count, weld_tail, \
-    weld_array_op
+from ...weld import weld_range, LazyArrayResult, LazyScalarResult, WeldBit, weld_filter, weld_slice, weld_compare, \
+    weld_count, weld_tail, weld_array_op
 
 
-class RangeIndex(LazyResult, BinaryOps):
+class RangeIndex(LazyArrayResult, BinaryOps):
     """Weld-ed Pandas RangeIndex.
 
     Attributes
@@ -69,30 +69,10 @@ class RangeIndex(LazyResult, BinaryOps):
 
         self._length = len(range(start, stop, step)) if isinstance(stop, int) else None
 
-        super(RangeIndex, self).__init__(weld_range(start, stop, step), WeldLong(), 1)
-
-    @property
-    def values(self):
-        """The internal data representation.
-
-        Returns
-        -------
-        numpy.ndarray or WeldObject
-            The internal data representation.
-
-        """
-        return self.weld_expr
+        super(RangeIndex, self).__init__(weld_range(start, stop, step), WeldLong())
 
     @property
     def name(self):
-        """The name of the RangeIndex.
-
-        Returns
-        -------
-        str
-            The name of the RangeIndex.
-
-        """
         if self._name is None:
             return self.__class__.__name__
         else:
@@ -124,9 +104,6 @@ class RangeIndex(LazyResult, BinaryOps):
                                                        self.start,
                                                        self.stop,
                                                        self.step)
-
-    def __str__(self):
-        return str(self.weld_expr)
 
     def _comparison(self, other, comparison):
         if isinstance(other, int):
@@ -163,7 +140,7 @@ class RangeIndex(LazyResult, BinaryOps):
         [1]
 
         """
-        if isinstance(item, LazyResult):
+        if isinstance(item, LazyArrayResult):
             if item.weld_type != WeldBit():
                 raise ValueError('Expected LazyResult of bool data to filter values')
 
@@ -242,7 +219,7 @@ class RangeIndex(LazyResult, BinaryOps):
         if self._length is not None:
             length = self._length
         else:
-            length = LazyResult(weld_count(self.weld_expr), WeldLong(), 0)
+            length = LazyScalarResult(weld_count(self.weld_expr), WeldLong())
 
         return Index(weld_tail(self.weld_expr, length, n),
                      np.dtype(np.int64))

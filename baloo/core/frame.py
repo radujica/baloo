@@ -8,7 +8,7 @@ from .generic import BinaryOps
 from .indexes import RangeIndex, Index
 from .series import Series
 from .utils import check_type, is_scalar, valid_int_slice
-from ..weld import weld_count, LazyResult, WeldLong
+from ..weld import weld_count, WeldLong, LazyArrayResult, LazyScalarResult
 
 
 class DataFrame(BinaryOps):
@@ -208,7 +208,7 @@ class DataFrame(BinaryOps):
                 self.data[item] = value
 
             return value
-        elif isinstance(item, LazyResult):
+        elif isinstance(item, LazyArrayResult):
             if item.weld_type != WeldBit():
                 raise ValueError('Expected LazyResult of bool data to filter values')
 
@@ -342,7 +342,7 @@ class DataFrame(BinaryOps):
             # if still None, get a random column and encode length
             if length is None:
                 keys = list(self.data.keys())
-                length = LazyResult(weld_count(self[keys[0]]), WeldLong(), 0)
+                length = LazyScalarResult(weld_count(self[keys[0]]), WeldLong())
 
         new_index = self.index.tail(n)
         new_data = OrderedDict(((column_name, Series._tail_series(self[column_name], new_index, length, n))
