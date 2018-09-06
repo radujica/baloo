@@ -170,3 +170,14 @@ class TestSeries(object):
         actual = eval('sr {} scalar'.format(operation))
 
         assert_series_equal(actual, expected)
+
+    @pytest.mark.parametrize('aggregation, expected', [
+        ('min', 1.),
+        ('max', 5.)
+    ])
+    def test_aggregation(self, aggregation, expected):
+        sr = Series(np.array([2, 2, 1, 4, 5], dtype=np.float32))
+
+        actual = getattr(sr, aggregation)().evaluate()
+
+        assert actual == expected

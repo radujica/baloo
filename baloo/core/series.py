@@ -50,6 +50,8 @@ class Series(LazyArrayResult, BinaryOps):
     array([2, 3, 4])
     >>> (sr - bl.Index(np.arange(3))).evaluate().values
     array([0, 0, 0])
+    >>> print(sr.max().evaluate())
+    2
 
     """
 

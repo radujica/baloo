@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import numpy as np
 import pytest
 
@@ -16,7 +18,7 @@ def assert_dataframe_equal(actual, expected):
 
     assert actual._length == expected._length
     assert len(actual) == len(expected)
-    assert actual._dtypes == expected._dtypes
+    assert_series_equal(actual.dtypes, expected.dtypes)
     assert_indexes_equal(actual.index, expected.index)
     assert len(actual.data) == len(expected.data)
     assert actual.data.keys() == expected.data.keys()
@@ -149,15 +151,13 @@ class TestDataFrame(object):
         assert_dataframe_equal(actual, expected)
 
     def test_keys(self):
-        df = DataFrame({'a': np.array([1, 2, 3, 4, 5], dtype=np.float32),
-                        'b': Series(np.arange(5))})
+        df = DataFrame(OrderedDict((('a', np.array([1, 2, 3, 4, 5], dtype=np.float32)),
+                                    ('b', Series(np.arange(5))))))
 
         actual = df.keys()
-        expected = Index(np.array(['b', 'a'], dtype=np.bytes_))
+        expected = Index(np.array(['a', 'b'], dtype=np.bytes_))
 
-        assert type(actual) == type(expected)
-        np.testing.assert_array_equal(np.sort(actual.values),
-                                      np.sort(expected.values))
+        assert_indexes_equal(actual, expected)
 
     def test_op_array(self):
         df = DataFrame({'a': np.array([1, 2, 3, 4, 5]),
@@ -178,3 +178,16 @@ class TestDataFrame(object):
                               'b': Series(np.arange(0, 10, 2))})
 
         assert_dataframe_equal(actual, expected)
+
+    @pytest.mark.parametrize('aggregation, expected', [
+        ('min', Series(np.array([1, 2]), Index(np.array(['a', 'b'], dtype=np.bytes_)))),
+        ('max', Series(np.array([6, 7]), Index(np.array(['a', 'b'], dtype=np.bytes_))))
+    ])
+    def test_aggregations(self, aggregation, expected):
+        data = OrderedDict([('a', np.arange(1, 6)), ('b', np.arange(2, 7))])
+        df = DataFrame(data)
+
+        actual = getattr(df, aggregation)()
+        expected = Series(np.array([1, 2]), Index(np.array(['a', 'b'], dtype=np.bytes_)))
+
+        assert_series_equal(actual, expected)

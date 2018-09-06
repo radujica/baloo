@@ -304,7 +304,7 @@ def weld_slice(array, weld_type, slice_, default_start=0, default_step=1):
     for(
         iter({array}, {slice_start}, {slice_stop}, {slice_step}),
         appender[{type}],
-        |b: appender[{type}], i: i64, n: {type}| 
+        |b: appender[{type}], i: i64, e: {type}| 
             merge(b, n)
     )  
 )"""
@@ -381,14 +381,14 @@ def weld_array_op(array1, array2, result_type, operation):
     obj_id2 = _get_weld_obj_id(weld_obj, array2)
 
     if operation == 'pow':
-        action = 'pow(n.$0, n.$1)'
+        action = 'pow(e.$0, e.$1)'
     else:
-        action = 'n.$0 {operation} n.$1'.format(operation=operation)
+        action = 'e.$0 {operation} e.$1'.format(operation=operation)
 
     weld_template = """result(
     for(zip({array1}, {array2}), 
         appender[{type}], 
-        |b: appender[{type}], i: i64, n: {{{type}, {type}}}| 
+        |b: appender[{type}], i: i64, e: {{{type}, {type}}}| 
             merge(b, {action})
     )
 )"""
@@ -420,8 +420,8 @@ def weld_invert(array):
     weld_template = """result(
     for({array},
         appender[bool],
-        |b: appender[bool], i: i64, n: bool|
-            if(n, merge(b, false), merge(b, true))
+        |b: appender[bool], i: i64, e: bool|
+            if(e, merge(b, false), merge(b, true))
     )
 )"""
 
@@ -481,15 +481,15 @@ def weld_element_wise_op(array, weld_type, scalar, operation):
     scalar = _to_weld_literal(scalar, weld_type)
 
     if operation == 'pow':
-        action = 'pow(n, {scalar})'.format(scalar=scalar)
+        action = 'pow(e, {scalar})'.format(scalar=scalar)
     else:
-        action = 'n {operation} {scalar}'.format(scalar=scalar,
+        action = 'e {operation} {scalar}'.format(scalar=scalar,
                                                  operation=operation)
 
     weld_template = """result(
     for({array}, 
         appender[{type}], 
-        |b: appender[{type}], i: i64, n: {type}| 
+        |b: appender[{type}], i: i64, e: {type}| 
             merge(b, {action})
     )
 )"""
@@ -497,5 +497,71 @@ def weld_element_wise_op(array, weld_type, scalar, operation):
     weld_obj.weld_code = weld_template.format(array=obj_id,
                                               type=weld_type,
                                               action=action)
+
+    return weld_obj
+
+
+def weld_aggregate(array, weld_type, operation):
+    """Returns operation on the elements in the array.
+
+    Arguments
+    ---------
+    array : WeldObject or numpy.ndarray
+        Input array.
+    weld_type : WeldType
+        Weld type of each element in the input array.
+    operation : {'+', '*', 'min', 'max'}
+        Operation to apply.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    obj_id, weld_obj = _create_weld_object(array)
+
+    weld_template = """result(
+    for(
+        {array},
+        merger[{type}, {operation}],
+        |b: merger[{type}, {operation}], i: i64, e: {type}| 
+            merge(b, e)
+    )
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=obj_id, type=weld_type, operation=operation)
+
+    return weld_obj
+
+
+def weld_combine_scalars(scalars, weld_type):
+    """Combine column-wise aggregations (so resulting scalars) into a single array.
+
+    Parameters
+    ----------
+    scalars : tuple of WeldObjects
+        WeldObjects to combine.
+    weld_type : WeldType
+        The Weld type of the result. Currently expecting scalars to be of the same type.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    weld_obj = WeldObject(_encoder, _decoder)
+    obj_ids = (_get_weld_obj_id(weld_obj, scalar) for scalar in scalars)
+
+    merges = '\n'.join(('let res = merge(res, {});'.format(obj_id) for obj_id in obj_ids))
+
+    weld_template = """let res = appender[{type}];
+{merges}
+result(res)
+"""
+
+    weld_obj.weld_code = weld_template.format(type=weld_type,
+                                              merges=merges)
 
     return weld_obj

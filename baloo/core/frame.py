@@ -8,7 +8,7 @@ from .generic import BinaryOps
 from .indexes import RangeIndex, Index
 from .series import Series
 from .utils import check_type, is_scalar, valid_int_slice
-from ..weld import weld_count, WeldLong, LazyArrayResult, LazyScalarResult
+from ..weld import weld_count, WeldLong, LazyArrayResult, LazyScalarResult, numpy_to_weld_type, weld_combine_scalars
 
 
 class DataFrame(BinaryOps):
@@ -30,7 +30,7 @@ class DataFrame(BinaryOps):
     >>> import baloo as bl
     >>> import numpy as np
     >>> from collections import OrderedDict
-    >>> df = bl.DataFrame(OrderedDict([('a', np.arange(5, 8)), ('b', np.arange(3))]))
+    >>> df = bl.DataFrame(OrderedDict((('a', np.arange(5, 8)), ('b', np.arange(3)))))
     >>> df.index  # repr
     RangeIndex(start=0, stop=3, step=1)
     >>> df  # repr
@@ -56,6 +56,8 @@ class DataFrame(BinaryOps):
           0   10    0
           1   12    2
           2   14    4
+    >>> print(df.min().evaluate())
+    [5 0]
 
     """
     @staticmethod
@@ -76,9 +78,8 @@ class DataFrame(BinaryOps):
 
         return data
 
-    @staticmethod
-    def _gather_dtypes(data):
-        return {k: v.dtype for k, v in data.items()}
+    def _gather_dtypes(self):
+        return OrderedDict(((k, v.dtype) for k, v in self.data.items()))
 
     @staticmethod
     def _default_dataframe_index(data, length):
@@ -109,7 +110,6 @@ class DataFrame(BinaryOps):
 
         """
         self.data = DataFrame._check_data_types(data)
-        self._dtypes = DataFrame._gather_dtypes(data)
         self._length = DataFrame._infer_length(data)
         self.index = DataFrame._default_dataframe_index(data, self._length) if index is None else index
 
@@ -124,6 +124,11 @@ class DataFrame(BinaryOps):
 
         """
         return self.data
+
+    @property
+    def dtypes(self):
+        return Series(np.array(list(self._gather_dtypes().values()), dtype=np.bytes_),
+                      self.keys())
 
     def __len__(self):
         """Eagerly get the length of the DataFrame.
@@ -187,8 +192,8 @@ class DataFrame(BinaryOps):
 
     def _comparison(self, other, comparison):
         if is_scalar(other):
-            new_data = OrderedDict(((column_name, self[column_name]._comparison(other, comparison))
-                                   for column_name in self))
+            new_data = OrderedDict((column_name, self[column_name]._comparison(other, comparison))
+                                   for column_name in self)
 
             return DataFrame(new_data, self.index)
         else:
@@ -196,13 +201,13 @@ class DataFrame(BinaryOps):
 
     def _element_wise_operation(self, other, operation):
         if isinstance(other, LazyArrayResult):
-            new_data = OrderedDict(((column_name, Series._series_array_op(self[column_name], other, operation))
-                                    for column_name in self))
+            new_data = OrderedDict((column_name, Series._series_array_op(self[column_name], other, operation))
+                                   for column_name in self)
 
             return DataFrame(new_data, self.index)
         elif is_scalar(other):
-            new_data = OrderedDict(((column_name, Series._series_element_wise_op(self[column_name], other, operation))
-                                    for column_name in self))
+            new_data = OrderedDict((column_name, Series._series_element_wise_op(self[column_name], other, operation))
+                                   for column_name in self)
 
             return DataFrame(new_data, self.index)
         else:
@@ -240,8 +245,8 @@ class DataFrame(BinaryOps):
                 raise ValueError('Expected LazyResult of bool data to filter values')
 
             new_index = self.index[item]
-            new_data = OrderedDict(((column_name, Series._filter_series(self[column_name], item, new_index))
-                                    for column_name in self))
+            new_data = OrderedDict((column_name, Series._filter_series(self[column_name], item, new_index))
+                                   for column_name in self)
 
             return DataFrame(new_data, new_index)
         elif isinstance(item, slice):
@@ -249,8 +254,8 @@ class DataFrame(BinaryOps):
                 raise ValueError('Can currently only slice with integers')
 
             new_index = self.index[item]
-            new_data = OrderedDict(((column_name, Series._slice_series(self[column_name], item, new_index))
-                                    for column_name in self))
+            new_data = OrderedDict((column_name, Series._slice_series(self[column_name], item, new_index))
+                                   for column_name in self)
 
             return DataFrame(new_data, new_index)
         else:
@@ -328,7 +333,7 @@ class DataFrame(BinaryOps):
 
         Examples
         --------
-        >>> df = bl.DataFrame(OrderedDict([('a', np.arange(5, 8)), ('b', np.arange(3))]))
+        >>> df = bl.DataFrame(OrderedDict((('a', np.arange(5, 8)), ('b', np.arange(3)))))
         >>> print(df.head(2).evaluate())
           Index    a    b
         -------  ---  ---
@@ -353,7 +358,7 @@ class DataFrame(BinaryOps):
 
         Examples
         --------
-        >>> df = bl.DataFrame(OrderedDict([('a', np.arange(5, 8)), ('b', np.arange(3))]))
+        >>> df = bl.DataFrame(OrderedDict((('a', np.arange(5, 8)), ('b', np.arange(3)))))
         >>> print(df.tail(2).evaluate())
           Index    a    b
         -------  ---  ---
@@ -372,8 +377,8 @@ class DataFrame(BinaryOps):
                 length = LazyScalarResult(weld_count(self[keys[0]]), WeldLong())
 
         new_index = self.index.tail(n)
-        new_data = OrderedDict(((column_name, Series._tail_series(self[column_name], new_index, length, n))
-                                for column_name in self))
+        new_data = OrderedDict((column_name, Series._tail_series(self[column_name], new_index, length, n))
+                               for column_name in self)
 
         return DataFrame(new_data, new_index)
 
@@ -389,3 +394,20 @@ class DataFrame(BinaryOps):
         data = np.array(list(self.data.keys()), dtype=np.bytes_)
 
         return Index(data, np.dtype(np.bytes_))
+
+    # TODO: currently assumes all columns are of the same type! also that dataframe is not empty!
+    def _aggregate_columns(self, func_name):
+        new_index = self.keys()
+
+        aggregations = (getattr(self[column_name], func_name)().weld_expr for column_name in self)
+        # grab a random column's dtype
+        random_column_dtype = self[list(self.data.keys())[0]].dtype
+        new_data = weld_combine_scalars(aggregations, numpy_to_weld_type(random_column_dtype))
+
+        return Series(new_data, new_index, random_column_dtype)
+
+    def min(self):
+        return self._aggregate_columns('min')
+
+    def max(self):
+        return self._aggregate_columns('min')

@@ -1,6 +1,7 @@
 from weld.weldobject import *
 
 from .convertors.utils import to_weld_vec
+from .weld_ops import weld_aggregate
 
 
 class LazyResult(object):
@@ -82,6 +83,34 @@ class LazyResult(object):
 class LazyArrayResult(LazyResult):
     def __init__(self, weld_expr, weld_type):
         super(LazyArrayResult, self).__init__(weld_expr, weld_type, 1)
+
+    def min(self):
+        """Returns the minimum value in the Series.
+
+        Returns
+        -------
+        LazyScalarResult
+            The minimum value in the Series.
+
+        """
+        return LazyScalarResult(weld_aggregate(self.weld_expr,
+                                               self.weld_type,
+                                               'min'),
+                                self.weld_type)
+
+    def max(self):
+        """Returns the maximum value in the Series.
+
+        Returns
+        -------
+        LazyScalarResult
+            The maximum value in the Series.
+
+        """
+        return LazyScalarResult(weld_aggregate(self.weld_expr,
+                                               self.weld_type,
+                                               'max'),
+                                self.weld_type)
 
 
 class LazyScalarResult(LazyResult):
