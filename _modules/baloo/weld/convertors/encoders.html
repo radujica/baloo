@@ -66,6 +66,16 @@
 <span class="sd">    WeldType</span>
 <span class="sd">        Corresponding WeldType.</span>
 
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; from baloo.weld import numpy_to_weld_type</span>
+<span class="sd">    &gt;&gt;&gt; str(numpy_to_weld_type(np.dtype(np.int64)))</span>
+<span class="sd">    &#39;i64&#39;</span>
+<span class="sd">    &gt;&gt;&gt; str(numpy_to_weld_type(&#39;?&#39;))</span>
+<span class="sd">    &#39;bool&#39;</span>
+
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">np_dtype</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">)):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Can only convert np.dtype or str&#39;</span><span class="p">)</span>
@@ -104,8 +114,15 @@
 <span class="sd">    numpy.dtype</span>
 <span class="sd">        Corresponding Numpy dtype.</span>
 
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; from baloo.weld import weld_to_numpy_dtype, WeldFloat</span>
+<span class="sd">    &gt;&gt;&gt; weld_to_numpy_dtype(WeldFloat())</span>
+<span class="sd">    dtype(&#39;float32&#39;)</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">_weld_to_numpy_type_mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">weld_type</span><span class="p">)])</span></div>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">_weld_to_numpy_type_mapping</span><span class="p">[</span><span class="n">weld_type</span><span class="p">])</span></div>
 
 
 <div class="viewcode-block" id="NumPyEncoder"><a class="viewcode-back" href="../../../../baloo.weld.convertors.html#baloo.weld.convertors.encoders.NumPyEncoder">[docs]</a><span class="k">class</span> <span class="nc">NumPyEncoder</span><span class="p">(</span><span class="n">WeldObjectEncoder</span><span class="p">):</span>
@@ -293,7 +310,10 @@
 
 <h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../baloo.html">baloo package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../intro.html">Intro to Baloo</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../baloo.html">Baloo Library</a></li>
 </ul>
 
 <div class="relations">

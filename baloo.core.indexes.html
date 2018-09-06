@@ -44,7 +44,24 @@
 <p>Weld-ed Pandas Index.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pandas.Index</span></code></p>
+<dl class="last docutils">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">pandas.Index</span></code></dt>
+<dd><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Index.html">https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Index.html</a></dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">baloo</span> <span class="k">as</span> <span class="nn">bl</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">)))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span>  <span class="c1"># repr</span>
+<span class="go">Index(name=Index, dtype=|S1)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>  <span class="c1"># str</span>
+<span class="go">[b&#39;a&#39; b&#39;b&#39; b&#39;c&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span><span class="o">.</span><span class="n">values</span>
+<span class="go">array([b&#39;a&#39;, b&#39;b&#39;, b&#39;c&#39;], dtype=&#39;|S1&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>  <span class="c1"># eager</span>
+<span class="go">3</span>
+</pre></div>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -66,10 +83,15 @@
 <dt id="baloo.core.indexes.base.Index.__getitem__">
 <code class="descname">__getitem__</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/base.html#Index.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.base.Index.__getitem__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Select from the Index. Currently used internally through DataFrame and Series.</p>
-<p>Supported functionality:</p>
-<ul class="simple">
-<li>Filter: ind[ind &lt;comparison&gt; &lt;scalar&gt;]</li>
-</ul>
+<p>Supported selection functionality exemplified below.</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ind</span><span class="p">[</span><span class="n">ind</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[0 1]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ind</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[1]</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -138,6 +160,38 @@ it will be eagerly computed.</p>
 </table>
 </dd></dl>
 
+<dl class="method">
+<dt id="baloo.core.indexes.base.Index.head">
+<code class="descname">head</code><span class="sig-paren">(</span><em>n=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/base.html#Index.head"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.base.Index.head" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Index with first n values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>n</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd><p class="first last">Index containing the first n values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ind</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[0. 1.]</span>
+</pre></div>
+</div>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="baloo.core.indexes.base.Index.name">
 <code class="descname">name</code><a class="headerlink" href="#baloo.core.indexes.base.Index.name" title="Permalink to this definition">¶</a></dt>
@@ -155,6 +209,38 @@ it will be eagerly computed.</p>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.indexes.base.Index.tail">
+<code class="descname">tail</code><span class="sig-paren">(</span><em>n=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/base.html#Index.tail"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.base.Index.tail" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Index with the last n values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>n</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd><p class="first last">Index containing the last n values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ind</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[1. 2.]</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="attribute">
@@ -188,7 +274,25 @@ it will be eagerly computed.</p>
 <p>Weld-ed Pandas RangeIndex.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pandas.RangeIndex</span></code></p>
+<dl class="last docutils">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">pandas.RangeIndex</span></code></dt>
+<dd><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/generated/pandas.RangeIndex.html#pandas.RangeIndex">https://pandas.pydata.org/pandas-docs/stable/generated/pandas.RangeIndex.html#pandas.RangeIndex</a></dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">baloo</span> <span class="k">as</span> <span class="nn">bl</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">RangeIndex</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span>  <span class="c1"># repr</span>
+<span class="go">RangeIndex(start=0, stop=3, step=1)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">weld_code</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>  <span class="c1"># weld_code</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+<span class="go">Index(name=Index, dtype=int64)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ind</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[0 1 2]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>  <span class="c1"># eager</span>
+<span class="go">3</span>
+</pre></div>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -210,10 +314,14 @@ it will be eagerly computed.</p>
 <dt id="baloo.core.indexes.range.RangeIndex.__getitem__">
 <code class="descname">__getitem__</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/range.html#RangeIndex.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.range.RangeIndex.__getitem__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Select from the RangeIndex. Currently used internally through DataFrame and Series.</p>
-<p>Supported functionality:</p>
-<ul class="simple">
-<li>Filter: ind[ind &lt;comparison&gt; &lt;scalar&gt;]</li>
-</ul>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">RangeIndex</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ind</span><span class="p">[</span><span class="n">ind</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[0 1]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ind</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[1]</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -282,6 +390,38 @@ it will be eagerly computed.</p>
 </table>
 </dd></dl>
 
+<dl class="method">
+<dt id="baloo.core.indexes.range.RangeIndex.head">
+<code class="descname">head</code><span class="sig-paren">(</span><em>n=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/range.html#RangeIndex.head"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.range.RangeIndex.head" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Index with first n values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>n</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd><p class="first last">Index containing the first n values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">RangeIndex</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ind</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[0 1]</span>
+</pre></div>
+</div>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="baloo.core.indexes.range.RangeIndex.name">
 <code class="descname">name</code><a class="headerlink" href="#baloo.core.indexes.range.RangeIndex.name" title="Permalink to this definition">¶</a></dt>
@@ -299,6 +439,38 @@ it will be eagerly computed.</p>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.indexes.range.RangeIndex.tail">
+<code class="descname">tail</code><span class="sig-paren">(</span><em>n=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/range.html#RangeIndex.tail"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.range.RangeIndex.tail" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Index with the last n values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>n</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd><p class="first last">Index containing the last n values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">RangeIndex</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ind</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[1 2]</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="attribute">

@@ -14,7 +14,7 @@ baloo.core.frame module
 
 .. automodule:: baloo.core.frame
     :members:
-    :special-members: __init__, __getitem__, __len__
+    :special-members: __init__, __getitem__, __len__, __setitem__
 
 baloo.core.series module
 ------------------------

@@ -55,7 +55,29 @@
 <dd><p>Weld-ed pandas DataFrame.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></p>
+<dl class="last docutils">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code></dt>
+<dd><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html">https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html</a></dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">baloo</span> <span class="k">as</span> <span class="nn">bl</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">([(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">index</span>  <span class="c1"># repr</span>
+<span class="go">RangeIndex(start=0, stop=3, step=1)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span>  <span class="c1"># repr</span>
+<span class="go">DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=[&#39;a&#39;, &#39;b&#39;])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>  <span class="c1"># omitting evaluate would trigger exception as index is now an unevaluated RangeIndex</span>
+<span class="go">  Index    a    b</span>
+<span class="go">-------  ---  ---</span>
+<span class="go">      0    5    0</span>
+<span class="go">      1    6    1</span>
+<span class="go">      2    7    2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
+<span class="go">3</span>
+</pre></div>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -77,11 +99,18 @@
 <dt id="baloo.core.frame.DataFrame.__getitem__">
 <code class="descname">__getitem__</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.__getitem__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Select from the DataFrame.</p>
-<p>Supported functionality:</p>
-<ul class="simple">
-<li>Select column: df[&lt;column-name&gt;]</li>
-<li>Filter: df[df[&lt;column&gt;] &lt;comparison&gt; &lt;scalar&gt;]</li>
-</ul>
+<p>Supported functionality exemplified below.</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)}))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">])</span>
+<span class="go">[5 6 7]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">7</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">  Index    a</span>
+<span class="go">-------  ---</span>
+<span class="go">      0    5</span>
+<span class="go">      1    6</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -129,6 +158,41 @@ it will be eagerly computed.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="baloo.core.frame.DataFrame.__setitem__">
+<code class="descname">__setitem__</code><span class="sig-paren">(</span><em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.__setitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.__setitem__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add/update DataFrame column.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>key</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Column name.</p>
+</dd>
+<dt><strong>value</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.ndarray or Series</span></dt>
+<dd><p class="first last">Note that it does NOT check for the same length as the other columns due to possibly not knowing
+the length before evaluation. Also note that for Series, it currently does NOT match Index as in a join but
+the Series inherits the index of the DataFrame.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)}))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">  Index    a    b</span>
+<span class="go">-------  ---  ---</span>
+<span class="go">      0    5    0</span>
+<span class="go">      1    6    1</span>
+<span class="go">      2    7    2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
 <dt id="baloo.core.frame.DataFrame.evaluate">
 <code class="descname">evaluate</code><span class="sig-paren">(</span><em>verbose=False</em>, <em>decode=True</em>, <em>passes=None</em>, <em>num_threads=1</em>, <em>apply_experimental=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.evaluate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluates by creating a DataFrame containing evaluated data and index.</p>
@@ -146,6 +210,95 @@ it will be eagerly computed.</p>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.head">
+<code class="descname">head</code><span class="sig-paren">(</span><em>n=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.head"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.head" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return DataFrame with first n values per column.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>n</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">DataFrame containing the first n values per column.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">([(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">  Index    a    b</span>
+<span class="go">-------  ---  ---</span>
+<span class="go">      0    5    0</span>
+<span class="go">      1    6    1</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.keys">
+<code class="descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve column names as Index, i.e. for axis=1.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Index</strong></dt>
+<dd><p class="first last">Column names as an Index.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.tail">
+<code class="descname">tail</code><span class="sig-paren">(</span><em>n=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.tail"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.tail" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return DataFrame with last n values per column.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>n</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">DataFrame containing the last n values per column.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">([(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">  Index    a    b</span>
+<span class="go">-------  ---  ---</span>
+<span class="go">      1    6    1</span>
+<span class="go">      2    7    2</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="attribute">
@@ -179,7 +332,33 @@ it will be eagerly computed.</p>
 <p>Weld-ed Pandas Series.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pandas.Series</span></code></p>
+<dl class="last docutils">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">pandas.Series</span></code></dt>
+<dd><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html">https://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.html</a></dd>
+</dl>
+</div>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">baloo</span> <span class="k">as</span> <span class="nn">bl</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span>
+<span class="go">Series(name=None, dtype=int64)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span><span class="o">.</span><span class="n">index</span>
+<span class="go">RangeIndex(start=0, stop=3, step=1)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">sr</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span>  <span class="c1"># repr</span>
+<span class="go">Series(name=None, dtype=int64)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="p">)</span>  <span class="c1"># str</span>
+<span class="go">[0 1 2]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span><span class="o">.</span><span class="n">index</span>
+<span class="go">Index(name=Index, dtype=int64)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+<span class="go">[0 1 2]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">sr</span><span class="p">)</span>  <span class="c1"># eager computation</span>
+<span class="go">3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span><span class="o">.</span><span class="n">values</span>
+<span class="go">array([0, 1, 2])</span>
+</pre></div>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -204,10 +383,21 @@ it will be eagerly computed.</p>
 <dt id="baloo.core.series.Series.__getitem__">
 <code class="descname">__getitem__</code><span class="sig-paren">(</span><em>item</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.__getitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.__getitem__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Select from the Series.</p>
-<p>Supported functionality:</p>
-<ul class="simple">
-<li>Filter: sr[sr &lt;comparison&gt; &lt;scalar&gt;]</li>
-</ul>
+<p>Supported selection functionality exemplified below.</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Test&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">sr</span><span class="p">[</span><span class="n">sr</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span>
+<span class="go">Series(name=Test, dtype=float32)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[1. 2. 3. 4.]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">sr</span><span class="p">[(</span><span class="n">sr</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="p">(</span><span class="n">sr</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[2. 3.]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[2.]</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -278,6 +468,93 @@ it will be eagerly computed.</p>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">weld_code</span> <span class="o">=</span> <span class="n">sr</span><span class="o">.</span><span class="n">values</span>  <span class="c1"># accessing values now returns the weld code as a string</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">sr</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span><span class="o">.</span><span class="n">values</span>  <span class="c1"># now it is evaluated to raw data</span>
+<span class="go">array([False,  True,  True])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.series.Series.head">
+<code class="descname">head</code><span class="sig-paren">(</span><em>n=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.head"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.head" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Series with first n values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>n</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd><p class="first last">Series containing the first n values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[0 1]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="baloo.core.series.Series.iloc">
+<code class="descname">iloc</code><a class="headerlink" href="#baloo.core.series.Series.iloc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve Indexer by index.</p>
+<p>Supported iloc functionality exemplified below.</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[0 1]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.series.Series.tail">
+<code class="descname">tail</code><span class="sig-paren">(</span><em>n=5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.tail"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.tail" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Series with the last n values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>n</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Number of values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd><p class="first last">Series containing the last n values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[1 2]</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="attribute">

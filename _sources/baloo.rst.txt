@@ -1,4 +1,4 @@
-baloo package
+Baloo Library
 =============
 
 Subpackages

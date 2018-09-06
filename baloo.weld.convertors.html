@@ -97,6 +97,15 @@ Python 2 str and Python 3 bytes. No unicode.</p>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">baloo.weld</span> <span class="k">import</span> <span class="n">numpy_to_weld_type</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">numpy_to_weld_type</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)))</span>
+<span class="go">&#39;i64&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">str</span><span class="p">(</span><span class="n">numpy_to_weld_type</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">))</span>
+<span class="go">&#39;bool&#39;</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -125,6 +134,13 @@ Python 2 str and Python 3 bytes. No unicode.</p>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">baloo.weld</span> <span class="k">import</span> <span class="n">weld_to_numpy_dtype</span><span class="p">,</span> <span class="n">WeldFloat</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">weld_to_numpy_dtype</span><span class="p">(</span><span class="n">WeldFloat</span><span class="p">())</span>
+<span class="go">dtype(&#39;float32&#39;)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 </div>
@@ -149,9 +165,12 @@ Python 2 str and Python 3 bytes. No unicode.</p>
 <h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="baloo.html">baloo package</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="baloo.html#subpackages">Subpackages</a><ul class="current">
-<li class="toctree-l3"><a class="reference internal" href="baloo.core.html">baloo.core package</a></li>
-<li class="toctree-l3 current"><a class="reference internal" href="baloo.weld.html">baloo.weld package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intro.html">Baloo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="baloo.core.html">baloo.core package</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="baloo.weld.html">baloo.weld package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="baloo.weld.html#subpackages">Subpackages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baloo.weld.html#submodules">Submodules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baloo.weld.html#module-baloo.weld.lazy_result">baloo.weld.lazy_result module</a></li>
 </ul>
 </li>
 </ul>

@@ -38,10 +38,10 @@
 <span class="kn">from</span> <span class="nn">tabulate</span> <span class="k">import</span> <span class="n">tabulate</span>
 <span class="kn">from</span> <span class="nn">weld.types</span> <span class="k">import</span> <span class="n">WeldBit</span>
 
-<span class="kn">from</span> <span class="nn">..weld</span> <span class="k">import</span> <span class="n">weld_count</span><span class="p">,</span> <span class="n">LazyResult</span>
 <span class="kn">from</span> <span class="nn">.indexes</span> <span class="k">import</span> <span class="n">RangeIndex</span><span class="p">,</span> <span class="n">Index</span>
 <span class="kn">from</span> <span class="nn">.series</span> <span class="k">import</span> <span class="n">Series</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">check_type</span><span class="p">,</span> <span class="n">is_scalar</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">check_type</span><span class="p">,</span> <span class="n">is_scalar</span><span class="p">,</span> <span class="n">valid_int_slice</span>
+<span class="kn">from</span> <span class="nn">..weld</span> <span class="k">import</span> <span class="n">weld_count</span><span class="p">,</span> <span class="n">LazyResult</span><span class="p">,</span> <span class="n">WeldLong</span>
 
 
 <div class="viewcode-block" id="DataFrame"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame">[docs]</a><span class="k">class</span> <span class="nc">DataFrame</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -56,7 +56,26 @@
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">    pandas.DataFrame</span>
+<span class="sd">    pandas.DataFrame : https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import baloo as bl</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; from collections import OrderedDict</span>
+<span class="sd">    &gt;&gt;&gt; df = bl.DataFrame(OrderedDict([(&#39;a&#39;, np.arange(5, 8)), (&#39;b&#39;, np.arange(3))]))</span>
+<span class="sd">    &gt;&gt;&gt; df.index  # repr</span>
+<span class="sd">    RangeIndex(start=0, stop=3, step=1)</span>
+<span class="sd">    &gt;&gt;&gt; df  # repr</span>
+<span class="sd">    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=[&#39;a&#39;, &#39;b&#39;])</span>
+<span class="sd">    &gt;&gt;&gt; print(df.evaluate())  # omitting evaluate would trigger exception as index is now an unevaluated RangeIndex</span>
+<span class="sd">      Index    a    b</span>
+<span class="sd">    -------  ---  ---</span>
+<span class="sd">          0    5    0</span>
+<span class="sd">          1    6    1</span>
+<span class="sd">          2    7    2</span>
+<span class="sd">    &gt;&gt;&gt; print(len(df))</span>
+<span class="sd">    3</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nd">@staticmethod</span>
@@ -160,7 +179,7 @@
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">(index=</span><span class="si">{}</span><span class="s2">, columns=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
                                                  <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">),</span>
-                                                 <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+                                                 <span class="nb">repr</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())))</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_shorten_data</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
@@ -217,10 +236,18 @@
 <div class="viewcode-block" id="DataFrame.__getitem__"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Select from the DataFrame.</span>
 
-<span class="sd">        Supported functionality:</span>
+<span class="sd">        Supported functionality exemplified below.</span>
 
-<span class="sd">        - Select column: df[&lt;column-name&gt;]</span>
-<span class="sd">        - Filter: df[df[&lt;column&gt;] &lt;comparison&gt; &lt;scalar&gt;]</span>
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; df = bl.DataFrame(OrderedDict({&#39;a&#39;: np.arange(5, 8)}))</span>
+<span class="sd">        &gt;&gt;&gt; print(df[&#39;a&#39;])</span>
+<span class="sd">        [5 6 7]</span>
+<span class="sd">        &gt;&gt;&gt; print(df[df[&#39;a&#39;] &lt; 7].evaluate())</span>
+<span class="sd">          Index    a</span>
+<span class="sd">        -------  ---</span>
+<span class="sd">              0    5</span>
+<span class="sd">              1    6</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -237,12 +264,54 @@
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected LazyResult of bool data to filter values&#39;</span><span class="p">)</span>
 
             <span class="n">new_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
-            <span class="n">new_data</span> <span class="o">=</span> <span class="p">{</span><span class="n">column_name</span><span class="p">:</span> <span class="n">Series</span><span class="o">.</span><span class="n">_filter_series</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">],</span> <span class="n">item</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span>
-                        <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">}</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(((</span><span class="n">column_name</span><span class="p">,</span> <span class="n">Series</span><span class="o">.</span><span class="n">_filter_series</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">],</span> <span class="n">item</span><span class="p">,</span> <span class="n">new_index</span><span class="p">))</span>
+                                    <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">))</span>
+
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_int_slice</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Can currently only slice with integers&#39;</span><span class="p">)</span>
+
+            <span class="n">new_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(((</span><span class="n">column_name</span><span class="p">,</span> <span class="n">Series</span><span class="o">.</span><span class="n">_slice_series</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">],</span> <span class="n">item</span><span class="p">,</span> <span class="n">new_index</span><span class="p">))</span>
+                                    <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">))</span>
 
             <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected a column name as a string&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrame.__setitem__"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.__setitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add/update DataFrame column.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        key : str</span>
+<span class="sd">            Column name.</span>
+<span class="sd">        value : numpy.ndarray or Series</span>
+<span class="sd">            Note that it does NOT check for the same length as the other columns due to possibly not knowing</span>
+<span class="sd">            the length before evaluation. Also note that for Series, it currently does NOT match Index as in a join but</span>
+<span class="sd">            the Series inherits the index of the DataFrame.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; df = bl.DataFrame(OrderedDict({&#39;a&#39;: np.arange(5, 8)}))</span>
+<span class="sd">        &gt;&gt;&gt; df[&#39;b&#39;] = np.arange(3)</span>
+<span class="sd">        &gt;&gt;&gt; print(df.evaluate())</span>
+<span class="sd">          Index    a    b</span>
+<span class="sd">        -------  ---  ---</span>
+<span class="sd">              0    5    0</span>
+<span class="sd">              1    6    1</span>
+<span class="sd">              2    7    2</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">check_type</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">check_type</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Series</span><span class="p">))</span>
+
+        <span class="c1"># inherit the index, no join atm</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Series</span><span class="p">):</span>
+            <span class="n">value</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
 
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
@@ -266,7 +335,84 @@
             <span class="n">evaluated_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="n">decode</span><span class="p">,</span> <span class="n">passes</span><span class="p">,</span>
                                                                      <span class="n">num_threads</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">evaluated_data</span><span class="p">,</span> <span class="n">evaluated_index</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">evaluated_data</span><span class="p">,</span> <span class="n">evaluated_index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrame.head"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.head">[docs]</a>    <span class="k">def</span> <span class="nf">head</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return DataFrame with first n values per column.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n : int</span>
+<span class="sd">            Number of values.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataFrame</span>
+<span class="sd">            DataFrame containing the first n values per column.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; df = bl.DataFrame(OrderedDict([(&#39;a&#39;, np.arange(5, 8)), (&#39;b&#39;, np.arange(3))]))</span>
+<span class="sd">        &gt;&gt;&gt; print(df.head(2).evaluate())</span>
+<span class="sd">          Index    a    b</span>
+<span class="sd">        -------  ---  ---</span>
+<span class="sd">              0    5    0</span>
+<span class="sd">              1    6    1</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="DataFrame.tail"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.tail">[docs]</a>    <span class="k">def</span> <span class="nf">tail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return DataFrame with last n values per column.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n : int</span>
+<span class="sd">            Number of values.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataFrame</span>
+<span class="sd">            DataFrame containing the last n values per column.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; df = bl.DataFrame(OrderedDict([(&#39;a&#39;, np.arange(5, 8)), (&#39;b&#39;, np.arange(3))]))</span>
+<span class="sd">        &gt;&gt;&gt; print(df.tail(2).evaluate())</span>
+<span class="sd">          Index    a    b</span>
+<span class="sd">        -------  ---  ---</span>
+<span class="sd">              1    6    1</span>
+<span class="sd">              2    7    2</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># first check again for raw data</span>
+            <span class="n">length</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_infer_length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="c1"># if still None, get a random column and encode length</span>
+            <span class="k">if</span> <span class="n">length</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                <span class="n">length</span> <span class="o">=</span> <span class="n">LazyResult</span><span class="p">(</span><span class="n">weld_count</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]]),</span> <span class="n">WeldLong</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">new_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(((</span><span class="n">column_name</span><span class="p">,</span> <span class="n">Series</span><span class="o">.</span><span class="n">_tail_series</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">],</span> <span class="n">new_index</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+                                <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrame.keys"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.keys">[docs]</a>    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Retrieve column names as Index, i.e. for axis=1.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Index</span>
+<span class="sd">             Column names as an Index.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">))</span></div></div>
 </pre></div>
 
           </div>
@@ -286,7 +432,10 @@
 
 <h3>Navigation</h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../baloo.html">baloo package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Intro to Baloo</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../baloo.html">Baloo Library</a></li>
 </ul>
 
 <div class="relations">
