@@ -43,6 +43,19 @@ class DataFrame(BinaryOps):
           2    7    2
     >>> print(len(df))
     3
+    >>> print((df * 2).evaluate())  # note that atm there is no type casting, i.e. if b was float32, it would fail
+      Index    a    b
+    -------  ---  ---
+          0   10    0
+          1   12    2
+          2   14    4
+    >>> sr = bl.Series(np.array([2] * 3))
+    >>> print((df * sr).evaluate())
+      Index    a    b
+    -------  ---  ---
+          0   10    0
+          1   12    2
+          2   14    4
 
     """
     @staticmethod
@@ -174,12 +187,26 @@ class DataFrame(BinaryOps):
 
     def _comparison(self, other, comparison):
         if is_scalar(other):
-            new_data = {column_name: self[column_name]._comparison(other, comparison)
-                        for column_name in self}
+            new_data = OrderedDict(((column_name, self[column_name]._comparison(other, comparison))
+                                   for column_name in self))
 
             return DataFrame(new_data, self.index)
         else:
             raise TypeError('Can currently only compare with scalars')
+
+    def _element_wise_operation(self, other, operation):
+        if isinstance(other, LazyArrayResult):
+            new_data = OrderedDict(((column_name, Series._series_array_op(self[column_name], other, operation))
+                                    for column_name in self))
+
+            return DataFrame(new_data, self.index)
+        elif is_scalar(other):
+            new_data = OrderedDict(((column_name, Series._series_element_wise_op(self[column_name], other, operation))
+                                    for column_name in self))
+
+            return DataFrame(new_data, self.index)
+        else:
+            raise TypeError('Can only apply operation with scalar or Series')
 
     # TODO: handle empty
     def __getitem__(self, item):

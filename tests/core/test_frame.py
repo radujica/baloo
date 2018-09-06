@@ -158,3 +158,23 @@ class TestDataFrame(object):
         assert type(actual) == type(expected)
         np.testing.assert_array_equal(np.sort(actual.values),
                                       np.sort(expected.values))
+
+    def test_op_array(self):
+        df = DataFrame({'a': np.array([1, 2, 3, 4, 5]),
+                        'b': Series(np.arange(5))})
+
+        actual = df * Series(np.array([2] * 5))
+        expected = DataFrame({'a': np.array([2, 4, 6, 8, 10]),
+                              'b': Series(np.arange(0, 10, 2))})
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_op_scalar(self):
+        df = DataFrame({'a': np.array([1, 2, 3, 4, 5], dtype=np.float32),
+                        'b': Series(np.arange(5))})
+
+        actual = df * 2
+        expected = DataFrame({'a': np.array([2, 4, 6, 8, 10], dtype=np.float32),
+                              'b': Series(np.arange(0, 10, 2))})
+
+        assert_dataframe_equal(actual, expected)

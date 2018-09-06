@@ -108,3 +108,31 @@ class TestRangeIndex(object):
         expected = Index(np.array([3, 4]))
 
         assert_index_equal(actual, expected)
+
+    @pytest.mark.parametrize('operation, expected', [
+        ('+', Index(np.array(np.arange(2, 7)), np.dtype(np.int64))),
+        ('-', Index(np.array(np.arange(-2, 3)), np.dtype(np.int64))),
+        ('*', Index(np.array(np.arange(0, 9, 2)), np.dtype(np.int64))),
+        ('/', Index(np.array([0, 0, 1, 1, 2]), np.dtype(np.int64)))
+    ])
+    def test_op_array(self, operation, expected):
+        data = RangeIndex(5)
+        other = Index(np.array([2] * 5))
+
+        actual = eval('data {} other'.format(operation))
+
+        assert_index_equal(actual, expected)
+
+    @pytest.mark.parametrize('operation, expected', [
+        ('+', Index(np.array(np.arange(2, 7)), np.dtype(np.int64))),
+        ('-', Index(np.array(np.arange(-2, 3)), np.dtype(np.int64))),
+        ('*', Index(np.array(np.arange(0, 9, 2)), np.dtype(np.int64))),
+        ('/', Index(np.array([0, 0, 1, 1, 2]), np.dtype(np.int64)))
+    ])
+    def test_op_scalar(self, operation, expected):
+        ind = RangeIndex(5)
+        scalar = 2
+
+        actual = eval('ind {} scalar'.format(operation))
+
+        assert_index_equal(actual, expected)

@@ -4,7 +4,7 @@ from weld.weldobject import WeldObject, WeldLong, WeldBit
 from ..generic import BinaryOps
 from ...core.utils import check_type, infer_dtype, valid_int_slice, is_scalar
 from ...weld import LazyArrayResult, LazyScalarResult, numpy_to_weld_type, weld_count, weld_filter, weld_slice, \
-    weld_compare, weld_tail, weld_array_op
+    weld_compare, weld_tail, weld_array_op, weld_element_wise_op
 
 
 class Index(LazyArrayResult, BinaryOps):
@@ -112,6 +112,25 @@ class Index(LazyArrayResult, BinaryOps):
                                    operation),
                      self.dtype,
                      self.name)
+
+    def _element_wise_operation(self, other, operation):
+        # Pandas converts result to a Series; unclear why atm
+        if isinstance(other, LazyArrayResult):
+            return Index(weld_array_op(self.weld_expr,
+                                       other.weld_expr,
+                                       self.weld_type,
+                                       operation),
+                         self.dtype,
+                         self.name)
+        elif is_scalar(other):
+            return Index(weld_element_wise_op(self.weld_expr,
+                                              self.weld_type,
+                                              other,
+                                              operation),
+                         self.dtype,
+                         self.name)
+        else:
+            raise TypeError('Can only apply operation with scalar or Series')
 
     def __getitem__(self, item):
         """Select from the Index. Currently used internally through DataFrame and Series.

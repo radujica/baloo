@@ -4,9 +4,9 @@ from weld.weldobject import WeldObject
 
 from .base import Index
 from ..generic import BinaryOps
-from ..utils import check_type, valid_int_slice
+from ..utils import check_type, valid_int_slice, is_scalar
 from ...weld import weld_range, LazyArrayResult, LazyScalarResult, WeldBit, weld_filter, weld_slice, weld_compare, \
-    weld_count, weld_tail, weld_array_op
+    weld_count, weld_tail, weld_array_op, weld_element_wise_op
 
 
 class RangeIndex(LazyArrayResult, BinaryOps):
@@ -38,6 +38,10 @@ class RangeIndex(LazyArrayResult, BinaryOps):
     [0 1 2]
     >>> len(ind)  # eager
     3
+    >>> (ind * 2).evaluate().values
+    array([0, 2, 4])
+    >>> (ind - bl.Series(np.arange(1, 4))).evaluate().values
+    array([-1, -1, -1])
 
     """
     def __init__(self, start=None, stop=None, step=1, name=None):
@@ -125,8 +129,23 @@ class RangeIndex(LazyArrayResult, BinaryOps):
                                    other.weld_expr,
                                    self.weld_type,
                                    operation),
-                     self.dtype,
-                     self.name)
+                     self.dtype)
+
+    def _element_wise_operation(self, other, operation):
+        if isinstance(other, LazyArrayResult):
+            return Index(weld_array_op(self.weld_expr,
+                                       other.weld_expr,
+                                       self.weld_type,
+                                       operation),
+                         self.dtype)
+        elif is_scalar(other):
+            return Index(weld_element_wise_op(self.weld_expr,
+                                              self.weld_type,
+                                              other,
+                                              operation),
+                         self.dtype)
+        else:
+            raise TypeError('Can only apply operation with scalar or Series')
 
     def __getitem__(self, item):
         """Select from the RangeIndex. Currently used internally through DataFrame and Series.

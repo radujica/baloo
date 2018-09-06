@@ -135,3 +135,38 @@ class TestSeries(object):
         expected = Series(np.array([2, 3]), Index(np.array([1, 2])), np.dtype(np.float32))
 
         assert_series_equal(actual, expected)
+
+    @pytest.mark.parametrize('operation, expected', [
+        ('+', Series(np.array(np.arange(2, 7), dtype=np.float32), Index(np.arange(5)), np.dtype(np.float32))),
+        ('-', Series(np.array(np.arange(-2, 3), dtype=np.float32), Index(np.arange(5)), np.dtype(np.float32))),
+        ('*', Series(np.array(np.arange(0, 9, 2), dtype=np.float32), Index(np.arange(5)), np.dtype(np.float32))),
+        ('/', Series(np.array([0, 0.5, 1, 1.5, 2], dtype=np.float32), Index(np.arange(5)), np.dtype(np.float32))),
+        ('**', Series(np.array([0, 1, 4, 9, 16], dtype=np.float32), Index(np.arange(5)), np.dtype(np.float32)))
+    ])
+    def test_op_array(self, operation, expected):
+        data = Series(np.arange(5).astype(np.float32))
+        other = Series(np.array([2] * 5).astype(np.float32))
+
+        actual = eval('data {} other'.format(operation))
+
+        assert_series_equal(actual, expected)
+
+    @pytest.mark.parametrize('operation, expected', [
+        ('+', Series(np.array(np.arange(2, 7)), Index(np.arange(5)), np.dtype(np.int64))),
+        ('-', Series(np.array(np.arange(-2, 3)), Index(np.arange(5)), np.dtype(np.int64))),
+        ('*', Series(np.array(np.arange(0, 9, 2)), Index(np.arange(5)), np.dtype(np.int64))),
+        ('/', Series(np.array([0, 0, 1, 1, 2]), Index(np.arange(5)), np.dtype(np.int64))),
+        ('**', Series(np.array([0, 1, 4, 9, 16], dtype=np.float32), Index(np.arange(5)), np.dtype(np.float32)))
+    ])
+    def test_op_scalar(self, operation, expected):
+        data = np.arange(5)
+        # hack until pow is fully supported by Weld
+        if operation == '**':
+            data = data.astype(np.float32)
+
+        sr = Series(data)
+        scalar = 2
+
+        actual = eval('sr {} scalar'.format(operation))
+
+        assert_series_equal(actual, expected)

@@ -180,7 +180,7 @@ def weld_compare(array, scalar, operation, weld_type):
     ----------
     array : numpy.ndarray or WeldObject
         Input data.
-    scalar : {int, float, str, bool, bytes}
+    scalar : {int, float, str, bool, bytes_}
         Value to compare with; must be same type as the values in the array. If not a str,
         it is casted to weld_type (allowing one to write e.g. native Python int).
     operation : str
@@ -368,7 +368,7 @@ def weld_array_op(array1, array2, result_type, operation):
         Second input array.
     result_type : WeldType
         Weld type of the result. Expected to be the same as both input arrays.
-    operation : {'+', '-', '*', '/', '&&', '||'}
+    operation : {'+', '-', '*', '/', '&&', '||', 'pow'}
         Which operation to apply. Note bitwise operations (not included) seem to be bugged at the LLVM level.
 
     Returns
@@ -380,18 +380,23 @@ def weld_array_op(array1, array2, result_type, operation):
     obj_id1, weld_obj = _create_weld_object(array1)
     obj_id2 = _get_weld_obj_id(weld_obj, array2)
 
+    if operation == 'pow':
+        action = 'pow(n.$0, n.$1)'
+    else:
+        action = 'n.$0 {operation} n.$1'.format(operation=operation)
+
     weld_template = """result(
     for(zip({array1}, {array2}), 
         appender[{type}], 
         |b: appender[{type}], i: i64, n: {{{type}, {type}}}| 
-            merge(b, n.$0 {operation} n.$1)
+            merge(b, {action})
     )
 )"""
 
     weld_obj.weld_code = weld_template.format(array1=obj_id1,
                                               array2=obj_id2,
                                               type=result_type,
-                                              operation=operation)
+                                              action=action)
 
     return weld_obj
 
@@ -447,5 +452,50 @@ def weld_iloc_int(array, index):
 
     weld_obj.weld_code = weld_template.format(array=obj_id,
                                               index=index)
+
+    return weld_obj
+
+
+def weld_element_wise_op(array, weld_type, scalar, operation):
+    """Applies operation to each element in the array with scalar.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input array.
+    weld_type : WeldType
+        Type of each element in the input array.
+    scalar : {int, float, str, bool, bytes_}
+        Value to compare with; must be same type as the values in the array. If not a str,
+        it is casted to weld_type (allowing one to write e.g. native Python int).
+    operation : {+, -, *, /, pow}
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    obj_id, weld_obj = _create_weld_object(array)
+
+    scalar = _to_weld_literal(scalar, weld_type)
+
+    if operation == 'pow':
+        action = 'pow(n, {scalar})'.format(scalar=scalar)
+    else:
+        action = 'n {operation} {scalar}'.format(scalar=scalar,
+                                                 operation=operation)
+
+    weld_template = """result(
+    for({array}, 
+        appender[{type}], 
+        |b: appender[{type}], i: i64, n: {type}| 
+            merge(b, {action})
+    )
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=obj_id,
+                                              type=weld_type,
+                                              action=action)
 
     return weld_obj

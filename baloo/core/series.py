@@ -5,7 +5,7 @@ from .generic import BinaryOps
 from .indexes import RangeIndex, Index
 from .utils import infer_dtype, default_index, check_type, is_scalar, valid_int_slice
 from ..weld import LazyArrayResult, LazyScalarResult, weld_count, weld_compare, numpy_to_weld_type, weld_filter, \
-    weld_slice, weld_array_op, weld_invert, weld_tail
+    weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op
 
 
 class Series(LazyArrayResult, BinaryOps):
@@ -46,6 +46,10 @@ class Series(LazyArrayResult, BinaryOps):
     3
     >>> sr.values
     array([0, 1, 2])
+    >>> (sr + 2).evaluate().values
+    array([2, 3, 4])
+    >>> (sr - bl.Index(np.arange(3))).evaluate().values
+    array([0, 0, 0])
 
     """
 
@@ -137,19 +141,41 @@ class Series(LazyArrayResult, BinaryOps):
         else:
             raise TypeError('Can currently only compare with scalars')
 
+    @staticmethod
+    def _series_array_op(series, other, operation):
+        return Series(weld_array_op(series.weld_expr,
+                                    other.weld_expr,
+                                    series.weld_type,
+                                    operation),
+                      series.index,
+                      series.dtype,
+                      series.name)
+
     def _bitwise_operation(self, other, operation):
         if not isinstance(other, LazyArrayResult):
             raise TypeError('Expected another Series')
         elif self.dtype.char != '?' or other.dtype.char != '?':
             raise TypeError('Binary operations currently supported only on bool Series')
 
-        return Series(weld_array_op(self.weld_expr,
-                                    other.weld_expr,
-                                    self.weld_type,
-                                    operation),
-                      self.index,
-                      self.dtype,
-                      self.name)
+        return Series._series_array_op(self, other, operation)
+
+    @staticmethod
+    def _series_element_wise_op(series, other, operation):
+        return Series(weld_element_wise_op(series.weld_expr,
+                                           series.weld_type,
+                                           other,
+                                           operation),
+                      series.index,
+                      series.dtype,
+                      series.name)
+
+    def _element_wise_operation(self, other, operation):
+        if isinstance(other, LazyArrayResult):
+            return Series._series_array_op(self, other, operation)
+        elif is_scalar(other):
+            return Series._series_element_wise_op(self, other, operation)
+        else:
+            raise TypeError('Can only apply operation with scalar or Series')
 
     @staticmethod
     def _filter_series(series, item, index):

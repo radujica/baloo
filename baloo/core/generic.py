@@ -5,6 +5,7 @@ import abc
 
 class BinaryOps(abc.ABC):
     # not abstractmethod because implementation in DataFrame is ambiguous atm
+    # TODO: internally uses logical and/or atm, not bitwise, due to some LLVM bug (perhaps solved by now?)
     def _bitwise_operation(self, other, operation):
         raise NotImplementedError
 
@@ -35,3 +36,22 @@ class BinaryOps(abc.ABC):
 
     def __gt__(self, other):
         return self._comparison(other, '>')
+
+    @abc.abstractmethod
+    def _element_wise_operation(self, other, operation):
+        raise NotImplementedError
+
+    def __add__(self, other):
+        return self._element_wise_operation(other, '+')
+
+    def __sub__(self, other):
+        return self._element_wise_operation(other, '-')
+
+    def __mul__(self, other):
+        return self._element_wise_operation(other, '*')
+
+    def __truediv__(self, other):
+        return self._element_wise_operation(other, '/')
+
+    def __pow__(self, other):
+        return self._element_wise_operation(other, 'pow')
