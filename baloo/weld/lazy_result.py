@@ -8,7 +8,7 @@ class LazyResult(object):
 
     Attributes
     ----------
-    weld_expr : WeldObject or np.ndarray
+    weld_expr : WeldObject or numpy.ndarray
         Expression that needs to be evaluated.
     weld_type : WeldType
         Type of the output.
@@ -28,6 +28,9 @@ class LazyResult(object):
 
     def __str__(self):
         return str(self.weld_expr)
+
+    def is_raw(self):
+        return not isinstance(self.weld_expr, WeldObject)
 
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1,
                  apply_experimental_transforms=True):
