@@ -204,3 +204,21 @@ class TestDataFrame(object):
         expected = DataFrame(OrderedDict((('c', data[0]), ('b', data[1]))))
 
         assert_dataframe_equal(actual, expected)
+
+    def test_drop_single(self):
+        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
+        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]))))
+
+        actual = df.drop('b')
+        expected = DataFrame({'a': data[0]})
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_drop_multi(self):
+        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5)), np.arange(5)]
+        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]), ('c', data[2]))))
+
+        actual = df.drop(['a', 'c'])
+        expected = DataFrame({'b': data[1]})
+
+        assert_dataframe_equal(actual, expected)

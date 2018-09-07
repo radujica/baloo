@@ -63,6 +63,8 @@ class DataFrame(BinaryOps):
     [6. 1.]
     >>> df.rename({'a': 'c'})
     DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=['c', 'b'])
+    >>> df.drop('a')
+    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=['b'])
 
     """
     @staticmethod
@@ -428,6 +430,40 @@ class DataFrame(BinaryOps):
                 new_data[column_name] = self.data[column_name]
 
         return DataFrame(new_data, self.index)
+
+    def drop(self, columns):
+        """Drop 1 or more columns. Any column which does not exist in the DataFrame is skipped, i.e. not removed,
+        without raising an exception.
+
+        Unlike Pandas' drop, this is currently restricted to dropping columns.
+
+        Parameters
+        ----------
+        columns : str or list of str
+            Column name or list of column names to drop.
+
+        Returns
+        -------
+        DataFrame
+            A new DataFrame without these columns.
+
+        """
+        if isinstance(columns, str):
+            new_data = OrderedDict()
+            for column_name in self:
+                if column_name != columns:
+                    new_data[column_name] = self.data[column_name]
+
+            return DataFrame(new_data, self.index)
+        elif isinstance(columns, list):
+            new_data = OrderedDict()
+            for column_name in self:
+                if column_name not in columns:
+                    new_data[column_name] = self.data[column_name]
+
+            return DataFrame(new_data, self.index)
+        else:
+            raise TypeError('Expected columns as a str or a list of str')
 
     # TODO: currently assumes all columns are of the same type! problem for min, max, sum, prod
     def _aggregate_columns(self, func_name):
