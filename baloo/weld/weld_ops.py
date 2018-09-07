@@ -340,6 +340,11 @@ def weld_tail(array, length, n):
     obj_id, weld_obj = _create_weld_object(array)
     if isinstance(length, WeldObject):
         length = _get_weld_obj_id(weld_obj, length)
+        slice_start = '{} - {}L'.format(length, n)
+        slice_stop = '{}'.format(length)
+    else:
+        slice_start = '{}L - {}L'.format(length, n)
+        slice_stop = '{}L'.format(length)
 
     weld_template = """slice(
     {array},
@@ -348,8 +353,8 @@ def weld_tail(array, length, n):
 )"""
 
     weld_obj.weld_code = weld_template.format(array=obj_id,
-                                              slice_start='{}L - {}L'.format(length, n),
-                                              slice_stop='{}L'.format(length))
+                                              slice_start=slice_start,
+                                              slice_stop=slice_stop)
 
     return weld_obj
 

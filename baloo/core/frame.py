@@ -36,26 +36,26 @@ class DataFrame(BinaryOps):
     >>> df  # repr
     DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=['a', 'b'])
     >>> print(df.evaluate())  # omitting evaluate would trigger exception as index is now an unevaluated RangeIndex
-      Index    a    b
-    -------  ---  ---
-          0    5    0
-          1    6    1
-          2    7    2
+           a    b
+    ---  ---  ---
+      0    5    0
+      1    6    1
+      2    7    2
     >>> print(len(df))
     3
     >>> print((df * 2).evaluate())  # note that atm there is no type casting, i.e. if b was float32, it would fail
-      Index    a    b
-    -------  ---  ---
-          0   10    0
-          1   12    2
-          2   14    4
+           a    b
+    ---  ---  ---
+      0   10    0
+      1   12    2
+      2   14    4
     >>> sr = bl.Series(np.array([2] * 3))
     >>> print((df * sr).evaluate())
-      Index    a    b
-    -------  ---  ---
-          0   10    0
-          1   12    2
-          2   14    4
+           a    b
+    ---  ---  ---
+      0   10    0
+      1   12    2
+      2   14    4
     >>> print(df.min().evaluate())
     [5 0]
 
@@ -183,7 +183,12 @@ class DataFrame(BinaryOps):
 
         str_data = OrderedDict()
 
-        str_data[self.index.name] = DataFrame._shorten_data(self.index.values)
+        if self.index.name is None:
+            index_name = ' '
+        else:
+            index_name = self.index.name
+
+        str_data[index_name] = DataFrame._shorten_data(self.index.values)
 
         for column_name in self:
             str_data[column_name] = DataFrame._shorten_data(self[column_name].values)
@@ -225,10 +230,10 @@ class DataFrame(BinaryOps):
         >>> print(df['a'])
         [5 6 7]
         >>> print(df[df['a'] < 7].evaluate())
-          Index    a
-        -------  ---
-              0    5
-              1    6
+               a
+        ---  ---
+          0    5
+          1    6
 
         """
         if isinstance(item, str):
@@ -278,11 +283,11 @@ class DataFrame(BinaryOps):
         >>> df = bl.DataFrame(OrderedDict({'a': np.arange(5, 8)}))
         >>> df['b'] = np.arange(3)
         >>> print(df.evaluate())
-          Index    a    b
-        -------  ---  ---
-              0    5    0
-              1    6    1
-              2    7    2
+               a    b
+        ---  ---  ---
+          0    5    0
+          1    6    1
+          2    7    2
 
         """
         key = check_type(key, str)
@@ -335,10 +340,10 @@ class DataFrame(BinaryOps):
         --------
         >>> df = bl.DataFrame(OrderedDict((('a', np.arange(5, 8)), ('b', np.arange(3)))))
         >>> print(df.head(2).evaluate())
-          Index    a    b
-        -------  ---  ---
-              0    5    0
-              1    6    1
+               a    b
+        ---  ---  ---
+          0    5    0
+          1    6    1
 
         """
         return self[:n]
@@ -360,10 +365,10 @@ class DataFrame(BinaryOps):
         --------
         >>> df = bl.DataFrame(OrderedDict((('a', np.arange(5, 8)), ('b', np.arange(3)))))
         >>> print(df.tail(2).evaluate())
-          Index    a    b
-        -------  ---  ---
-              1    6    1
-              2    7    2
+               a    b
+        ---  ---  ---
+          1    6    1
+          2    7    2
 
         """
         if self._length is not None:

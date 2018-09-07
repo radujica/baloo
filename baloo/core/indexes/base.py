@@ -27,7 +27,7 @@ class Index(LazyArrayResult, BinaryOps):
     >>> import numpy as np
     >>> ind = bl.Index(np.array(['a', 'b', 'c'], dtype=np.dtype(np.bytes_)))
     >>> ind  # repr
-    Index(name=Index, dtype=|S1)
+    Index(name=None, dtype=|S1)
     >>> print(ind)  # str
     [b'a' b'b' b'c']
     >>> ind.values
@@ -55,17 +55,6 @@ class Index(LazyArrayResult, BinaryOps):
         self._length = len(data) if isinstance(data, np.ndarray) else None
 
         super(Index, self).__init__(data, numpy_to_weld_type(self.dtype))
-
-    @property
-    def name(self):
-        if self._name is None:
-            return self.__class__.__name__
-        else:
-            return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
 
     def __repr__(self):
         return "{}(name={}, dtype={})".format(self.__class__.__name__,
@@ -210,7 +199,7 @@ class Index(LazyArrayResult, BinaryOps):
         if self._length is not None:
             length = self._length
         else:
-            length = LazyScalarResult(weld_count(self.weld_expr), WeldLong())
+            length = LazyScalarResult(weld_count(self.weld_expr), WeldLong()).weld_expr
 
         return Index(weld_tail(self.weld_expr, length, n),
                      self.dtype,

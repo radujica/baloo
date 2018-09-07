@@ -39,7 +39,7 @@ class Series(LazyArrayResult, BinaryOps):
     >>> print(sr)  # str
     [0 1 2]
     >>> sr.index
-    Index(name=Index, dtype=int64)
+    Index(name=None, dtype=int64)
     >>> print(sr.index)
     [0 1 2]
     >>> len(sr)  # eager computation
