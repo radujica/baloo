@@ -22,7 +22,12 @@ def assert_series_equal(actual, expected, almost=None):
     assert_indexes_equal(actual.index, expected.index)
 
 
+# TODO: update with (more) fixtures for faster execution ~ all tests
 class TestSeries(object):
+    @pytest.fixture(scope='class')
+    def series_float(self):
+        return Series(np.array([1, 2, 3, 4, 5], dtype=np.float32))
+
     def test_evaluate(self):
         data = np.array([1, 2, 3], dtype=np.int64)
         actual = Series(data)
@@ -80,10 +85,8 @@ class TestSeries(object):
 
         assert_series_equal(actual, expected)
 
-    def test_slice(self):
-        sr = Series(np.array([1, 2, 3, 4, 5], dtype=np.float32))
-
-        actual = sr[1:3]
+    def test_slice(self, series_float):
+        actual = series_float[1:3]
         expected = Series(np.array([2, 3]), Index(np.array([1, 2])), np.dtype(np.float32))
 
         assert_series_equal(actual, expected)
@@ -108,34 +111,26 @@ class TestSeries(object):
 
         assert_series_equal(actual, expected)
 
-    def test_head(self):
-        sr = Series(np.array([1, 2, 3, 4, 5], dtype=np.float32))
-
-        actual = sr.head(2)
+    def test_head(self, series_float):
+        actual = series_float.head(2)
         expected = Series(np.array([1, 2]), RangeIndex(2), np.dtype(np.float32))
 
         assert_series_equal(actual, expected)
 
-    def test_tail(self):
-        sr = Series(np.array([1, 2, 3, 4, 5], dtype=np.float32))
-
-        actual = sr.tail(2)
+    def test_tail(self, series_float):
+        actual = series_float.tail(2)
         expected = Series(np.array([4, 5]), Index(np.array([3, 4])), np.dtype(np.float32))
 
         assert_series_equal(actual, expected)
 
-    def test_iloc_int(self):
-        sr = Series(np.array([1, 2, 3, 4, 5], dtype=np.float32))
-
-        actual = sr.iloc[2].evaluate()
+    def test_iloc_int(self, series_float):
+        actual = series_float.iloc[2].evaluate()
         expected = 3
 
         assert actual == expected
 
-    def test_iloc_slice(self):
-        sr = Series(np.array([1, 2, 3, 4, 5], dtype=np.float32))
-
-        actual = sr.iloc[1:3]
+    def test_iloc_slice(self, series_float):
+        actual = series_float.iloc[1:3]
         expected = Series(np.array([2, 3]), Index(np.array([1, 2])), np.dtype(np.float32))
 
         assert_series_equal(actual, expected)
