@@ -195,3 +195,12 @@ class TestDataFrame(object):
         actual = getattr(df, aggregation)()
 
         assert_series_equal(actual, expected, 5)
+
+    def test_rename(self):
+        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
+        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]))))
+
+        actual = df.rename({'a': 'c', 'd': 'nooo'})
+        expected = DataFrame(OrderedDict((('c', data[0]), ('b', data[1]))))
+
+        assert_dataframe_equal(actual, expected)

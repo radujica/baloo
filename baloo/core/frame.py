@@ -61,6 +61,8 @@ class DataFrame(BinaryOps):
     [5 0]
     >>> print(df.mean().evaluate())
     [6. 1.]
+    >>> df.rename({'a': 'c'})
+    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=['c', 'b'])
 
     """
     @staticmethod
@@ -401,6 +403,31 @@ class DataFrame(BinaryOps):
         data = np.array(list(self.data.keys()), dtype=np.bytes_)
 
         return Index(data, np.dtype(np.bytes_))
+
+    def rename(self, columns):
+        """Returns a new DataFrame with renamed columns.
+
+        Currently a simplified version of Pandas' rename.
+
+        Parameters
+        ----------
+        columns : dict
+            Old names to new names.
+
+        Returns
+        -------
+        DataFrame
+            With columns renamed, if found.
+
+        """
+        new_data = OrderedDict()
+        for column_name in self:
+            if column_name in columns.keys():
+                new_data[columns[column_name]] = self.data[column_name]
+            else:
+                new_data[column_name] = self.data[column_name]
+
+        return DataFrame(new_data, self.index)
 
     # TODO: currently assumes all columns are of the same type! problem for min, max, sum, prod
     def _aggregate_columns(self, func_name):
