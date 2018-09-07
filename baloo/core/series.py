@@ -1,12 +1,11 @@
 import numpy as np
-from weld.weldobject import WeldObject, WeldBit
 
 from .generic import BinaryOps
 from .indexes import RangeIndex, Index
 from .utils import infer_dtype, default_index, check_type, is_scalar, valid_int_slice
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
-    weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, weld_mean, \
-    weld_variance, weld_standard_deviation, LazyDoubleResult, LazyScalarResult
+    weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, LazyDoubleResult, LazyScalarResult, \
+    weld_mean, weld_variance, weld_standard_deviation, WeldBit, WeldObject
 
 
 class Series(LazyArrayResult, BinaryOps):

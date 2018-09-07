@@ -2,13 +2,13 @@ from collections import OrderedDict
 
 import numpy as np
 from tabulate import tabulate
-from weld.types import WeldBit
 
 from .generic import BinaryOps
 from .indexes import RangeIndex, Index
 from .series import Series
 from .utils import check_type, is_scalar, valid_int_slice
-from ..weld import weld_count, WeldLong, LazyArrayResult, LazyScalarResult, weld_combine_scalars, weld_to_numpy_dtype
+from ..weld import WeldLong, LazyArrayResult, LazyScalarResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
+    WeldBit
 
 
 # TODO: handle empty dataframe case throughout operations

@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..weld import weld_count, WeldObject
+from ..weld import WeldObject, weld_count
 
 
 def check_type(data, expected_types):

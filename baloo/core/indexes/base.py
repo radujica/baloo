@@ -1,10 +1,9 @@
 import numpy as np
-from weld.weldobject import WeldObject, WeldLong, WeldBit
 
 from ..generic import BinaryOps
 from ...core.utils import check_type, infer_dtype, valid_int_slice, is_scalar
-from ...weld import LazyArrayResult, LazyScalarResult, numpy_to_weld_type, weld_count, weld_filter, weld_slice, \
-    weld_compare, weld_tail, weld_array_op, weld_element_wise_op
+from ...weld import LazyArrayResult, LazyScalarResult, numpy_to_weld_type, weld_filter, weld_slice, \
+    weld_compare, weld_tail, weld_array_op, weld_element_wise_op, weld_count, WeldObject, WeldLong, WeldBit
 
 
 class Index(LazyArrayResult, BinaryOps):

@@ -1,9 +1,8 @@
 import numpy as np
-from weld.weldobject import WeldObject
 
 from .base import Index
 from ..utils import check_type
-from ...weld import weld_range
+from ...weld import weld_range, WeldObject
 
 
 class RangeIndex(Index):
