@@ -6,11 +6,15 @@ from baloo.weld import create_placeholder_weld_object
 from .indexes.utils import assert_indexes_equal
 
 
-def assert_series_equal(actual, expected):
+def assert_series_equal(actual, expected, almost=None):
     actual = actual.evaluate()
     expected = expected.evaluate()
 
-    np.testing.assert_array_equal(actual.values, expected.values)
+    # for checking floats
+    if almost is not None:
+        np.testing.assert_array_almost_equal(actual.values, expected.values, almost)
+    else:
+        np.testing.assert_array_equal(actual.values, expected.values)
     assert actual.dtype == expected.dtype
     # might seem redundant but testing the __len__ function
     assert len(actual) == len(expected)
@@ -172,12 +176,18 @@ class TestSeries(object):
         assert_series_equal(actual, expected)
 
     @pytest.mark.parametrize('aggregation, expected', [
-        ('min', 1.),
-        ('max', 5.)
+        ('min', 1),
+        ('max', 5),
+        ('sum', 14),
+        ('prod', 80),
+        ('count', 5),
+        ('mean', 2.8),
+        ('var', 2.7),
+        ('std', 1.6431677)
     ])
     def test_aggregation(self, aggregation, expected):
-        sr = Series(np.array([2, 2, 1, 4, 5], dtype=np.float32))
+        sr = Series(np.array([2, 2, 1, 4, 5], dtype=np.int32))
 
         actual = getattr(sr, aggregation)().evaluate()
 
-        assert actual == expected
+        np.testing.assert_almost_equal(actual, expected, 5)

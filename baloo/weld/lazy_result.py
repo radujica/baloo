@@ -84,6 +84,12 @@ class LazyArrayResult(LazyResult):
     def __init__(self, weld_expr, weld_type):
         super(LazyArrayResult, self).__init__(weld_expr, weld_type, 1)
 
+    def _aggregate(self, operation):
+        return LazyScalarResult(weld_aggregate(self.weld_expr,
+                                               self.weld_type,
+                                               operation),
+                                self.weld_type)
+
     def min(self):
         """Returns the minimum value.
 
@@ -93,10 +99,7 @@ class LazyArrayResult(LazyResult):
             The minimum value.
 
         """
-        return LazyScalarResult(weld_aggregate(self.weld_expr,
-                                               self.weld_type,
-                                               'min'),
-                                self.weld_type)
+        return self._aggregate('min')
 
     def max(self):
         """Returns the maximum value.
@@ -107,10 +110,10 @@ class LazyArrayResult(LazyResult):
             The maximum value.
 
         """
-        return LazyScalarResult(weld_aggregate(self.weld_expr,
-                                               self.weld_type,
-                                               'max'),
-                                self.weld_type)
+        return self._aggregate('max')
+
+    def _lazy_len(self):
+        return LazyLongResult(weld_count(self.weld_expr))
 
     def __len__(self):
         """Eagerly get the length.
@@ -125,11 +128,22 @@ class LazyArrayResult(LazyResult):
 
         """
         if self._length is None:
-            self._length = LazyScalarResult(weld_count(self.weld_expr), WeldLong()).evaluate()
+            self._length = self._lazy_len().evaluate()
 
         return self._length
 
 
+# TODO: could make all subclasses but seems rather unnecessary atm
 class LazyScalarResult(LazyResult):
     def __init__(self, weld_expr, weld_type):
         super(LazyScalarResult, self).__init__(weld_expr, weld_type, 0)
+
+
+class LazyLongResult(LazyScalarResult):
+    def __init__(self, weld_expr):
+        super(LazyScalarResult, self).__init__(weld_expr, WeldLong(), 0)
+
+
+class LazyDoubleResult(LazyScalarResult):
+    def __init__(self, weld_expr):
+        super(LazyScalarResult, self).__init__(weld_expr, WeldDouble(), 0)

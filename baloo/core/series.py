@@ -1,11 +1,12 @@
 import numpy as np
-from weld.weldobject import WeldObject, WeldLong, WeldBit
+from weld.weldobject import WeldObject, WeldBit
 
 from .generic import BinaryOps
 from .indexes import RangeIndex, Index
 from .utils import infer_dtype, default_index, check_type, is_scalar, valid_int_slice
-from ..weld import LazyArrayResult, LazyScalarResult, weld_count, weld_compare, numpy_to_weld_type, weld_filter, \
-    weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op
+from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
+    weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, weld_mean, \
+    weld_variance, weld_standard_deviation, LazyDoubleResult, LazyScalarResult
 
 
 class Series(LazyArrayResult, BinaryOps):
@@ -52,6 +53,8 @@ class Series(LazyArrayResult, BinaryOps):
     array([0, 0, 0])
     >>> print(sr.max().evaluate())
     2
+    >>> print(sr.var().evaluate())
+    1.0
 
     """
 
@@ -301,6 +304,24 @@ class Series(LazyArrayResult, BinaryOps):
         if self._length is not None:
             length = self._length
         else:
-            length = LazyScalarResult(weld_count(self.weld_expr), WeldLong())
+            length = self._lazy_len()
 
         return Series._tail_series(self, self.index.tail(n), length, n)
+
+    def sum(self):
+        return LazyScalarResult(self._aggregate('+').weld_expr, self.weld_type)
+
+    def prod(self):
+        return LazyScalarResult(self._aggregate('*').weld_expr, self.weld_type)
+
+    def count(self):
+        return self._lazy_len()
+
+    def mean(self):
+        return LazyDoubleResult(weld_mean(self.weld_expr, self.weld_type))
+
+    def var(self):
+        return LazyDoubleResult(weld_variance(self.weld_expr, self.weld_type))
+
+    def std(self):
+        return LazyDoubleResult(weld_standard_deviation(self.weld_expr, self.weld_type))

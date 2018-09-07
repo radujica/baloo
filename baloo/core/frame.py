@@ -8,9 +8,10 @@ from .generic import BinaryOps
 from .indexes import RangeIndex, Index
 from .series import Series
 from .utils import check_type, is_scalar, valid_int_slice
-from ..weld import weld_count, WeldLong, LazyArrayResult, LazyScalarResult, numpy_to_weld_type, weld_combine_scalars
+from ..weld import weld_count, WeldLong, LazyArrayResult, LazyScalarResult, weld_combine_scalars, weld_to_numpy_dtype
 
 
+# TODO: handle empty dataframe case throughout operations
 class DataFrame(BinaryOps):
     """ Weld-ed pandas DataFrame.
 
@@ -58,6 +59,8 @@ class DataFrame(BinaryOps):
       2   14    4
     >>> print(df.min().evaluate())
     [5 0]
+    >>> print(df.mean().evaluate())
+    [6. 1.]
 
     """
     @staticmethod
@@ -218,7 +221,6 @@ class DataFrame(BinaryOps):
         else:
             raise TypeError('Can only apply operation with scalar or Series')
 
-    # TODO: handle empty
     def __getitem__(self, item):
         """Select from the DataFrame.
 
@@ -400,19 +402,39 @@ class DataFrame(BinaryOps):
 
         return Index(data, np.dtype(np.bytes_))
 
-    # TODO: currently assumes all columns are of the same type! also that dataframe is not empty!
+    # TODO: currently assumes all columns are of the same type! problem for min, max, sum, prod
     def _aggregate_columns(self, func_name):
         new_index = self.keys()
 
-        aggregations = (getattr(self[column_name], func_name)().weld_expr for column_name in self)
-        # grab a random column's dtype
-        random_column_dtype = self[list(self.data.keys())[0]].dtype
-        new_data = weld_combine_scalars(aggregations, numpy_to_weld_type(random_column_dtype))
+        agg_lazy_results = [getattr(self[column_name], func_name)() for column_name in self]
 
-        return Series(new_data, new_index, random_column_dtype)
+        weld_type = agg_lazy_results[0].weld_type
+        dtype = weld_to_numpy_dtype(weld_type)
+
+        new_data = weld_combine_scalars((agg.weld_expr for agg in agg_lazy_results), weld_type)
+
+        return Series(new_data, new_index, dtype)
 
     def min(self):
         return self._aggregate_columns('min')
 
     def max(self):
-        return self._aggregate_columns('min')
+        return self._aggregate_columns('max')
+
+    def sum(self):
+        return self._aggregate_columns('sum')
+
+    def prod(self):
+        return self._aggregate_columns('prod')
+
+    def count(self):
+        return self._aggregate_columns('count')
+
+    def mean(self):
+        return self._aggregate_columns('mean')
+
+    def var(self):
+        return self._aggregate_columns('var')
+
+    def std(self):
+        return self._aggregate_columns('std')

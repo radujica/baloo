@@ -181,13 +181,17 @@ class TestDataFrame(object):
 
     @pytest.mark.parametrize('aggregation, expected', [
         ('min', Series(np.array([1, 2]), Index(np.array(['a', 'b'], dtype=np.bytes_)))),
-        ('max', Series(np.array([6, 7]), Index(np.array(['a', 'b'], dtype=np.bytes_))))
+        ('max', Series(np.array([5, 6]), Index(np.array(['a', 'b'], dtype=np.bytes_)))),
+        ('sum', Series(np.array([15, 20]), Index(np.array(['a', 'b'], dtype=np.bytes_)))),
+        ('prod', Series(np.array([120, 720]), Index(np.array(['a', 'b'], dtype=np.bytes_)))),
+        ('count', Series(np.array([5, 5]), Index(np.array(['a', 'b'], dtype=np.bytes_)))),
+        ('var', Series(np.array([2.5, 2.5]), Index(np.array(['a', 'b'], dtype=np.bytes_)))),
+        ('std', Series(np.array([1.581139, 1.581139]), Index(np.array(['a', 'b'], dtype=np.bytes_))))
     ])
     def test_aggregations(self, aggregation, expected):
         data = OrderedDict([('a', np.arange(1, 6)), ('b', np.arange(2, 7))])
         df = DataFrame(data)
 
         actual = getattr(df, aggregation)()
-        expected = Series(np.array([1, 2]), Index(np.array(['a', 'b'], dtype=np.bytes_)))
 
-        assert_series_equal(actual, expected)
+        assert_series_equal(actual, expected, 5)
