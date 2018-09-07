@@ -1,7 +1,7 @@
 from weld.weldobject import *
 
 from .convertors.utils import to_weld_vec
-from .weld_ops import weld_aggregate
+from .weld_ops import weld_aggregate, weld_count
 
 
 class LazyResult(object):
@@ -85,12 +85,12 @@ class LazyArrayResult(LazyResult):
         super(LazyArrayResult, self).__init__(weld_expr, weld_type, 1)
 
     def min(self):
-        """Returns the minimum value in the Series.
+        """Returns the minimum value.
 
         Returns
         -------
         LazyScalarResult
-            The minimum value in the Series.
+            The minimum value.
 
         """
         return LazyScalarResult(weld_aggregate(self.weld_expr,
@@ -99,18 +99,35 @@ class LazyArrayResult(LazyResult):
                                 self.weld_type)
 
     def max(self):
-        """Returns the maximum value in the Series.
+        """Returns the maximum value.
 
         Returns
         -------
         LazyScalarResult
-            The maximum value in the Series.
+            The maximum value.
 
         """
         return LazyScalarResult(weld_aggregate(self.weld_expr,
                                                self.weld_type,
                                                'max'),
                                 self.weld_type)
+
+    def __len__(self):
+        """Eagerly get the length.
+
+        Note that if the length is unknown (such as for a WeldObject stop),
+        it will be eagerly computed by evaluating the data!
+
+        Returns
+        -------
+        int
+            Length.
+
+        """
+        if self._length is None:
+            self._length = LazyScalarResult(weld_count(self.weld_expr), WeldLong()).evaluate()
+
+        return self._length
 
 
 class LazyScalarResult(LazyResult):

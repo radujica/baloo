@@ -109,23 +109,6 @@ class Series(LazyArrayResult, BinaryOps):
 
         return _ILocIndexer(self)
 
-    def __len__(self):
-        """Eagerly get the length of the Series.
-
-        Note that if the length is unknown (such as for a WeldObject),
-        it will be eagerly computed.
-
-        Returns
-        -------
-        int
-            Length of the Series.
-
-        """
-        if self._length is None:
-            self._length = LazyScalarResult(weld_count(self.weld_expr), WeldLong()).evaluate()
-
-        return self._length
-
     def __repr__(self):
         return "{}(name={}, dtype={})".format(self.__class__.__name__,
                                               self.name,

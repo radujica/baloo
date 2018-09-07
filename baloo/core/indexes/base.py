@@ -67,23 +67,6 @@ class Index(LazyArrayResult, BinaryOps):
     def name(self, value):
         self._name = value
 
-    def __len__(self):
-        """Eagerly get the length of the Index.
-
-        Note that if the length is unknown (such as for a WeldObject),
-        it will be eagerly computed.
-
-        Returns
-        -------
-        int
-            Length of the Index.
-
-        """
-        if self._length is not None:
-            return self._length
-        else:
-            return LazyScalarResult(weld_count(self.values), WeldLong()).evaluate()
-
     def __repr__(self):
         return "{}(name={}, dtype={})".format(self.__class__.__name__,
                                               self.name,

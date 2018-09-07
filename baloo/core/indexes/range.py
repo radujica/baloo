@@ -86,23 +86,6 @@ class RangeIndex(LazyArrayResult, BinaryOps):
     def name(self, value):
         self._name = value
 
-    def __len__(self):
-        """Eagerly get the length of the RangeIndex.
-
-        Note that if the length is unknown (such as for a WeldObject stop),
-        it will be eagerly computed.
-
-        Returns
-        -------
-        int
-            Length of the RangeIndex.
-
-        """
-        if self._length is None:
-            self._length = len(self.evaluate())
-
-        return self._length
-
     def __repr__(self):
         return "{}(start={}, stop={}, step={})".format(self.__class__.__name__,
                                                        self.start,
