@@ -235,6 +235,12 @@ class DataFrame(BinaryOps):
         >>> df = bl.DataFrame(OrderedDict({'a': np.arange(5, 8)}))
         >>> print(df['a'])
         [5 6 7]
+        >>> print(df[['a']].evaluate())
+               a
+        ---  ---
+          0    5
+          1    6
+          2    7
         >>> print(df[df['a'] < 7].evaluate())
                a
         ---  ---
@@ -251,6 +257,18 @@ class DataFrame(BinaryOps):
                 self.data[item] = value
 
             return value
+        elif isinstance(item, list):
+            new_data = OrderedDict()
+
+            for column_name in item:
+                if not isinstance(column_name, str):
+                    raise TypeError('Expected a column name as a string: {}'.format(column_name))
+                elif column_name not in self:
+                    raise KeyError('Column name not in DataFrame: {}'.format(str(column_name)))
+
+                new_data[column_name] = self.data[column_name]
+
+            return DataFrame(new_data, self.index)
         elif isinstance(item, LazyArrayResult):
             if item.weld_type != WeldBit():
                 raise ValueError('Expected LazyResult of bool data to filter values')
@@ -308,6 +326,9 @@ class DataFrame(BinaryOps):
     def __iter__(self):
         for column_name in self.data:
             yield column_name
+
+    def __contains__(self, item):
+        return item in self.data
 
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
         """Evaluates by creating a DataFrame containing evaluated data and index.

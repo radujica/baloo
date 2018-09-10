@@ -74,6 +74,21 @@ class TestDataFrame(object):
         with pytest.raises(KeyError):
             column = df['b']
 
+    def test_getitem_list(self):
+        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5)), np.arange(5)]
+        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]), ('c', data[2]))))
+
+        actual = df[['a', 'c']]
+        expected = DataFrame(OrderedDict((('a', data[0]), ('c', data[2]))))
+
+        assert_dataframe_equal(actual, expected)
+
+        with pytest.raises(TypeError):
+            result = df[[1]]
+
+        with pytest.raises(KeyError):
+            result = df[['d']]
+
     def test_comparison(self):
         df = DataFrame({'a': np.arange(0, 4),
                         'b': np.arange(4, 8)})
