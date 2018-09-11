@@ -5,7 +5,7 @@ from .indexes import RangeIndex, Index
 from .utils import infer_dtype, default_index, check_type, is_scalar, valid_int_slice
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
     weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, LazyDoubleResult, LazyScalarResult, \
-    weld_mean, weld_variance, weld_standard_deviation, WeldBit, WeldObject
+    weld_mean, weld_variance, weld_standard_deviation, WeldBit, WeldObject, weld_agg
 
 
 class Series(LazyArrayResult, BinaryOps):
@@ -54,6 +54,8 @@ class Series(LazyArrayResult, BinaryOps):
     2
     >>> print(sr.var().evaluate())
     1.0
+    >>> print(sr.agg(['min', 'std']).evaluate())
+    [0. 1.]
 
     """
 
@@ -324,3 +326,34 @@ class Series(LazyArrayResult, BinaryOps):
 
     def std(self):
         return LazyDoubleResult(weld_standard_deviation(self.weld_expr, self.weld_type))
+
+    @staticmethod
+    def _agg_series(series, aggregations, index):
+        return Series(weld_agg(series.weld_expr,
+                               series.weld_type,
+                               aggregations),
+                      index,
+                      np.dtype(np.float64))
+
+    # TODO: currently casting everything to float64 (even if already f64 ~ weld_aggs TODO);
+    # maybe for min/max/count/sum/prod/.. cast ints to int64 like pandas does
+    def agg(self, aggregations):
+        """Multiple aggregations optimized.
+
+        Parameters
+        ----------
+        aggregations : list of str
+            Which aggregations to perform.
+
+        Returns
+        -------
+        Series
+            Series with resulting aggregations.
+
+        """
+        if not isinstance(aggregations, list):
+            raise TypeError('Expected aggregations as a list')
+
+        new_index = Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_))
+
+        return Series._agg_series(self, aggregations, new_index)

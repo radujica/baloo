@@ -61,6 +61,11 @@ class DataFrame(BinaryOps):
     [5 0]
     >>> print(df.mean().evaluate())
     [6. 1.]
+    >>> print(df.agg(['var', 'count']).evaluate())
+             a    b
+    -----  ---  ---
+    var      1    1
+    count    3    3
     >>> df.rename({'a': 'c'})
     DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=['c', 'b'])
     >>> df.drop('a')
@@ -522,3 +527,26 @@ class DataFrame(BinaryOps):
 
     def std(self):
         return self._aggregate_columns('std')
+
+    def agg(self, aggregations):
+        """Multiple aggregations optimized.
+
+        Parameters
+        ----------
+        aggregations : list of str
+            Which aggregations to perform.
+
+        Returns
+        -------
+        DataFrame
+            DataFrame with the aggregations per column.
+
+        """
+        if not isinstance(aggregations, list):
+            raise TypeError('Expected aggregations as a list')
+
+        new_index = Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_))
+        new_data = OrderedDict((column_name, Series._agg_series(self[column_name], aggregations, new_index))
+                               for column_name in self)
+
+        return DataFrame(new_data, new_index)

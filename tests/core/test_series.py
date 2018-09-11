@@ -186,3 +186,13 @@ class TestSeries(object):
         actual = getattr(sr, aggregation)().evaluate()
 
         np.testing.assert_almost_equal(actual, expected, 5)
+
+    def test_agg(self, series_float):
+        aggregations = ['max', 'var', 'count', 'mean']
+        actual = series_float.agg(aggregations)
+
+        expected = Series(np.array([5, 2.5, 5, 3], dtype=np.float64),
+                          Index(np.array(aggregations, dtype=np.bytes_)),
+                          np.dtype(np.float64))
+
+        assert_series_equal(actual, expected)

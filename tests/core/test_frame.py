@@ -211,6 +211,19 @@ class TestDataFrame(object):
 
         assert_series_equal(actual, expected, 5)
 
+    def test_agg(self):
+        aggregations = ['max', 'var', 'count', 'mean']
+        df = DataFrame(OrderedDict((('a', np.arange(1, 6, dtype=np.float32)),
+                                    ('b', Series(np.arange(5))))))
+
+        actual = df.agg(aggregations)
+
+        expected = DataFrame(OrderedDict((('a', np.array([5, 2.5, 5, 3], dtype=np.float64)),
+                                          ('b', np.array([4, 2.5, 5, 2], dtype=np.float64)))),
+                             Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_)))
+
+        assert_dataframe_equal(actual, expected)
+
     def test_rename(self):
         data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
         df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]))))
