@@ -211,6 +211,15 @@ class TestDataFrame(object):
 
         assert_series_equal(actual, expected, 5)
 
+    def test_aggregation_diff_types(self):
+        data = OrderedDict([('a', np.arange(1, 6)), ('b', np.arange(2, 7, dtype=np.float32))])
+        df = DataFrame(data)
+
+        actual = df.min()
+        expected = Series(np.array([1, 2], dtype=np.float64), Index(np.array(['a', 'b'], dtype=np.bytes_)))
+
+        assert_series_equal(actual, expected)
+
     def test_agg(self):
         aggregations = ['max', 'var', 'count', 'mean']
         df = DataFrame(OrderedDict((('a', np.arange(1, 6, dtype=np.float32)),

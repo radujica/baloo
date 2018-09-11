@@ -8,7 +8,7 @@ from .indexes import RangeIndex, Index
 from .series import Series
 from .utils import check_type, is_scalar, valid_int_slice
 from ..weld import WeldLong, LazyArrayResult, LazyScalarResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
-    WeldBit
+    WeldBit, weld_cast_double, WeldDouble
 
 
 # TODO: handle empty dataframe case throughout operations
@@ -491,16 +491,24 @@ class DataFrame(BinaryOps):
         else:
             raise TypeError('Expected columns as a str or a list of str')
 
-    # TODO: currently assumes all columns are of the same type! problem for min, max, sum, prod
+    # TODO: currently if the data has multiple types, the results are casted to f64; perhaps be more flexible about it
+    # TODO: cast data to relevant 64-bit format pre-aggregation ~ i16, i32 -> i64, f32 -> f64
     def _aggregate_columns(self, func_name):
         new_index = self.keys()
 
         agg_lazy_results = [getattr(self[column_name], func_name)() for column_name in self]
 
-        weld_type = agg_lazy_results[0].weld_type
-        dtype = weld_to_numpy_dtype(weld_type)
+        # if there are multiple types, cast to float64
+        if len(set(self.dtypes.values)) > 1:
+            weld_type = WeldDouble()
+            dtype = weld_to_numpy_dtype(weld_type)
+            agg_lazy_results = (weld_cast_double(result.weld_expr) for result in agg_lazy_results)
+        else:
+            weld_type = agg_lazy_results[0].weld_type
+            dtype = weld_to_numpy_dtype(weld_type)
+            agg_lazy_results = (agg.weld_expr for agg in agg_lazy_results)
 
-        new_data = weld_combine_scalars((agg.weld_expr for agg in agg_lazy_results), weld_type)
+        new_data = weld_combine_scalars(agg_lazy_results, weld_type)
 
         return Series(new_data, new_index, dtype)
 
