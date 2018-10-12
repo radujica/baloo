@@ -10,6 +10,13 @@ def check_type(data, expected_types):
     return data
 
 
+def check_inner_types(data, expected_types):
+    for value in data:
+        check_type(value, expected_types)
+
+    return data
+
+
 def infer_dtype(data, arg_dtype):
     if arg_dtype is not None:
         return arg_dtype

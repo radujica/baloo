@@ -6,7 +6,7 @@ from tabulate import tabulate
 from .generic import BinaryOps
 from .indexes import RangeIndex, Index
 from .series import Series
-from .utils import check_type, is_scalar, valid_int_slice
+from .utils import check_type, is_scalar, valid_int_slice, check_inner_types
 from ..weld import WeldLong, LazyArrayResult, LazyScalarResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
     WeldBit, weld_cast_double, WeldDouble
 
@@ -83,13 +83,6 @@ class DataFrame(BinaryOps):
 
         return None
 
-    @staticmethod
-    def _check_data_types(data):
-        for value in data.values():
-            check_type(value, (np.ndarray, Series))
-
-        return data
-
     def _gather_dtypes(self):
         return OrderedDict(((k, v.dtype) for k, v in self.data.items()))
 
@@ -121,7 +114,8 @@ class DataFrame(BinaryOps):
             RangeIndex by default.
 
         """
-        self.data = DataFrame._check_data_types(data)
+        check_inner_types(check_type(data, dict).values(), (np.ndarray, Series))
+        self.data = data
         self._length = DataFrame._infer_length(data)
         self.index = DataFrame._default_dataframe_index(data, self._length) if index is None else index
 
