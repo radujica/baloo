@@ -3,11 +3,12 @@ from collections import OrderedDict
 import numpy as np
 from tabulate import tabulate
 
+from baloo.weld import LazyLongResult
 from .generic import BinaryOps
 from .indexes import RangeIndex, Index
 from .series import Series
-from .utils import check_type, is_scalar, valid_int_slice, check_inner_types
-from ..weld import WeldLong, LazyArrayResult, LazyScalarResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
+from .utils import check_type, is_scalar, valid_int_slice, check_inner_types, infer_length
+from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
     WeldBit, weld_cast_double, WeldDouble
 
 
@@ -72,17 +73,6 @@ class DataFrame(BinaryOps):
     DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=['b'])
 
     """
-    @staticmethod
-    def _infer_length(data):
-        for value in data.values():
-            if isinstance(value, np.ndarray):
-                return len(value)
-            # must be a Series then
-            elif isinstance(value.values, np.ndarray):
-                return len(value.values)
-
-        return None
-
     def _gather_dtypes(self):
         return OrderedDict(((k, v.dtype) for k, v in self.data.items()))
 
@@ -116,7 +106,7 @@ class DataFrame(BinaryOps):
         """
         check_inner_types(check_type(data, dict).values(), (np.ndarray, Series))
         self.data = data
-        self._length = DataFrame._infer_length(data)
+        self._length = infer_length(data.values())
         self.index = DataFrame._default_dataframe_index(data, self._length) if index is None else index
 
     @property
@@ -152,7 +142,7 @@ class DataFrame(BinaryOps):
             return self._length
         else:
             # first check again for raw data
-            length = DataFrame._infer_length(self.data)
+            length = infer_length(self.data.values())
             if length is None:
                 keys = list(self.data.keys())
 
@@ -401,11 +391,11 @@ class DataFrame(BinaryOps):
             length = self._length
         else:
             # first check again for raw data
-            length = DataFrame._infer_length(self.data)
+            length = infer_length(self.data.values())
             # if still None, get a random column and encode length
             if length is None:
                 keys = list(self.data.keys())
-                length = LazyScalarResult(weld_count(self[keys[0]]), WeldLong())
+                length = LazyLongResult(weld_count(self[keys[0]]))
 
         new_index = self.index.tail(n)
         new_data = OrderedDict((column_name, Series._tail_series(self[column_name], new_index, length, n))

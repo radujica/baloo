@@ -30,6 +30,17 @@ def infer_dtype(data, arg_dtype):
             raise ValueError('Unsupported data type: {}'.format(str(type(data))))
 
 
+def infer_length(data):
+    for value in data:
+        if isinstance(value, np.ndarray):
+            return len(value)
+        # must be a Series then
+        elif isinstance(value.values, np.ndarray):
+            return len(value.values)
+
+    return None
+
+
 def default_index(data):
     from .indexes import RangeIndex
 
