@@ -11,8 +11,9 @@ def check_type(data, expected_types):
 
 
 def check_inner_types(data, expected_types):
-    for value in data:
-        check_type(value, expected_types)
+    if data is not None:
+        for value in data:
+            check_type(value, expected_types)
 
     return data
 

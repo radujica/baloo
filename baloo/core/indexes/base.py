@@ -200,6 +200,7 @@ class Index(LazyArrayResult, BinaryOps):
         else:
             length = LazyScalarResult(weld_count(self.weld_expr), WeldLong()).weld_expr
 
+        # not computing slice here to use with __getitem__ because we'd need to use len which is eager
         return Index(weld_tail(self.weld_expr, length, n),
                      self.dtype,
                      self.name)
