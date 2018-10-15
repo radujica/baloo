@@ -7,7 +7,7 @@ from baloo.weld import LazyLongResult
 from .generic import BinaryOps
 from .indexes import RangeIndex, Index
 from .series import Series
-from .utils import check_type, is_scalar, valid_int_slice, check_inner_types, infer_length
+from .utils import check_type, is_scalar, valid_int_slice, check_inner_types, infer_length, shorten_data
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
     WeldBit, weld_cast_double, WeldDouble
 
@@ -162,16 +162,6 @@ class DataFrame(BinaryOps):
                                                  repr(self.index),
                                                  repr(list(self.data.keys())))
 
-    @staticmethod
-    def _shorten_data(data):
-        if not isinstance(data, np.ndarray):
-            raise TypeError('Cannot print unevaluated data. First call evaluate()')
-
-        if len(data) > 50:
-            return list(np.concatenate([data[:20], np.array(['...']), data[-20:]]))
-        else:
-            return data
-
     def __str__(self):
         # TODO: find a better way to handle empty dataframe; this assumes it's impossible to have data with index=None
         if self.index is None:
@@ -184,10 +174,10 @@ class DataFrame(BinaryOps):
         else:
             index_name = self.index.name
 
-        str_data[index_name] = DataFrame._shorten_data(self.index.values)
+        str_data[index_name] = shorten_data(self.index.values)
 
         for column_name in self:
-            str_data[column_name] = DataFrame._shorten_data(self[column_name].values)
+            str_data[column_name] = shorten_data(self[column_name].values)
 
         return tabulate(str_data, headers='keys')
 

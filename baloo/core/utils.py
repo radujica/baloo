@@ -63,3 +63,13 @@ def _is_int_or_none(value):
 
 def valid_int_slice(slice_):
     return all([_is_int_or_none(v) for v in [slice_.start, slice_.stop, slice_.step]])
+
+
+def shorten_data(data):
+    if not isinstance(data, np.ndarray):
+        raise TypeError('Cannot shorten unevaluated data. First call evaluate()')
+
+    if len(data) > 50:
+        return list(np.concatenate([data[:20], np.array(['...']), data[-20:]]))
+    else:
+        return data
