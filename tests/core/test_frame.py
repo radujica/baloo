@@ -3,7 +3,7 @@ from collections import OrderedDict
 import numpy as np
 import pytest
 
-from baloo import DataFrame, Index, Series, RangeIndex
+from baloo import DataFrame, Index, Series, RangeIndex, MultiIndex
 from baloo.weld import create_placeholder_weld_object
 from .indexes.utils import assert_indexes_equal
 from .test_series import assert_series_equal
@@ -253,9 +253,80 @@ class TestDataFrame(object):
 
     def test_drop_multi(self):
         data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5)), np.arange(5)]
-        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]), ('c', data[2]))))
+        df = DataFrame(OrderedDict((('a', data[0]),
+                                    ('b', data[1]),
+                                    ('c', data[2]))))
 
         actual = df.drop(['a', 'c'])
         expected = DataFrame({'b': data[1]})
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_reset_index(self):
+        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
+        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]))))
+
+        actual = df.reset_index()
+        expected = DataFrame(OrderedDict((('index', np.arange(5)),
+                                          ('a', data[0]),
+                                          ('b', data[1]))),
+                             RangeIndex(5))
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_reset_multi_index_unnamed(self):
+        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
+        index_data = [np.arange(5, 10), np.arange(10, 15)]
+        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]))),
+                       MultiIndex(index_data))
+
+        actual = df.reset_index()
+        expected = DataFrame(OrderedDict((('level_0', index_data[0]),
+                                          ('level_1', index_data[1]),
+                                          ('a', data[0]),
+                                          ('b', data[1]))),
+                             RangeIndex(5))
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_reset_multi_index_named(self):
+        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
+        index_data = [np.arange(5, 10), np.arange(10, 15)]
+        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]))),
+                       MultiIndex(index_data, ['i1', 'i2']))
+
+        actual = df.reset_index()
+        expected = DataFrame(OrderedDict((('i1', index_data[0]),
+                                          ('i2', index_data[1]),
+                                          ('a', data[0]),
+                                          ('b', data[1]))),
+                             RangeIndex(5))
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_set_index(self):
+        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5)), np.arange(5)]
+        df = DataFrame(OrderedDict((('a', data[0]),
+                                    ('b', data[1]),
+                                    ('c', data[2]))))
+
+        actual = df.set_index('b')
+        expected = DataFrame(OrderedDict((('a', data[0]),
+                                          ('c', data[2]))),
+                             Index(data[1].values, np.dtype(np.int64), 'b'))
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_set_multi_index(self):
+        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5)), np.arange(5)]
+        df = DataFrame(OrderedDict((('a', data[0]),
+                                    ('b', data[1]),
+                                    ('c', data[2]))))
+
+        actual = df.set_index(['b', 'c'])
+        expected = DataFrame({'a': data[0]},
+                             MultiIndex([Index(data[1].values, np.dtype(np.int64), 'b'),
+                                         Index(data[2], np.dtype(np.int64), 'c')],
+                                        ['b', 'c']))
 
         assert_dataframe_equal(actual, expected)

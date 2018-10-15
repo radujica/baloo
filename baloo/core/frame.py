@@ -5,7 +5,7 @@ from tabulate import tabulate
 
 from baloo.weld import LazyLongResult
 from .generic import BinaryOps
-from .indexes import RangeIndex, Index
+from .indexes import RangeIndex, Index, MultiIndex
 from .series import Series
 from .utils import check_type, is_scalar, valid_int_slice, check_inner_types, infer_length, shorten_data
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
@@ -71,11 +71,20 @@ class DataFrame(BinaryOps):
     DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=['c', 'b'])
     >>> df.drop('a')
     DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=['b'])
+    >>> print(df.reset_index().evaluate())
+           index    a    b
+    ---  -------  ---  ---
+      0        0    5    0
+      1        1    6    1
+      2        2    7    2
+    >>> print(df.set_index('b').evaluate())
+      b    a
+    ---  ---
+      0    5
+      1    6
+      2    7
 
     """
-    def _gather_dtypes(self):
-        return OrderedDict(((k, v.dtype) for k, v in self.data.items()))
-
     @staticmethod
     def _default_dataframe_index(data, length):
         from .indexes import RangeIndex
@@ -92,6 +101,14 @@ class DataFrame(BinaryOps):
 
                 return RangeIndex(weld_count(data[keys[0]]))
 
+    @staticmethod
+    def _preprocess_data(data):
+        for k, v in data.items():
+            if isinstance(v, Series):
+                v.name = k
+
+        return data
+
     def __init__(self, data, index=None):
         """Initialize a DataFrame object.
 
@@ -99,13 +116,13 @@ class DataFrame(BinaryOps):
         ----------
         data : dict
             Data as a dict of str -> np.ndarray or Series.
-        index : Index or RangeIndex, optional
+        index : Index or RangeIndex or MultiIndex, optional
             Index linked to the data; it is assumed to be of the same length.
             RangeIndex by default.
 
         """
         check_inner_types(check_type(data, dict).values(), (np.ndarray, Series))
-        self.data = data
+        self.data = DataFrame._preprocess_data(data)
         self._length = infer_length(data.values())
         self.index = DataFrame._default_dataframe_index(data, self._length) if index is None else index
 
@@ -121,10 +138,17 @@ class DataFrame(BinaryOps):
         """
         return self.data
 
+    def _gather_dtypes(self):
+        return OrderedDict(((k, v.dtype) for k, v in self.data.items()))
+
     @property
     def dtypes(self):
         return Series(np.array(list(self._gather_dtypes().values()), dtype=np.bytes_),
                       self.keys())
+
+    @property
+    def columns(self):
+        return Index(np.array(self.data.keys(), dtype=np.bytes_), np.dtype(np.bytes_))
 
     def __len__(self):
         """Eagerly get the length of the DataFrame.
@@ -532,3 +556,83 @@ class DataFrame(BinaryOps):
                                for column_name in self)
 
         return DataFrame(new_data, new_index)
+
+    def reset_index(self):
+        """Returns a new DataFrame with previous index as column(s).
+
+        Returns
+        -------
+        DataFrame
+            DataFrame with the new index a RangeIndex for its length.
+
+        """
+        new_columns = OrderedDict()
+
+        # assumes at least 1 column
+        length = self._length
+        if length is None:
+            length = infer_length(self.data.values())
+        if length is None:
+            a_column = self[list(self.data.keys())[-1]]
+            length = weld_count(a_column.values)
+        new_index = RangeIndex(0, length, 1)
+
+        # first add the index, then the other columns
+        old_index = self.index
+        if isinstance(old_index, Index):
+            old_index.name = 'index'
+            old_index = [old_index]
+
+        for i, column in enumerate(old_index):
+            if column.name is None:
+                new_name = 'level_' + str(i)
+            else:
+                new_name = column.name
+
+            new_columns[new_name] = Series(column.values, new_index, column.dtype, new_name)
+
+        # the data/columns
+        new_columns.update(self.data)
+
+        return DataFrame(new_columns, new_index)
+
+    def set_index(self, keys):
+        """Set the index of the DataFrame to be the keys columns.
+
+        Note this means that the old index is removed.
+
+        Parameters
+        ----------
+        keys : str or list of str
+            Which column(s) to set as the index.
+
+        Returns
+        -------
+        DataFrame
+            DataFrame with the index set to the column(s) corresponding to the keys.
+
+        """
+        if isinstance(keys, str):
+            column = self[keys]
+            new_index = Index(column.values, column.dtype, column.name)
+
+            new_data = dict(self.values)
+            del new_data[keys]
+
+            return DataFrame(new_data, new_index)
+        elif isinstance(keys, list):
+            check_inner_types(keys, str)
+
+            new_index_data = []
+            for column_name in keys:
+                column = self[column_name]
+                new_index_data.append(Index(column.values, column.dtype, column.name))
+            new_index = MultiIndex(new_index_data, keys)
+
+            new_data = dict(self.values)
+            for column_name in keys:
+                del new_data[column_name]
+
+            return DataFrame(new_data, new_index)
+        else:
+            raise TypeError('Expected a string or a list of strings for the columns to set as the new index')
