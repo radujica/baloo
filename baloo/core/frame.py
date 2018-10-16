@@ -320,9 +320,10 @@ class DataFrame(BinaryOps):
         key = check_type(key, str)
         value = check_type(value, (np.ndarray, Series))
 
-        # inherit the index, no join atm
+        # inherit the index, no join/alignment atm
         if isinstance(value, Series):
             value.index = self.index
+            value.name = key
 
         self.data[key] = value
 
