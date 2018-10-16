@@ -617,7 +617,7 @@ class DataFrame(BinaryOps):
             column = self[keys]
             new_index = Index(column.values, column.dtype, column.name)
 
-            new_data = dict(self.values)
+            new_data = OrderedDict(self.values)
             del new_data[keys]
 
             return DataFrame(new_data, new_index)
@@ -630,7 +630,7 @@ class DataFrame(BinaryOps):
                 new_index_data.append(Index(column.values, column.dtype, column.name))
             new_index = MultiIndex(new_index_data, keys)
 
-            new_data = dict(self.values)
+            new_data = OrderedDict(self.values)
             for column_name in keys:
                 del new_data[column_name]
 
