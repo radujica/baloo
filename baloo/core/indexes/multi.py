@@ -186,7 +186,7 @@ class MultiIndex(object):
 
             return MultiIndex([column[item] for column in self], self.names)
         else:
-            raise TypeError('Expected a bool lazyArrayResult or a int slice')
+            raise TypeError('Expected LazyArrayResult or slice')
 
     # this method shouldn't exist however is kept to avoid checking for MultiIndex in DataFrame.tail() ~ generalizing
     def tail(self, n=5):

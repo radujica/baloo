@@ -229,7 +229,7 @@ class DataFrame(BinaryOps):
 
             return DataFrame(new_data, self.index)
         else:
-            raise TypeError('Can only apply operation with scalar or Series')
+            raise TypeError('Can only apply operation with scalar or LazyArrayResult')
 
     def __getitem__(self, item):
         """Select from the DataFrame.
@@ -291,7 +291,7 @@ class DataFrame(BinaryOps):
 
             return DataFrame(new_data, new_index)
         else:
-            raise TypeError('Expected a column name as a string')
+            raise TypeError('Expected a column name, list of columns, LazyArrayResult, or a slice')
 
     def __setitem__(self, key, value):
         """Add/update DataFrame column.
@@ -563,7 +563,7 @@ class DataFrame(BinaryOps):
         Returns
         -------
         DataFrame
-            DataFrame with the new index a RangeIndex for its length.
+            DataFrame with the new index a RangeIndex of its length.
 
         """
         new_columns = OrderedDict()
@@ -635,4 +635,4 @@ class DataFrame(BinaryOps):
 
             return DataFrame(new_data, new_index)
         else:
-            raise TypeError('Expected a string or a list of strings for the columns to set as the new index')
+            raise TypeError('Expected a string or a list of strings')

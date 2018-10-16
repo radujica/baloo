@@ -214,7 +214,7 @@ class Series(LazyArrayResult, BinaryOps):
 
             return Series._slice_series(self, item, self.index[item])
         else:
-            raise TypeError('Expected a LazyResult or a slice')
+            raise TypeError('Expected a LazyArrayResult or a slice')
 
     def __invert__(self):
         check_weld_bit_array(self)
@@ -301,7 +301,7 @@ class Series(LazyArrayResult, BinaryOps):
         if self._length is not None:
             length = self._length
         else:
-            length = self._lazy_len()
+            length = self._lazy_len().weld_expr
 
         return Series._tail_series(self, self.index.tail(n), length, n)
 

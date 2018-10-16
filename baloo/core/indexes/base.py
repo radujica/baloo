@@ -3,7 +3,7 @@ import numpy as np
 from ..generic import BinaryOps
 from ...core.utils import check_type, infer_dtype, is_scalar, check_weld_bit_array, check_valid_int_slice
 from ...weld import LazyArrayResult, numpy_to_weld_type, weld_filter, weld_slice, \
-    weld_compare, weld_tail, weld_array_op, weld_element_wise_op, weld_count, WeldObject, LazyLongResult
+    weld_compare, weld_tail, weld_array_op, weld_element_wise_op, WeldObject
 
 
 class Index(LazyArrayResult, BinaryOps):
@@ -100,7 +100,7 @@ class Index(LazyArrayResult, BinaryOps):
                          self.dtype,
                          self.name)
         else:
-            raise TypeError('Can only apply operation with scalar or Series')
+            raise TypeError('Can only apply operation with scalar or LazyArrayResult')
 
     def __getitem__(self, item):
         """Select from the Index. Currently used internally through DataFrame and Series.
@@ -133,7 +133,7 @@ class Index(LazyArrayResult, BinaryOps):
                          self.dtype,
                          self.name)
         else:
-            raise TypeError('Expected a LazyResult or a slice')
+            raise TypeError('Expected LazyArrayResult or slice')
 
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
         """Evaluates by creating an Index containing evaluated data.
@@ -195,7 +195,7 @@ class Index(LazyArrayResult, BinaryOps):
         if self._length is not None:
             length = self._length
         else:
-            length = LazyLongResult(weld_count(self.weld_expr)).weld_expr
+            length = self._lazy_len().weld_expr
 
         # not computing slice here to use with __getitem__ because we'd need to use len which is eager
         return Index(weld_tail(self.weld_expr, length, n),
