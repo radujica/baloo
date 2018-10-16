@@ -36,7 +36,7 @@ class DataFrame(BinaryOps):
     >>> df.index  # repr
     RangeIndex(start=0, stop=3, step=1)
     >>> df  # repr
-    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=['a', 'b'])
+    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=[a: int64, b: int64])
     >>> print(df.evaluate())  # omitting evaluate would trigger exception as index is now an unevaluated RangeIndex
            a    b
     ---  ---  ---
@@ -68,9 +68,9 @@ class DataFrame(BinaryOps):
     var      1    1
     count    3    3
     >>> df.rename({'a': 'c'})
-    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=['c', 'b'])
+    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=[c: int64, b: int64])
     >>> df.drop('a')
-    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=['b'])
+    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=[b: int64])
     >>> print(df.reset_index().evaluate())
            index    a    b
     ---  -------  ---  ---
@@ -182,9 +182,11 @@ class DataFrame(BinaryOps):
             return length
 
     def __repr__(self):
+        columns = '[' + ', '.join(['{}: {}'.format(k, v) for k, v in self._gather_dtypes().items()]) + ']'
+
         return "{}(index={}, columns={})".format(self.__class__.__name__,
                                                  repr(self.index),
-                                                 repr(list(self.data.keys())))
+                                                 columns)
 
     def __str__(self):
         # TODO: find a better way to handle empty dataframe; this assumes it's impossible to have data with index=None
