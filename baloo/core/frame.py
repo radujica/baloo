@@ -7,9 +7,10 @@ from baloo.weld import LazyLongResult
 from .generic import BinaryOps
 from .indexes import RangeIndex, Index, MultiIndex
 from .series import Series
-from .utils import check_type, is_scalar, valid_int_slice, check_inner_types, infer_length, shorten_data
+from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
+    check_weld_bit_array, check_valid_int_slice
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
-    WeldBit, weld_cast_double, WeldDouble
+    weld_cast_double, WeldDouble
 
 
 # TODO: handle empty dataframe case throughout operations
@@ -263,20 +264,18 @@ class DataFrame(BinaryOps):
 
             return value
         elif isinstance(item, list):
+            check_inner_types(item, str)
             new_data = OrderedDict()
 
             for column_name in item:
-                if not isinstance(column_name, str):
-                    raise TypeError('Expected a column name as a string: {}'.format(column_name))
-                elif column_name not in self:
+                if column_name not in self:
                     raise KeyError('Column name not in DataFrame: {}'.format(str(column_name)))
 
                 new_data[column_name] = self.data[column_name]
 
             return DataFrame(new_data, self.index)
         elif isinstance(item, LazyArrayResult):
-            if item.weld_type != WeldBit():
-                raise ValueError('Expected LazyResult of bool data to filter values')
+            check_weld_bit_array(item)
 
             new_index = self.index[item]
             new_data = OrderedDict((column_name, Series._filter_series(self[column_name], item, new_index))
@@ -284,8 +283,7 @@ class DataFrame(BinaryOps):
 
             return DataFrame(new_data, new_index)
         elif isinstance(item, slice):
-            if not valid_int_slice(item):
-                raise ValueError('Can currently only slice with integers')
+            check_valid_int_slice(item)
 
             new_index = self.index[item]
             new_data = OrderedDict((column_name, Series._slice_series(self[column_name], item, new_index))
@@ -551,8 +549,7 @@ class DataFrame(BinaryOps):
             DataFrame with the aggregations per column.
 
         """
-        if not isinstance(aggregations, list):
-            raise TypeError('Expected aggregations as a list')
+        check_type(aggregations, list)
 
         new_index = Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_))
         new_data = OrderedDict((column_name, Series._agg_series(self[column_name], aggregations, new_index))

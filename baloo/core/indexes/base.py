@@ -1,9 +1,9 @@
 import numpy as np
 
 from ..generic import BinaryOps
-from ...core.utils import check_type, infer_dtype, valid_int_slice, is_scalar
-from ...weld import LazyArrayResult, LazyScalarResult, numpy_to_weld_type, weld_filter, weld_slice, \
-    weld_compare, weld_tail, weld_array_op, weld_element_wise_op, weld_count, WeldObject, WeldLong, WeldBit
+from ...core.utils import check_type, infer_dtype, is_scalar, check_weld_bit_array, check_valid_int_slice
+from ...weld import LazyArrayResult, numpy_to_weld_type, weld_filter, weld_slice, \
+    weld_compare, weld_tail, weld_array_op, weld_element_wise_op, weld_count, WeldObject, LazyLongResult
 
 
 class Index(LazyArrayResult, BinaryOps):
@@ -48,7 +48,7 @@ class Index(LazyArrayResult, BinaryOps):
             Name of the Index.
 
         """
-        data = check_type(data, (np.ndarray, WeldObject))
+        check_type(data, (np.ndarray, WeldObject))
         self.dtype = infer_dtype(data, check_type(dtype, np.dtype))
         self.name = check_type(name, str)
         self._length = len(data) if isinstance(data, np.ndarray) else None
@@ -72,10 +72,9 @@ class Index(LazyArrayResult, BinaryOps):
             raise TypeError('Can currently only compare with scalars')
 
     def _bitwise_operation(self, other, operation):
-        if not isinstance(other, LazyArrayResult):
-            raise TypeError('Expected another Series')
-        elif self.dtype.char != '?' or other.dtype.char != '?':
-            raise TypeError('Binary operations currently supported only on bool Series')
+        check_type(other, LazyArrayResult)
+        check_weld_bit_array(other)
+        check_weld_bit_array(self)
 
         return Index(weld_array_op(self.weld_expr,
                                    other.weld_expr,
@@ -118,8 +117,7 @@ class Index(LazyArrayResult, BinaryOps):
 
         """
         if isinstance(item, LazyArrayResult):
-            if item.weld_type != WeldBit():
-                raise ValueError('Expected LazyResult of bool data to filter values')
+            check_weld_bit_array(item)
 
             return Index(weld_filter(self.weld_expr,
                                      self.weld_type,
@@ -127,8 +125,7 @@ class Index(LazyArrayResult, BinaryOps):
                          self.dtype,
                          self.name)
         elif isinstance(item, slice):
-            if not valid_int_slice(item):
-                raise ValueError('Can currently only slice with integers')
+            check_valid_int_slice(item)
 
             return Index(weld_slice(self.weld_expr,
                                     self.weld_type,
@@ -198,7 +195,7 @@ class Index(LazyArrayResult, BinaryOps):
         if self._length is not None:
             length = self._length
         else:
-            length = LazyScalarResult(weld_count(self.weld_expr), WeldLong()).weld_expr
+            length = LazyLongResult(weld_count(self.weld_expr)).weld_expr
 
         # not computing slice here to use with __getitem__ because we'd need to use len which is eager
         return Index(weld_tail(self.weld_expr, length, n),

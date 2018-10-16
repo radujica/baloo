@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..weld import WeldObject, weld_count
+from ..weld import WeldObject, weld_count, WeldBit
 
 
 def check_type(data, expected_types):
@@ -16,6 +16,10 @@ def check_inner_types(data, expected_types):
             check_type(value, expected_types)
 
     return data
+
+
+def check_weld_bit_array(data):
+    return check_type(data.weld_type, WeldBit)
 
 
 def infer_dtype(data, arg_dtype):
@@ -62,8 +66,13 @@ def _is_int_or_none(value):
     return value is None or isinstance(value, int)
 
 
-def valid_int_slice(slice_):
+def _valid_int_slice(slice_):
     return all([_is_int_or_none(v) for v in [slice_.start, slice_.stop, slice_.step]])
+
+
+def check_valid_int_slice(slice_):
+    if not _valid_int_slice(slice_):
+        raise ValueError('Can currently only slice with integers')
 
 
 def shorten_data(data):

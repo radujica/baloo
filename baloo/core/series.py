@@ -2,10 +2,10 @@ import numpy as np
 
 from .generic import BinaryOps
 from .indexes import RangeIndex, Index, MultiIndex
-from .utils import infer_dtype, default_index, check_type, is_scalar, valid_int_slice
+from .utils import infer_dtype, default_index, check_type, is_scalar, check_valid_int_slice, check_weld_bit_array
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
     weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, LazyDoubleResult, LazyScalarResult, \
-    weld_mean, weld_variance, weld_standard_deviation, WeldBit, WeldObject, weld_agg
+    weld_mean, weld_variance, weld_standard_deviation, WeldObject, weld_agg
 
 
 class Series(LazyArrayResult, BinaryOps):
@@ -76,7 +76,7 @@ class Series(LazyArrayResult, BinaryOps):
             Name of the Series.
 
         """
-        data = check_type(data, (np.ndarray, WeldObject))
+        check_type(data, (np.ndarray, WeldObject))
         self.index = default_index(data) if index is None else check_type(index, (RangeIndex, Index, MultiIndex))
         self.dtype = infer_dtype(data, check_type(dtype, np.dtype))
         self.name = check_type(name, str)
@@ -141,10 +141,9 @@ class Series(LazyArrayResult, BinaryOps):
                       series.name)
 
     def _bitwise_operation(self, other, operation):
-        if not isinstance(other, LazyArrayResult):
-            raise TypeError('Expected another Series')
-        elif self.dtype.char != '?' or other.dtype.char != '?':
-            raise TypeError('Binary operations currently supported only on bool Series')
+        check_type(other, LazyArrayResult)
+        check_weld_bit_array(other)
+        check_weld_bit_array(self)
 
         return Series._series_array_op(self, other, operation)
 
@@ -207,21 +206,18 @@ class Series(LazyArrayResult, BinaryOps):
 
         """
         if isinstance(item, LazyArrayResult):
-            if item.weld_type != WeldBit():
-                raise ValueError('Expected LazyResult of bool data to filter values')
+            check_weld_bit_array(item)
 
             return Series._filter_series(self, item, self.index[item])
         elif isinstance(item, slice):
-            if not valid_int_slice(item):
-                raise ValueError('Can currently only slice with integers')
+            check_valid_int_slice(item)
 
             return Series._slice_series(self, item, self.index[item])
         else:
             raise TypeError('Expected a LazyResult or a slice')
 
     def __invert__(self):
-        if self.weld_type != WeldBit():
-            raise TypeError('Can only invert bool Series')
+        check_weld_bit_array(self)
 
         return Series(weld_invert(self.weld_expr),
                       self.index,
@@ -351,8 +347,7 @@ class Series(LazyArrayResult, BinaryOps):
             Series with resulting aggregations.
 
         """
-        if not isinstance(aggregations, list):
-            raise TypeError('Expected aggregations as a list')
+        check_type(aggregations, list)
 
         new_index = Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_))
 

@@ -4,8 +4,9 @@ import numpy as np
 from tabulate import tabulate
 
 from .base import Index
-from ..utils import check_inner_types, check_type, infer_length, shorten_data, valid_int_slice
-from ...weld import LazyArrayResult, WeldBit
+from ..utils import check_inner_types, check_type, infer_length, shorten_data, check_weld_bit_array, \
+    check_valid_int_slice
+from ...weld import LazyArrayResult
 
 
 class MultiIndex(object):
@@ -177,13 +178,11 @@ class MultiIndex(object):
 
         """
         if isinstance(item, LazyArrayResult):
-            if item.weld_type != WeldBit():
-                raise ValueError('Expected LazyArrayResult of bool data to filter values')
+            check_weld_bit_array(item)
 
             return MultiIndex([column[item] for column in self], self.names)
         elif isinstance(item, slice):
-            if not valid_int_slice(item):
-                raise ValueError('Can currently only slice with integers')
+            check_valid_int_slice(item)
 
             return MultiIndex([column[item] for column in self], self.names)
         else:

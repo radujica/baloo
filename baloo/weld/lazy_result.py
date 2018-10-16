@@ -1,7 +1,7 @@
 from weld.weldobject import *
 
-from .weld_aggs import weld_count, weld_aggregate
 from .convertors.utils import to_weld_vec
+from .weld_aggs import weld_count, weld_aggregate
 
 
 class LazyResult(object):
