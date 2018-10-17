@@ -1,7 +1,7 @@
 from weld.weldobject import *
 
+from .cache import Cache
 from .convertors.utils import to_weld_vec
-from .weld_aggs import weld_count, weld_aggregate
 
 
 class LazyResult(object):
@@ -17,6 +17,8 @@ class LazyResult(object):
         Dimensionality of the output.
 
     """
+    _cache = Cache()
+
     def __init__(self, weld_expr, weld_type, ndim):
         self.weld_expr = weld_expr
         self.weld_type = weld_type
@@ -69,68 +71,25 @@ class LazyResult(object):
 
         """
         if isinstance(self.weld_expr, WeldObject):
-            return self.weld_expr.evaluate(to_weld_vec(self.weld_type,
-                                                       self.ndim),
-                                           verbose,
-                                           decode,
-                                           passes,
-                                           num_threads,
-                                           apply_experimental_transforms)
+            old_context = dict(self.weld_expr.context)
+
+            for key in self.weld_expr.context.keys():
+                if LazyResult._cache.contains(key):
+                    self.weld_expr.context[key] = LazyResult._cache.get(key)
+
+            evaluated = self.weld_expr.evaluate(to_weld_vec(self.weld_type,
+                                                            self.ndim),
+                                                verbose,
+                                                decode,
+                                                passes,
+                                                num_threads,
+                                                apply_experimental_transforms)
+
+            self.weld_expr.context = old_context
+
+            return evaluated
         else:
             return self.weld_expr
-
-
-class LazyArrayResult(LazyResult):
-    def __init__(self, weld_expr, weld_type):
-        super(LazyArrayResult, self).__init__(weld_expr, weld_type, 1)
-
-    def _aggregate(self, operation):
-        return LazyScalarResult(weld_aggregate(self.weld_expr,
-                                               self.weld_type,
-                                               operation),
-                                self.weld_type)
-
-    def min(self):
-        """Returns the minimum value.
-
-        Returns
-        -------
-        LazyScalarResult
-            The minimum value.
-
-        """
-        return self._aggregate('min')
-
-    def max(self):
-        """Returns the maximum value.
-
-        Returns
-        -------
-        LazyScalarResult
-            The maximum value.
-
-        """
-        return self._aggregate('max')
-
-    def _lazy_len(self):
-        return LazyLongResult(weld_count(self.weld_expr))
-
-    def __len__(self):
-        """Eagerly get the length.
-
-        Note that if the length is unknown (such as for a WeldObject stop),
-        it will be eagerly computed by evaluating the data!
-
-        Returns
-        -------
-        int
-            Length.
-
-        """
-        if self._length is None:
-            self._length = self._lazy_len().evaluate()
-
-        return self._length
 
 
 # TODO: could make all subclasses but seems rather unnecessary atm
@@ -147,3 +106,17 @@ class LazyLongResult(LazyScalarResult):
 class LazyDoubleResult(LazyScalarResult):
     def __init__(self, weld_expr):
         super(LazyScalarResult, self).__init__(weld_expr, WeldDouble(), 0)
+
+
+class LazyStructResult(LazyResult):
+    # weld_types should be a list of the Weld types in the struct
+    def __init__(self, weld_expr, weld_types):
+        super(LazyStructResult, self).__init__(weld_expr, WeldStruct(weld_types), 0)
+
+
+class LazyStructOfVecResult(LazyStructResult):
+    # weld_types should be a list of the Weld types in the struct
+    def __init__(self, weld_expr, weld_types):
+        weld_vec_types = [WeldVec(weld_type) for weld_type in weld_types]
+
+        super(LazyStructOfVecResult, self).__init__(weld_expr, weld_vec_types)
