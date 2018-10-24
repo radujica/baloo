@@ -1,26 +1,17 @@
 import abc
 
 
-# TODO: implement a flush-like method which clears both this cache and the values it added to WeldObject._registry?
-# garbage collection should then kick in and remove intermediate results from memory; though probably need to implement
-# `del df/sr/etc` to make this possible
-# TODO: this functionality would be nice if it could be a 'cache()' operator which is detected in weld_code at evaluate;
-# at the Python side (not weld/rust) since caching violates the Weld stateless principle...
+# TODO 1: implement a flush-like method which clears both this cache and the values it added to WeldObject._registry?
+# TODO garbage collection should then kick in and remove intermediate results from memory;
+# TODO though probably need to implement `del df/sr/etc` to make this possible
+# TODO 2: would be nice if there could be a 'cache()' operator which is detected in weld_code at evaluate;
+# TODO though at the Python side (not weld/rust) since caching violates the Weld stateless principle...
+# TODO: re-using the WeldObject.dependencies could be more natural instead of fake inputs
 class Cache(object):
-    # TODO: rewrite these
-    """workflow:
-    1. cache intermediate result -> returns it's placeholder name; adds placeholder -> intermresult in _interm_result : cache_intermediate_result
-    2. use placeholder to create fake inputs -> returns fake_input; no sideeffect : create_fake_array_input
-    3. use fake inputs as input array to weld objects -> weld_input_name obtained for the fake input;
-        fake input is implicitly added to WeldObject._registry[fake_input] -> weld_input_name : WeldObject(); weld_obj.update(fake_input)
-    4. link this weld_input_name to the fake input for evaluate to find; adds weld_input_name -> fake input to _cache : cache_fake_input
-    5. use the weld_input_name in the weld_code as desired
+    """Cache for intermediate results. Acts as a singleton.
 
-
-    Cache for intermediate results. Acts as a singleton.
-
-    The idea is to track weld_input_ids -> IntermediateResults for intermediate data which only gets computed
-    upon evaluation. For this to work, we treat intermediate results as new inputs to Weld. This means that
+    The idea is to track weld_input_ids -> intermediate results for intermediate data which only gets computed
+    upon evaluation. For this to work, we treat intermediate results as new 'fake' inputs to Weld. This means that
     intermediate results can now exist within WeldObject.context as lazy inputs/data represented with a placeholder.
 
     For example, a context could be: {'_inp0': np.array([1, 2, 3]), '_inp1': 'inter_result_join'}.
@@ -28,7 +19,8 @@ class Cache(object):
     Typically, the cache shall be used to cache an entire DataFrame which would actually be tuples of columns.
     To be able to lazily encode this into future WeldObjects which would hence depend on it,
     we either need to be able to encode a tuple, or provide further functionality in the Cache. Second option is
-    chosen by having the IntermediateResult contain a list of dependencies on other intermediate results.
+    chosen by having the _FakeWeldInputs contain a dependency on another intermediate results, here the entire
+    DataFrame as a tuple of columns.
 
     The placeholder is merely used to be informative to the user. On evaluation, the cache is checked for
     intermediate results and if found, the context is replaced with the actual, i.e. raw, data. If it's the first
@@ -45,6 +37,19 @@ class Cache(object):
     ~ future work)
 
     Currently contains a few sanity checks, aka asserts. Could remove later.
+
+    tl;dr How to use:
+
+    1. Cache.cache_intermediate_result(LazyResult) => returns placeholder; cache this LazyResult.
+        Internally, add placeholder -> LazyResult to _intermediate_results.
+    2. Cache.create_fake_array_input(placeholder, index=Optional) => returns a _FakeWeldInput.
+    3. WeldObject().update(_FakeWeldInput) => returns weld id for this fake input as _inpX (raw data);
+        _FakeWeldInput acts as a regular input to any further WeldObjects. Through update, the
+        input internally becomes registered in WeldObject._registry as _FakeWeldInput -> _inpX
+    4. Cache.cache_fake_input(id, _FakeWeldInput); the _FakeWeldInput (corresponding to a _inpX) is now cached
+        and can be seen by LazyResult.evaluate(). Internally, add _inpX -> _FakeWeldInput to _cache. On evaluate,
+        LazyResult replaced the placeholder in the WeldObject.context with the actual data, evaluating if necessary.
+    5. Use the weld id in weld_code as desired.
 
     """
     _counter = 0
@@ -150,6 +155,7 @@ class Cache(object):
         if index is None:
             fake_weld_input = _FakeArray(dependency, name)
         else:
+            assert isinstance(index, int)
             fake_weld_input = _FakeStructMember(dependency, index, name)
 
         return fake_weld_input
@@ -186,19 +192,29 @@ class Cache(object):
             The corresponding data.
 
         """
-        cls._cache[key] = cls._cache[key].retrieve()
+        assert isinstance(key, str)
 
-        return cls._cache[key]
+        data = cls._cache[key]
+        if isinstance(data, _FakeWeldInput):
+            data = data.retrieve()
+
+        cls._cache[key] = data
+
+        return data
 
 
 class _FakeWeldInput(abc.ABC):
     def __init__(self, dependency, readable_name):
+        assert isinstance(dependency, str)
+        assert isinstance(readable_name, str)
+
         self.dependency = dependency
         self.name = readable_name
 
     def __repr__(self):
         return '_FakeWeldInput(dependency={}, name={})'.format(self.dependency, self.name)
 
+    # the str representation is added to WeldObject._registry
     def __str__(self):
         return self.name
 
@@ -225,6 +241,9 @@ class _FakeStructMember(_FakeWeldInput):
         self.index = index
 
         super(_FakeStructMember, self).__init__(dependency, readable_name)
+
+    def __repr__(self):
+        return '_FakeStructMember(dependency={}, index={}, name={})'.format(self.dependency, self.index, self.name)
 
     def retrieve(self):
         return self._evaluate_dependency()[self.index]

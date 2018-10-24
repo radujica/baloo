@@ -1,4 +1,4 @@
-from .weld_utils import _create_weld_object, _get_weld_obj_id
+from .weld_utils import create_weld_object, get_weld_obj_id
 
 # TODO: don't cast to f64 if data is already f64
 
@@ -20,7 +20,7 @@ def weld_count(array):
         Representation of this computation.
 
     """
-    obj_id, weld_obj = _create_weld_object(array)
+    obj_id, weld_obj = create_weld_object(array)
 
     weld_template = _weld_count_code
 
@@ -67,7 +67,7 @@ def weld_aggregate(array, weld_type, operation):
         Representation of this computation.
 
     """
-    obj_id, weld_obj = _create_weld_object(array)
+    obj_id, weld_obj = create_weld_object(array)
 
     weld_template = _weld_aggregate_code
 
@@ -99,8 +99,8 @@ def weld_mean(array, weld_type):
     """
     weld_obj_sum = weld_aggregate(array, weld_type, '+')
 
-    obj_id, weld_obj = _create_weld_object(array)
-    weld_obj_sum_id = _get_weld_obj_id(weld_obj, weld_obj_sum)
+    obj_id, weld_obj = create_weld_object(array)
+    weld_obj_sum_id = get_weld_obj_id(weld_obj, weld_obj_sum)
 
     weld_template = _weld_mean_code
 
@@ -139,8 +139,8 @@ def weld_variance(array, weld_type):
     """
     weld_obj_mean = weld_mean(array, weld_type)
 
-    obj_id, weld_obj = _create_weld_object(array)
-    weld_obj_mean_id = _get_weld_obj_id(weld_obj, weld_obj_mean)
+    obj_id, weld_obj = create_weld_object(array)
+    weld_obj_mean_id = get_weld_obj_id(weld_obj, weld_obj_mean)
 
     weld_template = _weld_variance_code
 
@@ -172,8 +172,8 @@ def weld_standard_deviation(array, weld_type):
     """
     weld_obj_var = weld_variance(array, weld_type)
 
-    obj_id, weld_obj = _create_weld_object(weld_obj_var)
-    weld_obj_var_id = _get_weld_obj_id(weld_obj, weld_obj_var)
+    obj_id, weld_obj = create_weld_object(weld_obj_var)
+    weld_obj_var_id = get_weld_obj_id(weld_obj, weld_obj_var)
 
     weld_template = _weld_std_code
 
@@ -242,7 +242,7 @@ def weld_agg(array, weld_type, aggregations):
     """
     from functools import reduce
 
-    obj_id, weld_obj = _create_weld_object(array)
+    obj_id, weld_obj = create_weld_object(array)
 
     # find which aggregation computations are actually needed
     to_compute = reduce(lambda x, y: x | y, ({agg} | _agg_dependencies[agg] for agg in aggregations))

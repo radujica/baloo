@@ -1,6 +1,8 @@
 from weld.weldobject import WeldObject
 
-from .weld_utils import _get_weld_obj_id, _create_weld_object, _to_weld_literal, _create_empty_weld_object
+from .lazy_result import LazyStructOfVecResult
+from .weld_utils import get_weld_obj_id, create_weld_object, to_weld_literal, create_empty_weld_object, \
+    weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, extract_placeholder_weld_objects, Cache
 
 
 def weld_range(start, stop, step):
@@ -20,10 +22,10 @@ def weld_range(start, stop, step):
 
     """
     if isinstance(stop, WeldObject):
-        obj_id, weld_obj = _create_weld_object(stop)
+        obj_id, weld_obj = create_weld_object(stop)
         stop = obj_id
     else:
-        weld_obj = _create_empty_weld_object()
+        weld_obj = create_empty_weld_object()
 
     weld_template = """result(
     for(
@@ -64,9 +66,9 @@ def weld_compare(array, scalar, operation, weld_type):
         Representation of this computation.
 
     """
-    obj_id, weld_obj = _create_weld_object(array)
+    obj_id, weld_obj = create_weld_object(array)
 
-    scalar = _to_weld_literal(scalar, weld_type)
+    scalar = to_weld_literal(scalar, weld_type)
 
     # TODO: there should be no casting! requires Weld fix
     weld_template = """map(
@@ -101,8 +103,8 @@ def weld_filter(array, weld_type, bool_array):
         Representation of this computation.
 
     """
-    obj_id, weld_obj = _create_weld_object(array)
-    bool_obj_id = _get_weld_obj_id(weld_obj, bool_array)
+    obj_id, weld_obj = create_weld_object(array)
+    bool_obj_id = get_weld_obj_id(weld_obj, bool_array)
 
     weld_template = """result(
     for(
@@ -161,7 +163,7 @@ def weld_slice(array, weld_type, slice_, default_start=0, default_step=1):
 
     """
     slice_ = _replace_slice_defaults(slice_, default_start, default_step)
-    obj_id, weld_obj = _create_weld_object(array)
+    obj_id, weld_obj = create_weld_object(array)
 
     if slice_.step == 1:
         weld_template = """slice(
@@ -207,9 +209,9 @@ def weld_tail(array, length, n):
         Representation of the computation.
 
     """
-    obj_id, weld_obj = _create_weld_object(array)
+    obj_id, weld_obj = create_weld_object(array)
     if isinstance(length, WeldObject):
-        length = _get_weld_obj_id(weld_obj, length)
+        length = get_weld_obj_id(weld_obj, length)
         slice_start = '{} - {}L'.format(length, n)
         slice_stop = '{}'.format(length)
     else:
@@ -252,8 +254,8 @@ def weld_array_op(array1, array2, result_type, operation):
         Representation of this computation.
 
     """
-    obj_id1, weld_obj = _create_weld_object(array1)
-    obj_id2 = _get_weld_obj_id(weld_obj, array2)
+    obj_id1, weld_obj = create_weld_object(array1)
+    obj_id2 = get_weld_obj_id(weld_obj, array2)
 
     if operation == 'pow':
         action = 'pow(e.$0, e.$1)'
@@ -290,7 +292,7 @@ def weld_invert(array):
         Representation of this computation.
 
     """
-    obj_id, weld_obj = _create_weld_object(array)
+    obj_id, weld_obj = create_weld_object(array)
 
     weld_template = """result(
     for({array},
@@ -321,7 +323,7 @@ def weld_iloc_int(array, index):
         Representation of this computation.
 
     """
-    obj_id, weld_obj = _create_weld_object(array)
+    obj_id, weld_obj = create_weld_object(array)
 
     weld_template = 'lookup({array}, {index}L)'
 
@@ -351,9 +353,9 @@ def weld_element_wise_op(array, weld_type, scalar, operation):
         Representation of this computation.
 
     """
-    obj_id, weld_obj = _create_weld_object(array)
+    obj_id, weld_obj = create_weld_object(array)
 
-    scalar = _to_weld_literal(scalar, weld_type)
+    scalar = to_weld_literal(scalar, weld_type)
 
     if operation == 'pow':
         action = 'pow(e, {scalar})'.format(scalar=scalar)
@@ -374,3 +376,60 @@ def weld_element_wise_op(array, weld_type, scalar, operation):
                                               action=action)
 
     return weld_obj
+
+
+# this function does the actual sorting
+def _weld_sort(arrays, weld_types, indexes_to_sort, ascending=True):
+    assert len(indexes_to_sort) == 1
+
+    weld_obj_vec_of_struct = weld_arrays_to_vec_of_struct(arrays, weld_types)
+
+    weld_obj = create_empty_weld_object()
+    weld_obj_struct_id = get_weld_obj_id(weld_obj, weld_obj_vec_of_struct)
+
+    types = '{{{}}}'.format(', '.join((str(weld_type) for weld_type in weld_types)))
+    # TODO: update here when sorting on structs is possible
+    ascending_sort_func = '{}'.format(', '.join(('e.${}'.format(i) for i in indexes_to_sort)))
+    zero_literals = dict(enumerate([to_weld_literal(0, weld_type) for weld_type in weld_types]))
+    descending_sort_func = '{}'.format(', '.join(('{} - e.${}'.format(zero_literals[i], i) for i in indexes_to_sort)))
+    sort_func = ascending_sort_func if ascending else descending_sort_func
+
+    weld_template = 'sort({struct}, |e: {types}| {sort_func})'
+
+    weld_obj.weld_code = weld_template.format(struct=weld_obj_struct_id,
+                                              types=types,
+                                              sort_func=sort_func)
+
+    return weld_obj
+
+
+def weld_sort(arrays, weld_types, indexes_to_sort, readable_text, ascending=True):
+    """Sort the arrays.
+
+    Parameters
+    ----------
+    arrays : list of numpy.ndarray or WeldObject
+        Arrays to put in a struct.
+    weld_types : list of WeldType
+        The Weld types of the arrays in the same order.
+    indexes_to_sort : list of int
+        Indexes on which to sort, e.g. the first 2 columns would be [0, 1].
+    readable_text : str
+        Explanatory string to add in the Weld placeholder.
+    ascending : bool, optional
+
+    Returns
+    -------
+    list of WeldObject
+        Representation of this computation.
+
+    """
+    weld_obj_sort = _weld_sort(arrays, weld_types, indexes_to_sort, ascending)
+    weld_obj_struct = weld_vec_of_struct_to_struct_of_vec(weld_obj_sort, weld_types)
+
+    intermediate_result = LazyStructOfVecResult(weld_obj_struct, weld_types)
+    dependency_name = Cache.cache_intermediate_result(intermediate_result, readable_text)
+
+    weld_objects = extract_placeholder_weld_objects(dependency_name, len(weld_types), readable_text)
+
+    return weld_objects

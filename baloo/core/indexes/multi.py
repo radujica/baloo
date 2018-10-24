@@ -133,13 +133,6 @@ class MultiIndex(object):
 
         return tabulate(str_data, headers='keys')
 
-    def __iter__(self):
-        for column in self.values:
-            yield column
-
-    def __contains__(self, item):
-        return item in self.values
-
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
         """Evaluates by creating a MultiIndex containing evaluated data and index.
 
@@ -151,7 +144,7 @@ class MultiIndex(object):
             MultiIndex with evaluated data.
 
         """
-        evaluated_data = [v.evaluate(verbose, decode, passes, num_threads, apply_experimental) for v in self]
+        evaluated_data = [v.evaluate(verbose, decode, passes, num_threads, apply_experimental) for v in self.values]
 
         return MultiIndex(evaluated_data, self.names)
 
@@ -180,11 +173,11 @@ class MultiIndex(object):
         if isinstance(item, LazyArrayResult):
             check_weld_bit_array(item)
 
-            return MultiIndex([column[item] for column in self], self.names)
+            return MultiIndex([column[item] for column in self.values], self.names)
         elif isinstance(item, slice):
             check_valid_int_slice(item)
 
-            return MultiIndex([column[item] for column in self], self.names)
+            return MultiIndex([column[item] for column in self.values], self.names)
         else:
             raise TypeError('Expected LazyArrayResult or slice')
 
@@ -204,4 +197,4 @@ class MultiIndex(object):
 
         """
         # not computing slice here to use with __getitem__ because we'd need to use len which is eager
-        return MultiIndex([v.tail(n) for v in self], self.names)
+        return MultiIndex([v.tail(n) for v in self.values], self.names)

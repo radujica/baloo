@@ -330,3 +330,71 @@ class TestDataFrame(object):
                                         ['b', 'c']))
 
         assert_dataframe_equal(actual, expected)
+
+    def test_sort_index_index_ascending(self):
+        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
+        df = DataFrame(OrderedDict((('a', data[0]),
+                                    ('b', data[1]))),
+                       Index(np.array([3, 1, 2, 5, 4])))
+
+        actual = df.sort_index()
+
+        expected_index = Index(np.arange(1, 6), np.dtype(np.int64), 'index')
+        expected_data = [Series(np.array([2, 3, 1, 5, 4], dtype=np.float32), expected_index, np.dtype(np.float32), 'a'),
+                         Series(np.array([1, 2, 0, 4, 3], dtype=np.int64), expected_index, np.dtype(np.int64), 'b')]
+        expected = DataFrame(OrderedDict((('a', expected_data[0]),
+                                          ('b', expected_data[1]))),
+                             expected_index)
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_sort_index_index_descending(self):
+        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
+        df = DataFrame(OrderedDict((('a', data[0]),
+                                    ('b', data[1]))),
+                       Index(np.array([3, 1, 2, 5, 4])))
+
+        actual = df.sort_index(ascending=False)
+
+        expected_index = Index(np.arange(5, 0, -1), np.dtype(np.int64), 'index')
+        expected_data = [Series(np.array([4, 5, 1, 3, 2], dtype=np.float32), expected_index, np.dtype(np.float32), 'a'),
+                         Series(np.array([3, 4, 0, 2, 1], dtype=np.int64), expected_index, np.dtype(np.int64), 'b')]
+        expected = DataFrame(OrderedDict((('a', expected_data[0]),
+                                          ('b', expected_data[1]))),
+                             expected_index)
+
+        assert_dataframe_equal(actual, expected)
+
+    # TODO: uncomment when implemented
+    # def test_sort_index_multi_index_ascending(self):
+    #     data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
+    #     df = DataFrame(OrderedDict((('a', data[0]),
+    #                                 ('b', data[1]))),
+    #                    MultiIndex([np.array([2, 3, 3, 1, 1]), np.array([2, 2, 1, 0, 3], dtype=np.float64)]))
+    #
+    #     actual = df.sort_index()
+    #     expected_index = MultiIndex([np.array([1, 1, 2, 3, 3]), np.array([0, 3, 2, 1, 2], dtype=np.float64)])
+    #     expected_data = [Series(np.array([4, 5, 1, 3, 2], dtype=np.float32), expected_index, np.dtype(np.float32), 'a'),
+    #                      Series(np.array([3, 4, 0, 2, 1], dtype=np.int64), expected_index, np.dtype(np.int64), 'b')]
+    #     expected = DataFrame(OrderedDict((('a', expected_data[0]),
+    #                                       ('b', expected_data[1]))),
+    #                          expected_index)
+    #
+    #     assert_dataframe_equal(actual, expected)
+
+    def test_sort_values(self):
+        data = [np.array([3, 1, 2, 5, 4], dtype=np.float32), Series(np.arange(5))]
+        df = DataFrame(OrderedDict((('a', data[0]),
+                                    ('b', data[1]))),
+                       Index(np.arange(1, 6)))
+
+        actual = df.sort_values('a')
+
+        expected_index = Index(np.array([2, 3, 1, 5, 4]), np.dtype(np.int64), 'index')
+        expected_data = [Series(np.array(np.arange(1, 6), dtype=np.float32), expected_index, np.dtype(np.float32), 'a'),
+                         Series(np.array([1, 2, 0, 4, 3], dtype=np.int64), expected_index, np.dtype(np.int64), 'b')]
+        expected = DataFrame(OrderedDict((('a', expected_data[0]),
+                                          ('b', expected_data[1]))),
+                             expected_index)
+
+        assert_dataframe_equal(actual, expected)

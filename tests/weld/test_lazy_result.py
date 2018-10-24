@@ -1,7 +1,6 @@
 import numpy as np
 
-from baloo.weld.convertors import NumPyDecoder, NumPyEncoder
-from baloo.weld.lazy_result import LazyResult, WeldLong, WeldObject
+from baloo.weld import NumPyDecoder, NumPyEncoder, LazyResult, WeldLong, WeldObject
 
 
 class TestLazyResult(object):

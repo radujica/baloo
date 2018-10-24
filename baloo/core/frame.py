@@ -3,17 +3,17 @@ from collections import OrderedDict
 import numpy as np
 from tabulate import tabulate
 
-from baloo.weld import LazyLongResult
 from .generic import BinaryOps
 from .indexes import RangeIndex, Index, MultiIndex
 from .series import Series
 from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
     check_weld_bit_array, check_valid_int_slice
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
-    weld_cast_double, WeldDouble
+    weld_cast_double, WeldDouble, weld_sort, numpy_to_weld_type, LazyLongResult
 
 
 # TODO: handle empty dataframe case throughout operations
+# TODO: wrap all internal data in Series to avoid always checking for raw/weldobject ~ like in multiindex
 class DataFrame(BinaryOps):
     """ Weld-ed pandas DataFrame.
 
@@ -147,9 +147,12 @@ class DataFrame(BinaryOps):
         return Series(np.array(list(self._gather_dtypes().values()), dtype=np.bytes_),
                       self.keys())
 
+    def _gather_column_names(self):
+        return self.data.keys()
+
     @property
     def columns(self):
-        return Index(np.array(self.data.keys(), dtype=np.bytes_), np.dtype(np.bytes_))
+        return Index(np.array(self._gather_column_names(), dtype=np.bytes_), np.dtype(np.bytes_))
 
     def __len__(self):
         """Eagerly get the length of the DataFrame.
@@ -582,6 +585,8 @@ class DataFrame(BinaryOps):
         if isinstance(old_index, Index):
             old_index.name = 'index'
             old_index = [old_index]
+        elif isinstance(old_index, MultiIndex):
+            old_index = old_index.values
 
         for i, column in enumerate(old_index):
             if column.name is None:
@@ -636,3 +641,162 @@ class DataFrame(BinaryOps):
             return DataFrame(new_data, new_index)
         else:
             raise TypeError('Expected a string or a list of strings')
+
+    def _gather_all_data(self):
+        return _AllDataFrameData(self)
+
+    def sort_index(self, ascending=True):
+        """Sort the index of the DataFrame.
+
+        Currently MultiIndex is not supported since Weld is missing multiple-column sort.
+
+        Note this is an expensive operation (brings all data to Weld).
+
+        Parameters
+        ----------
+        ascending : bool, optional
+
+        Returns
+        -------
+        DataFrame
+            DataFrame sorted according to the index.
+
+        """
+        if isinstance(self.index, MultiIndex):
+            raise NotImplementedError('Weld does not yet support sorting on multiple columns')
+
+        check_type(ascending, bool)
+
+        all_data = self._gather_all_data()
+
+        weld_objects = weld_sort(all_data.data_for_weld(),
+                                 all_data.weld_types(),
+                                 all_data.index_indices(),
+                                 'sort_index',
+                                 ascending=ascending)
+
+        all_dtypes = all_data.dtypes()
+        all_names = all_data.names()
+        i = all_data.separator_index()
+
+        if isinstance(self.index, MultiIndex):
+            new_index = MultiIndex(weld_objects[:i], all_names[:i])
+        else:
+            new_index = Index(weld_objects[0], all_dtypes[0], all_names[0])
+
+        new_data = [Series(data, new_index, dtype, name)
+                    for data, dtype, name in zip(weld_objects[i:], all_dtypes[i:], all_names[i:])]
+
+        return DataFrame(OrderedDict(zip(all_names[i:], new_data)), new_index)
+
+    def sort_values(self, by, ascending=True):
+        """Sort the DataFrame based on a column.
+
+        Currently possible to sort only on a single column since Weld is missing multiple-column sort.
+
+        Note this is an expensive operation (brings all data to Weld).
+
+        Parameters
+        ----------
+        by : str
+            Column name to sort.
+        ascending : bool, optional
+
+        Returns
+        -------
+        DataFrame
+            DataFrame sorted according to the column.
+
+        """
+        check_type(ascending, bool)
+        check_type(by, str)
+
+        all_data = self._gather_all_data()
+
+        weld_objects = weld_sort(all_data.data_for_weld(),
+                                 all_data.weld_types(),
+                                 [all_data.column_index(by)],
+                                 'sort_index',
+                                 ascending=ascending)
+
+        all_dtypes = all_data.dtypes()
+        all_names = all_data.names()
+        i = all_data.separator_index()
+
+        if isinstance(self.index, MultiIndex):
+            new_index = MultiIndex(weld_objects[:i], all_names[:i])
+        else:
+            new_index = Index(weld_objects[0], all_dtypes[0], all_names[0])
+
+        new_data = [Series(data, new_index, dtype, name)
+                    for data, dtype, name in zip(weld_objects[i:], all_dtypes[i:], all_names[i:])]
+
+        return DataFrame(OrderedDict(zip(all_names[i:], new_data)), new_index)
+
+
+# Helper class that stores both index and data in the same structure
+class _AllDataFrameData(object):
+    @staticmethod
+    def _find_separating_index(df):
+        if isinstance(df.index, MultiIndex):
+            return len(df.index.values)
+        else:
+            return 1
+
+    @staticmethod
+    def _gather_all_data(df):
+        all_data = OrderedDict()
+
+        # TODO: this already done in set_index and will probably need again; generalize!
+        if isinstance(df.index, MultiIndex):
+            for i, column in enumerate(df.index.values):
+                column_name = column.name
+                if column_name is None:
+                    column_name = 'level_' + str(i)
+                all_data[column_name] = column
+        else:
+            index_name = df.index.name
+            if index_name is None:
+                index_name = 'index'
+            all_data[index_name] = df.index
+
+        for k, v in df.data.items():
+            all_data[k] = v
+
+        return all_data
+
+    def __init__(self, df):
+        self._separator_index = _AllDataFrameData._find_separating_index(df)
+        self._data = _AllDataFrameData._gather_all_data(df)
+
+    def data(self):
+        return list(self._data.values())
+
+    # TODO: change this when TODO of DataFrame regarding wrapping all in Series is done
+    @staticmethod
+    def _get_internal(data):
+        if not isinstance(data, np.ndarray):
+            data = data.values
+
+        return data
+
+    def data_for_weld(self):
+        return [_AllDataFrameData._get_internal(data) for data in self.data()]
+
+    def names(self):
+        return list(self._data.keys())
+
+    def dtypes(self):
+        return [v.dtype for v in self._data.values()]
+
+    def weld_types(self):
+        return [numpy_to_weld_type(dtype) for dtype in self.dtypes()]
+
+    def separator_index(self):
+        return self._separator_index
+
+    def index_indices(self):
+        return list(range(self._separator_index))
+
+    def column_index(self, column_name):
+        return self.names().index(column_name)

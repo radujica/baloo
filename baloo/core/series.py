@@ -67,7 +67,7 @@ class Series(LazyArrayResult, BinaryOps):
         ----------
         data : numpy.ndarray or WeldObject
             Raw data or Weld expression.
-        index : Index or RangeIndex, optional
+        index : Index or RangeIndex or MultiIndex, optional
             Index linked to the data; it is assumed to be of the same length.
             RangeIndex by default.
         dtype : numpy.dtype, optional
