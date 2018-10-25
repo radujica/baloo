@@ -1,1 +1,18 @@
+dist: trusty
+sudo: false
+
 language: python
+python:
+  - 3.5
+
+before_install:
+  - sh travis/build_weld.sh
+
+install:
+  # not sure why setup.py doesn't seem to install tabulate
+  - pip install tabulate sphinx pytest numpydoc matplotlib memory-profiler wheel
+  - sh travis/build_baloo.sh
+
+script:
+  - pytest tests
+  - make -C doc doctest

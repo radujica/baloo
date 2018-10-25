@@ -16,6 +16,10 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
 
+# doctest runs in the source directories, not at install location, so the .so is missing
+# (unless changing the path above to point to the install location)
+os.system('make -C ../../baloo/weld/convertors')
+
 
 # -- Project information -----------------------------------------------------
 
