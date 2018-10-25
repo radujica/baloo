@@ -27,12 +27,11 @@ Pandas. More work coming soon!
 Ideally, a `pip install pyweld` would be enough. However, the pyweld package is not currently maintained on pypi 
 so need to build ourselves:
 
-1) Weld. Follow instructions [here](https://github.com/weld-project/weld). Latest work is being done on llvm-st branch.
-2) pyweld. Baloo currently requires [this](https://github.com/radujica/weld/tree/pyweld3) branch for Python 3 support. 
-For Python 2, main Weld repo pyweld should be fine. 
+1) Build Weld. Follow instructions [here](https://github.com/weld-project/weld). 
+Latest work is being done on llvm-st branch.
+2) pyweld (included in Weld ^): `pip install <path-to-pyweld-setup.py>` 
 
 ## Install ~ users
-    pip install <path-to-pyweld>
     git clone https://github.com/radujica/baloo.git
     cd baloo && python setup.py install
     
@@ -51,3 +50,5 @@ Shall be later published on pypi.
     cd doc && make html                         // generate documentation in baloo-adjacent dir baloo-docs
     cd doc && make doctest                      // run doc examples
     cd benchmarks && python run.py              // run benchmarks ~ correctness checks, plots, and memory profile
+    python setup.py sdist                       // source distribution
+    python setup.py bdist_wheel                 // wheel distribution ~ built package; requires pip install wheel
