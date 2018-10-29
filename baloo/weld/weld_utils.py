@@ -232,18 +232,20 @@ def weld_arrays_to_vec_of_struct(arrays, weld_types):
     input_types = '{{{}}}'.format(', '.join((str(weld_type) for weld_type in weld_types))) \
         if len(obj_ids) > 1 else '{}'.format(weld_types[0])
     res_types = '{{{}}}'.format(', '.join((str(weld_type) for weld_type in weld_types)))
+    to_merge = 'e' if len(obj_ids) > 1 else '{e}'
 
     weld_template = """result(
     for({arrays},
         appender[{res_types}],
         |b: appender[{res_types}], i: i64, e: {input_types}|
-            merge(b, e)
+            merge(b, {to_merge})
     )    
 )"""
 
     weld_obj.weld_code = weld_template.format(arrays=arrays,
                                               input_types=input_types,
-                                              res_types=res_types)
+                                              res_types=res_types,
+                                              to_merge=to_merge)
 
     return weld_obj
 
