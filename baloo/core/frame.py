@@ -33,7 +33,7 @@ class DataFrame(BinaryOps):
     >>> import baloo as bl
     >>> import numpy as np
     >>> from collections import OrderedDict
-    >>> df = bl.DataFrame(OrderedDict((('a', np.arange(5, 8)), ('b', np.arange(3)))))
+    >>> df = bl.DataFrame(OrderedDict((('a', np.arange(5, 8)), ('b', np.array([1, 0, 2])))))
     >>> df.index  # repr
     RangeIndex(start=0, stop=3, step=1)
     >>> df  # repr
@@ -41,23 +41,23 @@ class DataFrame(BinaryOps):
     >>> print(df.evaluate())  # omitting evaluate would trigger exception as index is now an unevaluated RangeIndex
            a    b
     ---  ---  ---
-      0    5    0
-      1    6    1
+      0    5    1
+      1    6    0
       2    7    2
     >>> print(len(df))
     3
     >>> print((df * 2).evaluate())  # note that atm there is no type casting, i.e. if b was float32, it would fail
            a    b
     ---  ---  ---
-      0   10    0
-      1   12    2
+      0   10    2
+      1   12    0
       2   14    4
     >>> sr = bl.Series(np.array([2] * 3))
     >>> print((df * sr).evaluate())
            a    b
     ---  ---  ---
-      0   10    0
-      1   12    2
+      0   10    2
+      1   12    0
       2   14    4
     >>> print(df.min().evaluate())
     [5 0]
@@ -75,15 +75,26 @@ class DataFrame(BinaryOps):
     >>> print(df.reset_index().evaluate())
            index    a    b
     ---  -------  ---  ---
-      0        0    5    0
-      1        1    6    1
+      0        0    5    1
+      1        1    6    0
       2        2    7    2
     >>> print(df.set_index('b').evaluate())
       b    a
     ---  ---
-      0    5
-      1    6
+      1    5
+      0    6
       2    7
+    >>> print(df.sort_values('b').evaluate())
+      index    a    b
+    -------  ---  ---
+          1    6    0
+          0    5    1
+          2    7    2
+    >>> df2 = bl.DataFrame({'b': np.array([0, 2])})
+    >>> print(df.merge(df2, on='b').evaluate())
+      b    index_x    a    index_y
+    ---  ---------  ---  ---------
+      2          2    7          1
 
     """
     @staticmethod
@@ -794,20 +805,22 @@ class DataFrame(BinaryOps):
         Algorithms and limitations:
 
         - Merge algorithms: merge-join or hash-join. Typical pros and cons apply when choosing between the two.
-        Merge-join shall be used on fairly equally-sized DataFrames while a hash-join would be better when
-        one of the DataFrames is (much) smaller.
+          Merge-join shall be used on fairly equally-sized DataFrames while a hash-join would be better when
+          one of the DataFrames is (much) smaller.
         - Limitations:
-            - Hash-join requires the (smaller) hashed DataFrame
+
+          + Hash-join requires the (smaller) hashed DataFrame
             (more precisely, the on columns) to contain no duplicates!
-            - Merge-join requires the on-columns to be sorted!
-            - For unsorted data can only sort a single column! (current Weld limitation)
+          + Merge-join requires the on-columns to be sorted!
+          + For unsorted data can only sort a single column! (current Weld limitation)
+
         - Sortedness. If the on-columns are sorted, merge-join does not require to sort the data so it can be
-        significantly faster. Do add is_on_sorted=True if this is known to be true!
+          significantly faster. Do add is_on_sorted=True if this is known to be true!
         - Uniqueness. If the on-columns data contains duplicates, the algorithm is more complicated, i.e. slow.
-        Also hash-join cannot be used on a hashed (smaller) DataFrame with duplicates. Do add is_on_unique=True
-        if this is known to be true!
+          Also hash-join cannot be used on a hashed (smaller) DataFrame with duplicates. Do add is_on_unique=True
+          if this is known to be true!
         - Setting the above 2 flags incorrectly, e.g. is_on_sorted to True when data is in fact not sorted,
-        will produce undefined results.
+          will produce undefined results.
 
         Parameters
         ----------
