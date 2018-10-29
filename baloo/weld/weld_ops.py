@@ -333,6 +333,43 @@ def weld_iloc_int(array, index):
     return weld_obj
 
 
+def weld_iloc_indices(array, weld_type, indices):
+    """Retrieve the values at indices.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input data. Assumed to be bool data.
+    weld_type : WeldType
+        The WeldType of the array data.
+    indices : numpy.ndarray or WeldObject
+        The indices to lookup.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    weld_obj = create_empty_weld_object()
+    weld_obj_id_array = get_weld_obj_id(weld_obj, array)
+    weld_obj_id_indices = get_weld_obj_id(weld_obj, indices)
+
+    weld_template = """result(
+    for({indices},
+        appender[{type}],
+        |b: appender[{type}], i: i64, e: i64|
+            merge(b, lookup({array}, e))
+    )
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=weld_obj_id_array,
+                                              indices=weld_obj_id_indices,
+                                              type=weld_type)
+
+    return weld_obj
+
+
 def weld_element_wise_op(array, weld_type, scalar, operation):
     """Applies operation to each element in the array with scalar.
 

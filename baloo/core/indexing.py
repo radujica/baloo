@@ -16,6 +16,7 @@ class _ILocIndexer(object):
     def __init__(self, data):
         self.data = check_type(data, (Series, DataFrame))
 
+    # TODO: add iloc[<lazyarrayresult> of ints]
     def __getitem__(self, item):
         if isinstance(item, int):
             if isinstance(self.data, Series):

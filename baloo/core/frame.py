@@ -9,7 +9,7 @@ from .series import Series
 from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
     check_weld_bit_array, check_valid_int_slice
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
-    weld_cast_double, WeldDouble, weld_sort, numpy_to_weld_type, LazyLongResult
+    weld_cast_double, WeldDouble, weld_sort, numpy_to_weld_type, LazyLongResult, weld_merge_join, weld_iloc_indices
 
 
 # TODO: handle empty dataframe case throughout operations
@@ -148,11 +148,17 @@ class DataFrame(BinaryOps):
                       self.keys())
 
     def _gather_column_names(self):
-        return self.data.keys()
+        return list(self.data.keys())
 
     @property
     def columns(self):
         return Index(np.array(self._gather_column_names(), dtype=np.bytes_), np.dtype(np.bytes_))
+
+    def _gather_data_for_weld(self):
+        return [self[column_name].values for column_name in self]
+
+    def _gather_weld_types(self):
+        return [self[column_name].weld_type for column_name in self]
 
     def __len__(self):
         """Eagerly get the length of the DataFrame.
@@ -715,7 +721,7 @@ class DataFrame(BinaryOps):
 
         weld_objects = weld_sort(all_data.data_for_weld(),
                                  all_data.weld_types(),
-                                 [all_data.column_index(by)],
+                                 all_data.column_indices([by]),
                                  'sort_index',
                                  ascending=ascending)
 
@@ -733,8 +739,181 @@ class DataFrame(BinaryOps):
 
         return DataFrame(OrderedDict(zip(all_names[i:], new_data)), new_index)
 
+    @staticmethod
+    def _compute_on(self, other, on, all_names_self, all_names_other):
+        if on is None:
+            if not isinstance(self.index, type(other.index)):
+                raise ValueError('Expected indexes to be of the same type when on=None')
+
+            error_message = 'When on=None, the names of both indexes must be the same'
+            # TODO: could make MultiIndex.name property point to .names
+            if isinstance(self.index, MultiIndex):
+                if self.index.names == other.index.names:
+                    return self.index.names
+                else:
+                    raise ValueError(error_message)
+            else:
+                if self.index.name == other.index.name:
+                    return [self.index.name]
+                else:
+                    raise ValueError(error_message)
+        else:
+            if isinstance(on, str):
+                on = [on]
+
+            set_on = set(on)
+            if not set_on.issubset(set(all_names_self)):
+                raise ValueError('On column(s) not included in the self DataFrame')
+            if not set_on.issubset(set(all_names_other)):
+                raise ValueError('On column(s) not included in the other DataFrame')
+
+        return on
+
+    @staticmethod
+    def _compute_new_names(names_self, names_other, suffixes):
+        common_names = set(names_self).intersection(set(names_other))
+        self_new_names = names_self
+        other_new_names = names_other
+
+        if len(common_names) != 0:
+            for name in common_names:
+                self_new_names[self_new_names.index(name)] += suffixes[0]
+                other_new_names[other_new_names.index(name)] += suffixes[1]
+
+        return self_new_names, other_new_names
+
+    def merge(self, other, how='inner', on=None, suffixes=('_x', '_y'),
+              algorithm='merge', is_on_sorted=True, is_on_unique=True):
+        """Database-like join this DataFrame with the other DataFrame.
+
+        Currently assumes the `on` columns are sorted and the on-column(s) values are unique!
+        Next work handles the other cases.
+
+        Note there's no automatic cast if the type of the on columns differs.
+
+        Algorithms and limitations:
+
+        - Merge algorithms: merge-join or hash-join. Typical pros and cons apply when choosing between the two.
+        Merge-join shall be used on fairly equally-sized DataFrames while a hash-join would be better when
+        one of the DataFrames is (much) smaller.
+        - Limitations:
+            - Hash-join requires the (smaller) hashed DataFrame
+            (more precisely, the on columns) to contain no duplicates!
+            - Merge-join requires the on-columns to be sorted!
+            - For unsorted data can only sort a single column! (current Weld limitation)
+        - Sortedness. If the on-columns are sorted, merge-join does not require to sort the data so it can be
+        significantly faster. Do add is_on_sorted=True if this is known to be true!
+        - Uniqueness. If the on-columns data contains duplicates, the algorithm is more complicated, i.e. slow.
+        Also hash-join cannot be used on a hashed (smaller) DataFrame with duplicates. Do add is_on_unique=True
+        if this is known to be true!
+        - Setting the above 2 flags incorrectly, e.g. is_on_sorted to True when data is in fact not sorted,
+        will produce undefined results.
+
+        Parameters
+        ----------
+        other : DataFrame
+            With which to merge.
+        how : {'inner', 'left', 'right', 'outer'}, optional
+            Which kind of join to do.
+        on : str or list or None, optional
+            The columns from both DataFrames on which to join.
+            If None, will join on the index if it has the same name.
+        suffixes : tuple of str, optional
+            To append on columns not in `on` that have the same name in the DataFrames.
+        algorithm : {'merge', 'hash'}, optional
+            Which algorithm to use. Note that for 'hash', the `other` DataFrame is the one hashed.
+        is_on_sorted : bool, optional
+            If we know that the on columns are already sorted, can employ faster algorithm.
+        is_on_unique : bool, optional
+            If we know that the values are unique, can employ faster algorithm.
+
+        Returns
+        -------
+        DataFrame
+            DataFrame containing the merge result, with the `on` columns as index.
+
+        """
+        check_type(other, DataFrame)
+        check_type(how, str)
+        check_type(algorithm, str)
+        check_inner_types(on, str) if isinstance(on, list) else check_type(on, str)
+        check_inner_types(check_type(suffixes, tuple), str)
+
+        # TODO: remove these after implementation
+        # TODO: change defaults on flags
+        assert how == 'inner'
+        assert is_on_sorted
+        assert is_on_unique
+
+        self_reset = self.reset_index()
+        other_reset = other.reset_index()
+        on = DataFrame._compute_on(self, other, on,
+                                   self_reset._gather_column_names(),
+                                   other_reset._gather_column_names())
+        self_on_cols = self_reset[on]
+        other_on_cols = other_reset[on]
+
+        if algorithm == 'merge':
+            weld_objects_indexes = weld_merge_join(self_on_cols._gather_data_for_weld(),
+                                                   self_on_cols._gather_weld_types(),
+                                                   other_on_cols._gather_data_for_weld(),
+                                                   other_on_cols._gather_weld_types(),
+                                                   how, is_on_sorted, is_on_unique, 'merge-join')
+        elif algorithm == 'hash':
+            raise NotImplementedError('Not yet supported')
+        else:
+            raise NotImplementedError('Only merge- and hash-join algorithms are supported')
+
+        # TODO: implement & replace the filter_by_indices with .iloc[indices]
+        if len(on) > 1:
+            new_indexes = []
+            for column_name in on:
+                column = self_on_cols[column_name]
+                new_indexes.append(Index(weld_iloc_indices(column.values,
+                                                           column.weld_type,
+                                                           weld_objects_indexes[0]),
+                                         column.dtype,
+                                         column.name))
+
+            new_index = MultiIndex(new_indexes, on)
+        else:
+            column = self_on_cols[on[0]]
+            new_index = Index(weld_iloc_indices(column.values,
+                                                column.weld_type,
+                                                weld_objects_indexes[0]),
+                              column.dtype,
+                              column.name)
+
+        new_data = OrderedDict()
+        self_no_on = self_reset.drop(on)
+        other_no_on = other_reset.drop(on)
+        self_new_names, other_new_names = DataFrame._compute_new_names(self_no_on._gather_column_names(),
+                                                                       other_no_on._gather_column_names(),
+                                                                       suffixes)
+        # TODO: duplicate code
+        for column_name, new_name in zip(self_no_on, self_new_names):
+            column = self_no_on[column_name]
+            new_data[new_name] = Series(weld_iloc_indices(column.values,
+                                                          column.weld_type,
+                                                          weld_objects_indexes[0]),
+                                        new_index,
+                                        column.dtype,
+                                        new_name)
+
+        for column_name, new_name in zip(other_no_on, other_new_names):
+            column = other_no_on[column_name]
+            new_data[new_name] = Series(weld_iloc_indices(column.values,
+                                                          column.weld_type,
+                                                          weld_objects_indexes[1]),
+                                        new_index,
+                                        column.dtype,
+                                        new_name)
+
+        return DataFrame(new_data, new_index)
+
 
 # Helper class that stores both index and data in the same structure
+# TODO: reset_index might be enough to replace this?
 class _AllDataFrameData(object):
     @staticmethod
     def _find_separating_index(df):
@@ -798,5 +977,7 @@ class _AllDataFrameData(object):
     def index_indices(self):
         return list(range(self._separator_index))
 
-    def column_index(self, column_name):
-        return self.names().index(column_name)
+    def column_indices(self, columns):
+        names = self.names()
+
+        return [names.index(column_name) for column_name in columns]
