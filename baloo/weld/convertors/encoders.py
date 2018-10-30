@@ -90,6 +90,42 @@ def weld_to_numpy_dtype(weld_type):
     return np.dtype(_weld_to_numpy_type_mapping[weld_type])
 
 
+# TODO: add str 'None' when str encoding is solved (branch str-support) ~ there is no str literal
+# TODO: make np.nan work?
+_default_missing_mapping = {
+    WeldInt16(): '-999si',
+    WeldInt(): '-999',
+    WeldLong(): '-999L',
+    WeldFloat(): '-999f',
+    WeldDouble(): '-999.0',
+    WeldBit(): 'false'
+}
+
+
+def default_missing_data_literal(weld_type):
+    """Convert from Weld type to missing literal placeholder.
+
+    Parameters
+    ----------
+    weld_type : WeldType
+        Weld type.
+
+    Returns
+    -------
+    numpy.dtype
+        Corresponding Numpy dtype.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from baloo.weld import default_missing_data_literal, WeldDouble
+    >>> default_missing_data_literal(WeldDouble())
+    '-999.0'
+
+    """
+    return _default_missing_mapping[weld_type]
+
+
 class NumPyEncoder(WeldObjectEncoder):
     def __init__(self):
         lib = to_shared_lib('numpy_weld_convertor')
@@ -122,7 +158,7 @@ class NumPyEncoder(WeldObjectEncoder):
             elif obj.dtype.char == 'S':
                 numpy_to_weld = self.utils.numpy_to_weld_char_arr_arr
             else:
-                raise TypeError('Unable to decode np.ndarray of 1 dimension with dtype={}'.format(str(obj.dtype)))
+                raise TypeError('Unable to encode np.ndarray of 1 dimension with dtype={}'.format(str(obj.dtype)))
         elif obj.ndim == 2:
             if obj.dtype == 'int16':
                 numpy_to_weld = self.utils.numpy_to_weld_int16_arr_arr
@@ -137,7 +173,7 @@ class NumPyEncoder(WeldObjectEncoder):
             elif obj.dtype == 'bool':
                 numpy_to_weld = self.utils.numpy_to_weld_bool_arr_arr
             else:
-                raise TypeError('Unable to decode np.ndarray of 2 dimensions with dtype={}'.format(str(obj.dtype)))
+                raise TypeError('Unable to encode np.ndarray of 2 dimensions with dtype={}'.format(str(obj.dtype)))
         else:
             raise ValueError('Can only encode np.ndarray of 1 or 2 dimensions')
 
