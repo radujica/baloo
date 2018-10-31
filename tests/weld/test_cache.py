@@ -34,8 +34,8 @@ class TestCache(object):
         weld_obj.weld_code = '{{{obj_id}, {obj_id}}}'.format(obj_id=obj_id)
         intermediate_result = LazyStructOfVecResult(weld_obj, [WeldLong(), WeldLong()])
         dependency_name = Cache.cache_intermediate_result(intermediate_result, 'test')
-        fake_weld_input1 = Cache.create_fake_array_input(dependency_name, 'test_struct_1', 0)
-        fake_weld_input2 = Cache.create_fake_array_input(dependency_name, 'test_struct_2', 1)
+        fake_weld_input1 = Cache.create_fake_array_input(dependency_name, 'test_struct_1', (0, ))
+        fake_weld_input2 = Cache.create_fake_array_input(dependency_name, 'test_struct_2', (1, ))
 
         assert isinstance(fake_weld_input1, _FakeStructMember)
         assert isinstance(fake_weld_input2, _FakeStructMember)
@@ -43,8 +43,8 @@ class TestCache(object):
         assert fake_weld_input2.dependency == dependency_name
         assert fake_weld_input1.name.startswith('_interm_') and fake_weld_input1.name.endswith('_test_struct_1')
         assert fake_weld_input2.name.startswith('_interm_') and fake_weld_input2.name.endswith('_test_struct_2')
-        assert fake_weld_input1.index == 0
-        assert fake_weld_input2.index == 1
+        assert fake_weld_input1.index == (0, )
+        assert fake_weld_input2.index == (1, )
 
     def test_integration_array(self):
         data = np.arange(5)
@@ -75,7 +75,7 @@ class TestCache(object):
         weld_obj.weld_code = '{{{obj_id}, {obj_id}}}'.format(obj_id=obj_id)
         intermediate_result = LazyStructOfVecResult(weld_obj, [WeldLong(), WeldLong()])
         dependency_name = Cache.cache_intermediate_result(intermediate_result, 'test')
-        fake_weld_input1 = Cache.create_fake_array_input(dependency_name, 'test_struct_1', 0)
+        fake_weld_input1 = Cache.create_fake_array_input(dependency_name, 'test_struct_1', (0, ))
         # fake_weld_input2 = Cache.create_fake_array_input(dependency_name, 'test_struct_2', 1)
 
         obj_id, weld_obj = create_weld_object(fake_weld_input1)
