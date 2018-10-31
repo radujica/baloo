@@ -1,5 +1,6 @@
 from weld.weldobject import WeldObject
 
+from .convertors import default_missing_data_literal
 from .lazy_result import LazyStructOfVecResult
 from .weld_utils import get_weld_obj_id, create_weld_object, to_weld_literal, create_empty_weld_object, \
     weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, extract_placeholder_weld_objects, Cache
@@ -366,6 +367,50 @@ def weld_iloc_indices(array, weld_type, indices):
     weld_obj.weld_code = weld_template.format(array=weld_obj_id_array,
                                               indices=weld_obj_id_indices,
                                               type=weld_type)
+
+    return weld_obj
+
+
+def weld_iloc_indices_with_missing(array, weld_type, indices):
+    """Retrieve the values at indices. Indices greater than array length get replaced with
+    a corresponding-type missing value literal.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input data. Assumed to be bool data.
+    weld_type : WeldType
+        The WeldType of the array data.
+    indices : numpy.ndarray or WeldObject
+        The indices to lookup.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    weld_obj = create_empty_weld_object()
+    weld_obj_id_array = get_weld_obj_id(weld_obj, array)
+    weld_obj_id_indices = get_weld_obj_id(weld_obj, indices)
+
+    missing_literal = default_missing_data_literal(weld_type)
+    weld_template = """let len_array = len({array});
+result(
+    for({indices},
+        appender[{type}],
+        |b: appender[{type}], i: i64, e: i64|
+            if(e > len_array,
+                merge(b, {missing}),
+                merge(b, lookup({array}, e))
+            )
+    )
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=weld_obj_id_array,
+                                              indices=weld_obj_id_indices,
+                                              type=weld_type,
+                                              missing=missing_literal)
 
     return weld_obj
 
