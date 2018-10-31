@@ -10,7 +10,7 @@ from .utils import check_type, is_scalar, check_inner_types, infer_length, short
     check_weld_bit_array, check_valid_int_slice
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
     weld_cast_double, WeldDouble, weld_sort, LazyLongResult, weld_merge_join, weld_iloc_indices, \
-    weld_iloc_indices_with_missing
+    weld_iloc_indices_with_missing, weld_merge_outer_join
 
 
 # TODO: handle empty dataframe case throughout operations
@@ -136,6 +136,7 @@ class DataFrame(BinaryOps):
         """
         check_inner_types(check_type(data, dict).values(), (np.ndarray, Series))
         self.data = DataFrame._preprocess_data(data)
+        # TODO: length could also be inferred from index, if passed
         self._length = infer_length(data.values())
         self.index = DataFrame._default_dataframe_index(data, self._length) if index is None else index
 
@@ -794,6 +795,42 @@ class DataFrame(BinaryOps):
 
         return self_new_names, other_new_names
 
+    # TODO: feels too intricate/complicated after generalization; review later
+    @staticmethod
+    def _compute_new_index(weld_objects_indexes, how, on, self_on_cols, other_on_cols, filter_func):
+        if how in ['inner', 'left']:
+            extract_index_from = self_on_cols
+            index_index = 0
+        else:
+            extract_index_from = other_on_cols
+            index_index = 1
+
+        if how == 'outer':
+            data_arg = 'weld_objects_indexes[2]'
+        else:
+            data_arg = 'column.values'
+
+        if len(on) > 1:
+            new_indexes = []
+            data_arg = data_arg if how != 'outer' else data_arg + '[i]'
+            for i, column_name in enumerate(on):
+                column = extract_index_from[column_name]
+                new_indexes.append(Index(filter_func(eval(data_arg),
+                                                     column.weld_type,
+                                                     weld_objects_indexes[index_index]),
+                                         column.dtype,
+                                         column.name))
+            new_index = MultiIndex(new_indexes, on)
+        else:
+            column = extract_index_from[on[0]]
+            new_index = Index(filter_func(eval(data_arg),
+                                          column.weld_type,
+                                          weld_objects_indexes[index_index]),
+                              column.dtype,
+                              column.name)
+
+        return new_index
+
     def merge(self, other, how='inner', on=None, suffixes=('_x', '_y'),
               algorithm='merge', is_on_sorted=True, is_on_unique=True):
         """Database-like join this DataFrame with the other DataFrame.
@@ -852,9 +889,10 @@ class DataFrame(BinaryOps):
         check_type(algorithm, str)
         check_inner_types(on, str) if isinstance(on, list) else check_type(on, str)
         check_inner_types(check_type(suffixes, tuple), str)
+        check_type(is_on_sorted, bool)
+        check_type(is_on_unique, bool)
 
-        # TODO: remove these after implementation
-        # TODO: change defaults on flags
+        # TODO: change defaults on flags & remove after implementation
         assert is_on_sorted
         assert is_on_unique
 
@@ -867,53 +905,39 @@ class DataFrame(BinaryOps):
         other_on_cols = other_reset[on]
 
         if algorithm == 'merge':
-            weld_objects_indexes = weld_merge_join(self_on_cols._gather_data_for_weld(),
+            # for left and right joins, the on columns can just be copied; no need for filter
+            def fake_filter_func(x, y, z):
+                return x
+
+            if how == 'inner':
+                index_filter_func = weld_iloc_indices
+                data_filter_func = weld_iloc_indices
+                weld_merge_func = weld_merge_join
+            elif how in {'left', 'right'}:
+                index_filter_func = fake_filter_func
+                data_filter_func = weld_iloc_indices_with_missing
+                weld_merge_func = weld_merge_join
+            else:
+                index_filter_func = fake_filter_func
+                data_filter_func = weld_iloc_indices_with_missing
+                weld_merge_func = weld_merge_outer_join
+
+            weld_objects_indexes = weld_merge_func(self_on_cols._gather_data_for_weld(),
                                                    self_on_cols._gather_weld_types(),
                                                    other_on_cols._gather_data_for_weld(),
                                                    other_on_cols._gather_weld_types(),
                                                    how, is_on_sorted, is_on_unique, 'merge-join')
+
+            new_index = DataFrame._compute_new_index(weld_objects_indexes,
+                                                     how,
+                                                     on,
+                                                     self_on_cols,
+                                                     other_on_cols,
+                                                     index_filter_func)
         elif algorithm == 'hash':
             raise NotImplementedError('Not yet supported')
         else:
             raise NotImplementedError('Only merge- and hash-join algorithms are supported')
-
-        if how == 'inner':
-            filter_func = weld_iloc_indices
-        else:
-            filter_func = weld_iloc_indices_with_missing
-
-        # TODO: really need better names and structure
-        if how in ['inner', 'left']:
-            extract_index_from = self_on_cols
-            index_index = 0
-        elif how == 'right':
-            extract_index_from = other_on_cols
-            index_index = 1
-        else:
-            extract_index_from = other_on_cols
-            index_index = 1
-            # TODO: outer need to merge the 2 (original!) index arrays together ~ concat + distinct; no iloc;
-            # TODO or perhaps it's better to just compute the new index during the join, instead of filtering after
-
-        # TODO: implement & replace the filter_by_indices with .iloc[indices]; perhaps iloc._with_missing(indices) too?
-        if len(on) > 1:
-            new_indexes = []
-            for column_name in on:
-                column = extract_index_from[column_name]
-                new_indexes.append(Index(filter_func(column.values,
-                                                     column.weld_type,
-                                                     weld_objects_indexes[index_index]),
-                                         column.dtype,
-                                         column.name))
-
-            new_index = MultiIndex(new_indexes, on)
-        else:
-            column = extract_index_from[on[0]]
-            new_index = Index(filter_func(column.values,
-                                          column.weld_type,
-                                          weld_objects_indexes[index_index]),
-                              column.dtype,
-                              column.name)
 
         new_data = OrderedDict()
         self_no_on = self_reset.drop(on)
@@ -922,20 +946,21 @@ class DataFrame(BinaryOps):
                                                                        other_no_on._gather_column_names(),
                                                                        suffixes)
         # TODO: duplicate code
+        # TODO: implement & replace the filter_by_indices with .iloc[indices]; perhaps iloc._with_missing(indices) too?
         for column_name, new_name in zip(self_no_on, self_new_names):
             column = self_no_on[column_name]
-            new_data[new_name] = Series(filter_func(column.values,
-                                                    column.weld_type,
-                                                    weld_objects_indexes[0]),
+            new_data[new_name] = Series(data_filter_func(column.values,
+                                                         column.weld_type,
+                                                         weld_objects_indexes[0]),
                                         new_index,
                                         column.dtype,
                                         new_name)
 
         for column_name, new_name in zip(other_no_on, other_new_names):
             column = other_no_on[column_name]
-            new_data[new_name] = Series(filter_func(column.values,
-                                                    column.weld_type,
-                                                    weld_objects_indexes[1]),
+            new_data[new_name] = Series(data_filter_func(column.values,
+                                                         column.weld_type,
+                                                         weld_objects_indexes[1]),
                                         new_index,
                                         column.dtype,
                                         new_name)
