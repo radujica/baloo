@@ -77,7 +77,7 @@ def create_placeholder_weld_object(data):
     return weld_obj
 
 
-def extract_placeholder_weld_objects(dependency_name, length, readable_text):
+def _extract_placeholder_weld_objects_at_index(dependency_name, length, readable_text, index):
     """Helper method that creates a WeldObject for each component of dependency.
 
     Parameters
@@ -88,6 +88,8 @@ def extract_placeholder_weld_objects(dependency_name, length, readable_text):
         Number of components to create WeldObjects for
     readable_text : str
         Used when creating the placeholders in WeldObject.context.
+    index : str
+        Representing a tuple of ints used to select from the struct.
 
     Returns
     -------
@@ -97,7 +99,7 @@ def extract_placeholder_weld_objects(dependency_name, length, readable_text):
     weld_objects = []
 
     for i in range(length):
-        fake_weld_input = Cache.create_fake_array_input(dependency_name, readable_text + '_' + str(i), i)
+        fake_weld_input = Cache.create_fake_array_input(dependency_name, readable_text + '_' + str(i), eval(index))
         obj_id, weld_obj = create_weld_object(fake_weld_input)
         weld_obj.weld_code = '{}'.format(obj_id)
         weld_objects.append(weld_obj)
@@ -105,6 +107,14 @@ def extract_placeholder_weld_objects(dependency_name, length, readable_text):
         Cache.cache_fake_input(obj_id, fake_weld_input)
 
     return weld_objects
+
+
+def extract_placeholder_weld_objects(dependency_name, length, readable_text):
+    return _extract_placeholder_weld_objects_at_index(dependency_name, length, readable_text, '(i, )')
+
+
+def extract_placeholder_weld_objects_from_index(dependency_name, length, readable_text, index):
+    return _extract_placeholder_weld_objects_at_index(dependency_name, length, readable_text, '({}, i)'.format(index))
 
 
 # an attempt to avoid expensive casting
