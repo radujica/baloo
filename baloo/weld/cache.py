@@ -6,7 +6,7 @@ import abc
 # TODO though probably need to implement `del df/sr/etc` to make this possible
 # TODO 2: would be nice if there could be a 'cache()' operator which is detected in weld_code at evaluate;
 # TODO though at the Python side (not weld/rust) since caching violates the Weld stateless principle...
-# TODO: re-using the WeldObject.dependencies could be more natural instead of fake inputs
+# TODO 3: re-using the WeldObject.dependencies could be more natural instead of fake inputs
 class Cache(object):
     """Cache for intermediate results. Acts as a singleton.
 
@@ -137,9 +137,10 @@ class Cache(object):
         readable_name : str
             User-friendly string that will be used to generate a unique placeholder name. This placeholder
             will be seen in the WeldObject.context.
-        index : int, optional
+        index : tuple, optional
             If passed, it means the intermediate result dependency is in fact a struct/tuple, so this fake input
-            shall be able to select the required array from the struct.
+            shall be able to select the required array from the tuple. Note that it can work through multiple levels,
+            i.e. passing (1, 0) would essentially select 2 from (1, (2, 3)).
 
         Returns
         -------
@@ -155,7 +156,7 @@ class Cache(object):
         if index is None:
             fake_weld_input = _FakeArray(dependency, name)
         else:
-            assert isinstance(index, int)
+            assert isinstance(index, tuple)
             fake_weld_input = _FakeStructMember(dependency, index, name)
 
         return fake_weld_input
@@ -236,7 +237,7 @@ class _FakeArray(_FakeWeldInput):
 
 class _FakeStructMember(_FakeWeldInput):
     def __init__(self, dependency, index, readable_name):
-        assert isinstance(index, int)
+        assert isinstance(index, tuple)
 
         self.index = index
 
@@ -246,4 +247,8 @@ class _FakeStructMember(_FakeWeldInput):
         return '_FakeStructMember(dependency={}, index={}, name={})'.format(self.dependency, self.index, self.name)
 
     def retrieve(self):
-        return self._evaluate_dependency()[self.index]
+        result = self._evaluate_dependency()
+        for i in self.index:
+            result = result[i]
+
+        return result
