@@ -402,12 +402,13 @@ def weld_iloc_indices_with_missing(array, weld_type, indices):
     missing_literal = default_missing_data_literal(weld_type)
     if weld_type == WeldVec(WeldChar()):
         missing_literal = get_weld_obj_id(weld_obj, missing_literal)
+
     weld_template = """let len_array = len({array});
 result(
     for({indices},
         appender[{type}],
         |b: appender[{type}], i: i64, e: i64|
-            if(e > len_array,
+            if(e >= len_array,
                 merge(b, {missing}),
                 merge(b, lookup({array}, e))
             )
