@@ -4,6 +4,9 @@ from weld.weldobject import *
 
 from .utils import to_shared_lib, to_weld_vec
 
+# Python3: str _is_ unicode -> 'Bürgermeister'.encode() => b'B\xc3\xbcrgermeister'
+# Python2: str is ascii -> 'Bürgermeister' does not exist; u'Bürgermeister'.encode() => 'B\xc3\xbcrgermeister'
+
 # TODO: datetime support
 _numpy_to_weld_type_mapping = {
     'S': WeldVec(WeldChar()),
@@ -90,9 +93,9 @@ def weld_to_numpy_dtype(weld_type):
     return np.dtype(_weld_to_numpy_type_mapping[weld_type])
 
 
-# TODO: add str 'None' when str encoding is solved (branch str-support) ~ there is no str literal
 # TODO: make np.nan work?
 _default_missing_mapping = {
+    WeldVec(WeldChar()): 'None',
     WeldInt16(): '-999si',
     WeldInt(): '-999',
     WeldLong(): '-999L',
@@ -112,8 +115,8 @@ def default_missing_data_literal(weld_type):
 
     Returns
     -------
-    numpy.dtype
-        Corresponding Numpy dtype.
+    str
+        Literal for missing data.
 
     Examples
     --------
@@ -138,6 +141,8 @@ class NumPyEncoder(WeldObjectEncoder):
             base = to_weld_vec(base, obj.ndim)
 
             return base
+        elif isinstance(obj, str):
+            return WeldVec(WeldChar())
         else:
             raise TypeError('Unable to infer weld type from obj of type={}'.format(str(type(obj))))
 
@@ -186,6 +191,12 @@ class NumPyEncoder(WeldObjectEncoder):
             numpy_to_weld.argtypes = [py_object]
 
             return numpy_to_weld(obj)
+        elif isinstance(obj, str):
+            numpy_to_weld = self.utils.str_to_weld_char_arr
+            numpy_to_weld.restype = WeldVec(WeldChar()).ctype_class
+            numpy_to_weld.argtypes = [py_object]
+
+            return numpy_to_weld(obj.encode('ascii'))
         else:
             raise TypeError('Unable to encode obj of type={}'.format(str(type(obj))))
 
@@ -215,6 +226,13 @@ class NumPyDecoder(WeldObjectDecoder):
         elif restype == WeldBit():
             result = ctypes.cast(data, ctypes.POINTER(c_bool)).contents.value
             return np.bool(result)
+        elif restype == WeldVec(WeldChar()):
+            weld_to_numpy = self.utils.weld_to_str
+            weld_to_numpy.restype = py_object
+            weld_to_numpy.argtypes = [restype.ctype_class]
+            result = ctypes.cast(data, ctypes.POINTER(restype.ctype_class)).contents
+
+            return weld_to_numpy(result).decode('ascii')
         else:
             return None
 
@@ -256,7 +274,12 @@ class NumPyDecoder(WeldObjectDecoder):
             weld_to_numpy.argtypes = [restype.ctype_class]
             result = ctypes.cast(data, ctypes.POINTER(restype.ctype_class)).contents
 
-            return weld_to_numpy(result)
+            res = weld_to_numpy(result)
+            # TODO: this might be a bug waiting to happen; the dtype is |S0 despite actually being e.g. |S9
+            if restype == WeldVec(WeldVec(WeldChar())):
+                res = res.astype(np.bytes_)
+
+            return res
         else:
             return None
 

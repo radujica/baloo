@@ -244,6 +244,8 @@ class Series(LazyArrayResult, BinaryOps):
         array([False,  True,  True])
 
         """
+        # TODO: work on masking (branch masking) ~ evaluate the mask first and use on both index and data;
+        # TODO right now the filter gets computed twice, once for index and once for the data
         evaluated_data = super(Series, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
         evaluated_index = self.index.evaluate(verbose, decode, passes, num_threads, apply_experimental)
 

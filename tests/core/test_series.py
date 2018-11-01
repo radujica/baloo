@@ -15,7 +15,7 @@ def assert_series_equal(actual, expected, almost=None):
         np.testing.assert_array_almost_equal(actual.values, expected.values, almost)
     else:
         np.testing.assert_array_equal(actual.values, expected.values)
-    assert actual.dtype == expected.dtype
+    assert actual.dtype.char == expected.dtype.char
     # might seem redundant but testing the __len__ function
     assert len(actual) == len(expected)
     assert actual.name == expected.name
@@ -82,6 +82,14 @@ class TestSeries(object):
 
         actual = sr[(sr != 0) & (sr != 3)]
         expected = Series(np.array([1, 2]), Index(np.array([1, 2])), np.dtype(np.int64))
+
+        assert_series_equal(actual, expected)
+
+    def test_filter_str(self):
+        sr = Series(np.array(['a', 'abc', 'goosfraba'], dtype=np.bytes_))
+
+        actual = sr[sr != 'abc']
+        expected = Series(np.array(['a', 'goosfraba'], dtype=np.bytes_), Index(np.array([0, 2])), np.dtype(np.bytes_))
 
         assert_series_equal(actual, expected)
 
