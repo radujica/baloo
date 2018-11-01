@@ -93,9 +93,9 @@ def weld_to_numpy_dtype(weld_type):
     return np.dtype(_weld_to_numpy_type_mapping[weld_type])
 
 
-# TODO: add str 'None' when str encoding is solved (branch str-support) ~ there is no str literal
 # TODO: make np.nan work?
 _default_missing_mapping = {
+    WeldVec(WeldChar()): 'None',
     WeldInt16(): '-999si',
     WeldInt(): '-999',
     WeldLong(): '-999L',
@@ -115,8 +115,8 @@ def default_missing_data_literal(weld_type):
 
     Returns
     -------
-    numpy.dtype
-        Corresponding Numpy dtype.
+    str
+        Literal for missing data.
 
     Examples
     --------

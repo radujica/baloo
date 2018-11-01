@@ -1,7 +1,7 @@
 from weld.weldobject import WeldObject
 
 from .convertors import default_missing_data_literal
-from .lazy_result import LazyStructOfVecResult, WeldVec
+from .lazy_result import LazyStructOfVecResult, WeldVec, WeldChar
 from .weld_utils import get_weld_obj_id, create_weld_object, to_weld_literal, create_empty_weld_object, \
     weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, extract_placeholder_weld_objects, Cache
 
@@ -400,6 +400,8 @@ def weld_iloc_indices_with_missing(array, weld_type, indices):
     weld_obj_id_indices = get_weld_obj_id(weld_obj, indices)
 
     missing_literal = default_missing_data_literal(weld_type)
+    if weld_type == WeldVec(WeldChar()):
+        missing_literal = get_weld_obj_id(weld_obj, missing_literal)
     weld_template = """let len_array = len({array});
 result(
     for({indices},
