@@ -1,4 +1,4 @@
-from weld.types import WeldInt16, WeldLong, WeldFloat, WeldBit, WeldDouble
+from weld.types import WeldInt16, WeldLong, WeldFloat, WeldBit, WeldDouble, WeldInt
 from weld.weldobject import WeldObject
 
 from .cache import Cache
@@ -19,8 +19,8 @@ def get_weld_obj_id(weld_obj, data):
     ----------
     weld_obj : WeldObject
         WeldObject to update.
-    data : numpy.ndarray or WeldObject
-        Data for which to get an id.
+    data : numpy.ndarray or WeldObject or str
+        Data for which to get an id. If str, it is a placeholder or 'str' literal.
 
     Returns
     -------
@@ -42,7 +42,7 @@ def create_weld_object(data):
     Parameters
     ----------
     data : numpy.ndarray or WeldObject or str
-        Data to include in newly created object. If str, it is a placeholder.
+        Data to include in newly created object. If str, it is a placeholder or 'str' literal.
 
     Returns
     -------
@@ -62,8 +62,8 @@ def create_placeholder_weld_object(data):
 
     Parameters
     ----------
-    data : numpy.ndarray or WeldObject
-        Data to wrap around.
+    data : numpy.ndarray or WeldObject or str
+        Data to wrap around. If str, it is a placeholder or 'str' literal.
 
     Returns
     -------
@@ -123,7 +123,7 @@ def to_weld_literal(scalar, weld_type):
 
     Parameters
     ----------
-    scalar : {int, float, str, bool, bytes}
+    scalar : {int, float, str, bool}
         Scalar data to convert to weld literal.
     weld_type : WeldType
         Desired Weld type.
@@ -139,18 +139,41 @@ def to_weld_literal(scalar, weld_type):
     '4L'
 
     """
-    if isinstance(weld_type, WeldInt16):
-        return '{}si'.format(str(scalar))
-    elif isinstance(weld_type, WeldLong):
-        return '{}L'.format(str(scalar))
-    elif isinstance(weld_type, WeldFloat):
-        return '{}f'.format(str(scalar))
-    elif isinstance(weld_type, WeldBit):
-        return '{}'.format(str(scalar).lower())
-    elif isinstance(weld_type, WeldDouble) and isinstance(scalar, int):
-        return '{}.0'.format(str(scalar))
-    else:
-        return '{}'.format(str(scalar))
+    try:
+        if isinstance(scalar, int):
+            if isinstance(weld_type, WeldInt16):
+                return '{}si'.format(str(scalar))
+            elif isinstance(weld_type, WeldInt):
+                return str(scalar)
+            elif isinstance(weld_type, WeldLong):
+                return '{}L'.format(str(scalar))
+            elif isinstance(weld_type, WeldFloat):
+                return '{}f'.format(str(scalar))
+            elif isinstance(weld_type, WeldDouble):
+                return '{}.0'.format(str(scalar))
+            else:
+                raise TypeError()
+        elif isinstance(scalar, float):
+            if isinstance(weld_type, WeldFloat):
+                return '{}f'.format(str(scalar))
+            elif isinstance(weld_type, WeldDouble):
+                return str(scalar)
+            else:
+                raise TypeError()
+        elif isinstance(scalar, str):
+            if str(weld_type) == 'vec[i8]':
+                return str(scalar)
+            else:
+                raise TypeError()
+        elif isinstance(scalar, bool):
+            if isinstance(weld_type, WeldBit):
+                return str(scalar).lower()
+            else:
+                raise TypeError()
+        else:
+            raise TypeError()
+    except TypeError:
+        raise TypeError('Cannot convert scalar:{} to type:{}'.format(scalar, weld_type))
 
 
 def weld_combine_scalars(scalars, weld_type):

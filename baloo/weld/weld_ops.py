@@ -1,7 +1,7 @@
 from weld.weldobject import WeldObject
 
 from .convertors import default_missing_data_literal
-from .lazy_result import LazyStructOfVecResult
+from .lazy_result import LazyStructOfVecResult, WeldVec
 from .weld_utils import get_weld_obj_id, create_weld_object, to_weld_literal, create_empty_weld_object, \
     weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, extract_placeholder_weld_objects, Cache
 
@@ -71,17 +71,22 @@ def weld_compare(array, scalar, operation, weld_type):
 
     scalar = to_weld_literal(scalar, weld_type)
 
+    cast = '{type}({scalar})'.format(type=weld_type, scalar=scalar)
+    # actually checking WeldVec(WeldChar)
+    if isinstance(weld_type, WeldVec):
+        cast = get_weld_obj_id(weld_obj, scalar)
+
     # TODO: there should be no casting! requires Weld fix
     weld_template = """map(
     {array},
     |a: {type}| 
-        a {operation} {type}({scalar})
+        a {operation} {cast}
 )"""
 
     weld_obj.weld_code = weld_template.format(array=obj_id,
-                                              scalar=scalar,
                                               operation=operation,
-                                              type=weld_type)
+                                              type=weld_type,
+                                              cast=cast)
 
     return weld_obj
 

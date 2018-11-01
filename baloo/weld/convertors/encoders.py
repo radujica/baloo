@@ -275,6 +275,7 @@ class NumPyDecoder(WeldObjectDecoder):
             result = ctypes.cast(data, ctypes.POINTER(restype.ctype_class)).contents
 
             res = weld_to_numpy(result)
+            # TODO: this might be a bug waiting to happen; the dtype is |S0 despite actually being e.g. |S9
             if restype == WeldVec(WeldVec(WeldChar())):
                 res = res.astype(np.bytes_)
 
