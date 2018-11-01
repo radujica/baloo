@@ -4,12 +4,13 @@
 #include <cstdlib>
 #include <cstdio>
 #include <iostream>
+#include <string.h>
 //#include <omp.h> //uncomment to enable parallel encode
 
 using namespace std;
 
 #if PY_MAJOR_VERSION >= 3
-    #define PyString_Size PyUnicode_GetSize
+    #define PyString_Size PyBytes_Size
     #define PyString_AsString PyBytes_AsString
     #define PyString_FromStringAndSize PyBytes_FromStringAndSize
 #endif
@@ -80,11 +81,15 @@ weld::vec<double> numpy_to_weld_double_arr(PyObject* in) {
  * Converts numpy array to Weld char vector.
  */
 extern "C"
-weld::vec<uint8_t> numpy_to_weld_char_arr(PyObject* in) {
+weld::vec<uint8_t> str_to_weld_char_arr(PyObject* in) {
   int64_t dimension = (int64_t) PyString_Size(in);
+  // No clue why it needs to be copied.
+  const char *str = PyString_AsString(in);
+  const char *copied = strdup(str);
+
   weld::vec<uint8_t> t;
   t.size = dimension;
-  t.ptr = (uint8_t*) PyString_AsString(in);
+  t.ptr = (uint8_t*) copied;
   return t;
 }
 
@@ -386,6 +391,16 @@ weld::vec<weld::vec<bool> > numpy_to_weld_bool_arr_arr(PyObject* in) {
     }
 
     return t;
+}
+
+/**
+ * Converts Weld vector to Python str.
+ */
+extern "C"
+PyObject* weld_to_str(weld::vec<uint8_t> inp) {
+  Py_Initialize();
+  PyObject* out = PyString_FromStringAndSize((const char*) inp.ptr, inp.size);
+  return out;
 }
 
 /**

@@ -64,6 +64,18 @@ class TestNumPyEncoders(object):
 
         assert evaluated == expected
 
+    def test_str(self):
+        data = 'abc'
+        weld_obj = WeldObject(self._encoder, self._decoder)
+        obj_id = weld_obj.update(data)
+        weld_obj.weld_code = '{}'.format(obj_id)
+        res = LazyResult(weld_obj, WeldChar(), 1)
+
+        actual = res.evaluate()
+        expected = data
+
+        assert actual == expected
+
     def test_struct(self):
         data1 = np.array([1, 2, 3], dtype=np.int64)
         data2 = np.array([2, 3, 4], dtype=np.int64)
