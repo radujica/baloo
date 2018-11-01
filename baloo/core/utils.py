@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..weld import WeldObject, weld_count, WeldBit
+from ..weld import WeldObject, weld_count, WeldBit, WeldLong
 
 
 def check_type(data, expected_types):
@@ -20,6 +20,10 @@ def check_inner_types(data, expected_types):
 
 def check_weld_bit_array(data):
     return check_type(data.weld_type, WeldBit)
+
+
+def check_weld_long_array(data):
+    return check_type(data.weld_type, WeldLong)
 
 
 def infer_dtype(data, arg_dtype):

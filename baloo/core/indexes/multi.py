@@ -4,12 +4,13 @@ import numpy as np
 from tabulate import tabulate
 
 from .base import Index
+from ..generic import IlocIndex
 from ..utils import check_inner_types, check_type, infer_length, shorten_data, check_weld_bit_array, \
     check_valid_int_slice
 from ...weld import LazyArrayResult
 
 
-class MultiIndex(object):
+class MultiIndex(IlocIndex):
     """Weld-ed MultiIndex, however completely different to Pandas.
 
     This version merely groups a few columns together to act as an index
@@ -198,3 +199,9 @@ class MultiIndex(object):
         """
         # not computing slice here to use with __getitem__ because we'd need to use len which is eager
         return MultiIndex([v.tail(n) for v in self.values], self.names)
+
+    def _iloc_indices(self, indices):
+        return MultiIndex([index._iloc_indices(indices) for index in self.values], self.names)
+
+    def _iloc_indices_with_missing(self, indices):
+        return MultiIndex([index._iloc_indices_with_missing(indices) for index in self.values], self.names)
