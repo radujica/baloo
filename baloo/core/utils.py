@@ -87,3 +87,10 @@ def shorten_data(data):
         return list(np.concatenate([data[:20], np.array(['...']), data[-20:]]))
     else:
         return data
+
+
+def as_list(data):
+    if isinstance(data, list):
+        return data
+    else:
+        return [data]

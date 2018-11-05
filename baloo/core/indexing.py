@@ -36,8 +36,18 @@ class _ILocIndexer(object):
             return self.data[item]
         elif isinstance(item, LazyArrayResult):
             check_weld_long_array(item)
+            item = item.weld_expr
 
-            return self._iloc(item.weld_expr)
+            if isinstance(self.data, Series):
+                return self._iloc_series(item, self.data.index._iloc_indices(item))
+            elif isinstance(self.data, DataFrame):
+                new_index = self.data.index._iloc_indices(item)
+
+                new_data = OrderedDict()
+                for column_name in self.data:
+                    new_data[column_name] = self.data[column_name].iloc._iloc_series(item, new_index)
+
+                return DataFrame(new_data, new_index)
         else:
             raise TypeError('Expected an int, slice, or indices array')
 
@@ -48,19 +58,6 @@ class _ILocIndexer(object):
                       new_index,
                       self.data.dtype,
                       self.data.name)
-
-    def _iloc(self, item):
-        if isinstance(self.data, Series):
-            return self._iloc_series(item, self.data.index._iloc_indices(item))
-        elif isinstance(self.data, DataFrame):
-            # this should only happen when called by _ILocIndexer.__getitem__
-            new_index = self.data.index._iloc_indices(item)
-
-            new_data = OrderedDict()
-            for column_name in self.data:
-                new_data[column_name] = self.data[column_name].iloc._iloc_series(item, new_index)
-
-            return DataFrame(new_data, new_index)
 
     def _iloc_series_with_missing(self, item, new_index):
         return Series(weld_iloc_indices_with_missing(self.data.weld_expr,

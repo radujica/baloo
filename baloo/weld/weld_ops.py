@@ -1,9 +1,11 @@
 from weld.weldobject import WeldObject
 
 from .convertors import default_missing_data_literal
-from .lazy_result import LazyStructOfVecResult, WeldVec, WeldChar
+from .lazy_array_result import LazyArrayResult
+from .lazy_result import WeldVec, WeldChar, WeldLong
 from .weld_utils import get_weld_obj_id, create_weld_object, to_weld_literal, create_empty_weld_object, \
-    weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, extract_placeholder_weld_objects, Cache
+    weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, extract_placeholder_weld_objects, Cache, \
+    weld_select_from_struct
 
 
 def weld_range(start, stop, step):
@@ -469,9 +471,15 @@ def weld_element_wise_op(array, weld_type, scalar, operation):
 
 
 # this function does the actual sorting
-def _weld_sort(arrays, weld_types, indexes_to_sort, ascending=True):
-    assert len(indexes_to_sort) == 1
+# TODO: descending sort on strings might not work
+def _weld_sort(arrays, weld_types, ascending=True):
+    obj_id, index_obj = create_weld_object(arrays[0])
+    index_obj.weld_code = 'len({})'.format(obj_id)
+    # get indexes that will be sorted and returned
+    index_column = weld_range(0, index_obj, 1)
 
+    arrays.insert(0, index_column)
+    weld_types.insert(0, WeldLong())
     weld_obj_vec_of_struct = weld_arrays_to_vec_of_struct(arrays, weld_types)
 
     weld_obj = create_empty_weld_object()
@@ -479,9 +487,10 @@ def _weld_sort(arrays, weld_types, indexes_to_sort, ascending=True):
 
     types = '{{{}}}'.format(', '.join((str(weld_type) for weld_type in weld_types)))
     # TODO: update here when sorting on structs is possible
-    ascending_sort_func = '{}'.format(', '.join(('e.${}'.format(i) for i in indexes_to_sort)))
+    ascending_sort_func = '{}'.format(', '.join(('e.${}'.format(i) for i in range(1, len(arrays)))))
     zero_literals = dict(enumerate([to_weld_literal(0, weld_type) for weld_type in weld_types]))
-    descending_sort_func = '{}'.format(', '.join(('{} - e.${}'.format(zero_literals[i], i) for i in indexes_to_sort)))
+    descending_sort_func = '{}'.format(', '.join(('{} - e.${}'.format(zero_literals[i], i)
+                                                  for i in range(1, len(arrays)))))
     sort_func = ascending_sort_func if ascending else descending_sort_func
 
     weld_template = 'sort({struct}, |e: {types}| {sort_func})'
@@ -493,7 +502,8 @@ def _weld_sort(arrays, weld_types, indexes_to_sort, ascending=True):
     return weld_obj
 
 
-def weld_sort(arrays, weld_types, indexes_to_sort, readable_text, ascending=True):
+# TODO: further optimization is to skip creating struct of vec when it's a single column
+def weld_sort(arrays, weld_types, readable_text, ascending=True):
     """Sort the arrays.
 
     Parameters
@@ -502,8 +512,6 @@ def weld_sort(arrays, weld_types, indexes_to_sort, readable_text, ascending=True
         Arrays to put in a struct.
     weld_types : list of WeldType
         The Weld types of the arrays in the same order.
-    indexes_to_sort : list of int
-        Indexes on which to sort, e.g. the first 2 columns would be [0, 1].
     readable_text : str
         Explanatory string to add in the Weld placeholder.
     ascending : bool, optional
@@ -514,12 +522,16 @@ def weld_sort(arrays, weld_types, indexes_to_sort, readable_text, ascending=True
         Representation of this computation.
 
     """
-    weld_obj_sort = _weld_sort(arrays, weld_types, indexes_to_sort, ascending)
+    weld_obj_sort = _weld_sort(arrays, weld_types, ascending)
     weld_obj_struct = weld_vec_of_struct_to_struct_of_vec(weld_obj_sort, weld_types)
+    weld_obj_indices = weld_select_from_struct(weld_obj_struct, 0)
 
-    intermediate_result = LazyStructOfVecResult(weld_obj_struct, weld_types)
+    intermediate_result = LazyArrayResult(weld_obj_indices, WeldLong())
     dependency_name = Cache.cache_intermediate_result(intermediate_result, readable_text)
 
-    weld_objects = extract_placeholder_weld_objects(dependency_name, len(weld_types), readable_text)
+    fake_weld_input = Cache.create_fake_array_input(dependency_name, readable_text + '_indices')
+    obj_id, weld_obj = create_weld_object(fake_weld_input)
+    weld_obj.weld_code = '{}'.format(obj_id)
+    Cache.cache_fake_input(obj_id, fake_weld_input)
 
-    return weld_objects
+    return weld_obj
