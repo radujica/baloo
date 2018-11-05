@@ -107,6 +107,8 @@ class Series(LazyArrayResult, BinaryOps):
         2
         >>> print(sr.iloc[0:2].evaluate())
         [0 1]
+        >>> print(sr.iloc[bl.Series(np.array([0, 2]))].evaluate())
+        [0 2]
 
         """
         from .indexing import _ILocIndexer

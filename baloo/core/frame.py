@@ -204,6 +204,31 @@ class DataFrame(BinaryOps):
 
             return length
 
+    @property
+    def iloc(self):
+        """Retrieve Indexer by index.
+
+        Supported iloc functionality exemplified below.
+
+        Examples
+        --------
+        >>> df = bl.DataFrame(OrderedDict((('a', np.arange(5, 8)), ('b', np.array([1, 0, 2])))))
+        >>> print(df.iloc[0:2].evaluate())
+               a    b
+        ---  ---  ---
+          0    5    1
+          1    6    0
+        >>> print(df.iloc[bl.Series(np.array([0, 2]))].evaluate())
+               a    b
+        ---  ---  ---
+          0    5    1
+          2    7    2
+
+        """
+        from .indexing import _ILocIndexer
+
+        return _ILocIndexer(self)
+
     def __repr__(self):
         columns = '[' + ', '.join(['{}: {}'.format(k, v) for k, v in self._gather_dtypes().items()]) + ']'
 
@@ -515,6 +540,7 @@ class DataFrame(BinaryOps):
 
     # TODO: currently if the data has multiple types, the results are casted to f64; perhaps be more flexible about it
     # TODO: cast data to relevant 64-bit format pre-aggregation ~ i16, i32 -> i64, f32 -> f64
+    # TODO: update gather_dtypes, str check
     def _aggregate_columns(self, func_name):
         new_index = self.keys()
 
