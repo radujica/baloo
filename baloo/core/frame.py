@@ -10,7 +10,7 @@ from .utils import check_type, is_scalar, check_inner_types, infer_length, short
     check_weld_bit_array, check_valid_int_slice
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
     weld_cast_double, WeldDouble, weld_sort, LazyLongResult, weld_merge_join, weld_iloc_indices, \
-    weld_iloc_indices_with_missing, weld_merge_outer_join
+    weld_merge_outer_join
 
 
 # TODO: handle empty dataframe case throughout operations
@@ -203,6 +203,31 @@ class DataFrame(BinaryOps):
             self._length = length
 
             return length
+
+    @property
+    def iloc(self):
+        """Retrieve Indexer by index.
+
+        Supported iloc functionality exemplified below.
+
+        Examples
+        --------
+        >>> df = bl.DataFrame(OrderedDict((('a', np.arange(5, 8)), ('b', np.array([1, 0, 2])))))
+        >>> print(df.iloc[0:2].evaluate())
+               a    b
+        ---  ---  ---
+          0    5    1
+          1    6    0
+        >>> print(df.iloc[bl.Series(np.array([0, 2]))].evaluate())
+               a    b
+        ---  ---  ---
+          0    5    1
+          2    7    2
+
+        """
+        from .indexing import _ILocIndexer
+
+        return _ILocIndexer(self)
 
     def __repr__(self):
         columns = '[' + ', '.join(['{}: {}'.format(k, v) for k, v in self._gather_dtypes().items()]) + ']'
@@ -515,6 +540,7 @@ class DataFrame(BinaryOps):
 
     # TODO: currently if the data has multiple types, the results are casted to f64; perhaps be more flexible about it
     # TODO: cast data to relevant 64-bit format pre-aggregation ~ i16, i32 -> i64, f32 -> f64
+    # TODO: update gather_dtypes, str check
     def _aggregate_columns(self, func_name):
         new_index = self.keys()
 
@@ -911,15 +937,15 @@ class DataFrame(BinaryOps):
 
             if how == 'inner':
                 index_filter_func = weld_iloc_indices
-                data_filter_func = weld_iloc_indices
+                data_filter_func = '_iloc_series'
                 weld_merge_func = weld_merge_join
             elif how in {'left', 'right'}:
                 index_filter_func = fake_filter_func
-                data_filter_func = weld_iloc_indices_with_missing
+                data_filter_func = '_iloc_series_with_missing'
                 weld_merge_func = weld_merge_join
             else:
                 index_filter_func = fake_filter_func
-                data_filter_func = weld_iloc_indices_with_missing
+                data_filter_func = '_iloc_series_with_missing'
                 weld_merge_func = weld_merge_outer_join
 
             weld_objects_indexes = weld_merge_func(self_on_cols._gather_data_for_weld(),
@@ -934,35 +960,24 @@ class DataFrame(BinaryOps):
                                                      self_on_cols,
                                                      other_on_cols,
                                                      index_filter_func)
+
+            new_data = OrderedDict()
+            self_no_on = self_reset.drop(on)
+            other_no_on = other_reset.drop(on)
+            self_new_names, other_new_names = DataFrame._compute_new_names(self_no_on._gather_column_names(),
+                                                                           other_no_on._gather_column_names(),
+                                                                           suffixes)
+
+            for column_name, new_name in zip(self_no_on, self_new_names):
+                new_data[new_name] = getattr(self_no_on[column_name].iloc,
+                                             data_filter_func)(weld_objects_indexes[0], new_index)
+
+            for column_name, new_name in zip(other_no_on, other_new_names):
+                new_data[new_name] = getattr(other_no_on[column_name].iloc,
+                                             data_filter_func)(weld_objects_indexes[1], new_index)
+
+            return DataFrame(new_data, new_index)
         elif algorithm == 'hash':
             raise NotImplementedError('Not yet supported')
         else:
             raise NotImplementedError('Only merge- and hash-join algorithms are supported')
-
-        new_data = OrderedDict()
-        self_no_on = self_reset.drop(on)
-        other_no_on = other_reset.drop(on)
-        self_new_names, other_new_names = DataFrame._compute_new_names(self_no_on._gather_column_names(),
-                                                                       other_no_on._gather_column_names(),
-                                                                       suffixes)
-        # TODO: duplicate code
-        # TODO: implement & replace the filter_by_indices with .iloc[indices]; perhaps iloc._with_missing(indices) too?
-        for column_name, new_name in zip(self_no_on, self_new_names):
-            column = self_no_on[column_name]
-            new_data[new_name] = Series(data_filter_func(column.values,
-                                                         column.weld_type,
-                                                         weld_objects_indexes[0]),
-                                        new_index,
-                                        column.dtype,
-                                        new_name)
-
-        for column_name, new_name in zip(other_no_on, other_new_names):
-            column = other_no_on[column_name]
-            new_data[new_name] = Series(data_filter_func(column.values,
-                                                         column.weld_type,
-                                                         weld_objects_indexes[1]),
-                                        new_index,
-                                        column.dtype,
-                                        new_name)
-
-        return DataFrame(new_data, new_index)

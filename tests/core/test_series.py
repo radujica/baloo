@@ -143,6 +143,22 @@ class TestSeries(object):
 
         assert_series_equal(actual, expected)
 
+    def test_iloc_indices(self, series_float):
+        indices = Series(np.array([0, 3, 4]))
+
+        actual = series_float.iloc[indices]
+        expected = Series(np.array([1, 4, 5], dtype=np.float32), Index(np.array([0, 3, 4])), np.dtype(np.float32))
+
+        assert_series_equal(actual, expected)
+
+    def test_iloc_indices_missing(self, series_float):
+        indices = Series(np.array([0, 3, 5]))
+
+        actual = series_float.iloc._iloc_with_missing(indices.weld_expr)
+        expected = Series(np.array([1, 4, -999], dtype=np.float32), Index(np.array([0, 3, -999])), np.dtype(np.float32))
+
+        assert_series_equal(actual, expected)
+
     @pytest.mark.parametrize('operation, expected', [
         ('+', Series(np.array(np.arange(2, 7), dtype=np.float32), Index(np.arange(5)), np.dtype(np.float32))),
         ('-', Series(np.array(np.arange(-2, 3), dtype=np.float32), Index(np.arange(5)), np.dtype(np.float32))),

@@ -1,12 +1,13 @@
 import numpy as np
 
-from ..generic import BinaryOps
+from ..generic import BinaryOps, IlocIndex
 from ...core.utils import check_type, infer_dtype, is_scalar, check_weld_bit_array, check_valid_int_slice
 from ...weld import LazyArrayResult, numpy_to_weld_type, weld_filter, weld_slice, \
-    weld_compare, weld_tail, weld_array_op, weld_element_wise_op, WeldObject
+    weld_compare, weld_tail, weld_array_op, weld_element_wise_op, WeldObject, weld_iloc_indices, \
+    weld_iloc_indices_with_missing
 
 
-class Index(LazyArrayResult, BinaryOps):
+class Index(LazyArrayResult, BinaryOps, IlocIndex):
     """Weld-ed Pandas Index.
 
     Attributes
@@ -199,5 +200,19 @@ class Index(LazyArrayResult, BinaryOps):
 
         # not computing slice here to use with __getitem__ because we'd need to use len which is eager
         return Index(weld_tail(self.weld_expr, length, n),
+                     self.dtype,
+                     self.name)
+
+    def _iloc_indices(self, indices):
+        return Index(weld_iloc_indices(self.weld_expr,
+                                       self.weld_type,
+                                       indices),
+                     self.dtype,
+                     self.name)
+
+    def _iloc_indices_with_missing(self, indices):
+        return Index(weld_iloc_indices_with_missing(self.weld_expr,
+                                                    self.weld_type,
+                                                    indices),
                      self.dtype,
                      self.name)

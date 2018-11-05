@@ -165,6 +165,18 @@ class TestDataFrame(object):
 
         assert_dataframe_equal(actual, expected)
 
+    def test_iloc_indices(self):
+        df = DataFrame(OrderedDict((('a', np.array([1, 2, 3, 4, 5])),
+                                    ('b', Series(np.arange(5))))))
+        indices = Series(np.array([0, 2, 3]))
+
+        actual = df.iloc[indices]
+        expected = DataFrame(OrderedDict((('a', np.array([1, 3, 4])),
+                                          ('b', Series(np.array([0, 2, 3]))))),
+                             Index(np.array([0, 2, 3])))
+
+        assert_dataframe_equal(actual, expected)
+
     def test_keys(self):
         df = DataFrame(OrderedDict((('a', np.array([1, 2, 3, 4, 5], dtype=np.float32)),
                                     ('b', Series(np.arange(5))))))

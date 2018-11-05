@@ -55,3 +55,27 @@ class BinaryOps(abc.ABC):
 
     def __pow__(self, other):
         return self._element_wise_operation(other, 'pow')
+
+
+class IlocIndex(abc.ABC):
+    @abc.abstractmethod
+    def _iloc_indices(self, indices):
+        """Filter based on indices.
+
+        Parameters
+        ----------
+        indices : numpy.ndarray or WeldObject
+
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _iloc_indices_with_missing(self, indices):
+        """Filter based on indices, where an index > length signifies missing data.
+
+        Parameters
+        ----------
+        indices : numpy.ndarray or WeldObject
+
+        """
+        raise NotImplementedError
