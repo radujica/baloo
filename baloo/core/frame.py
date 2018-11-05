@@ -967,3 +967,58 @@ class DataFrame(BinaryOps):
             raise NotImplementedError('Not yet supported')
         else:
             raise NotImplementedError('Only merge- and hash-join algorithms are supported')
+
+    def join(self, other, on=None, how='left', lsuffix=None, rsuffix=None,
+             algorithm='merge', is_on_sorted=True, is_on_unique=True):
+        """Database-like join this DataFrame with the other DataFrame.
+
+        Currently assumes the `on` columns are sorted and the on-column(s) values are unique!
+        Next work handles the other cases.
+
+        Note there's no automatic cast if the type of the on columns differs.
+
+        Check DataFrame.merge() for more details.
+
+        Parameters
+        ----------
+        other : DataFrame
+            With which to merge.
+        on : str or list or None, optional
+            The columns from both DataFrames on which to join.
+            If None, will join on the index if it has the same name.
+        how : {'inner', 'left', 'right', 'outer'}, optional
+            Which kind of join to do.
+        lsuffix : str, optional
+            Suffix to use on columns that overlap from self.
+        rsuffix : str, optional
+            Suffix to use on columns that overlap from other.
+        algorithm : {'merge', 'hash'}, optional
+            Which algorithm to use. Note that for 'hash', the `other` DataFrame is the one hashed.
+        is_on_sorted : bool, optional
+            If we know that the on columns are already sorted, can employ faster algorithm.
+        is_on_unique : bool, optional
+            If we know that the values are unique, can employ faster algorithm.
+
+        Returns
+        -------
+        DataFrame
+            DataFrame containing the merge result, with the `on` columns as index.
+
+        """
+        check_type(lsuffix, str)
+        check_type(rsuffix, str)
+
+        self_names = self._gather_column_names()
+        other_names = other._gather_column_names()
+        common_names = set(self_names).intersection(set(other_names))
+        if len(common_names) > 0 and lsuffix is None and rsuffix is None:
+            raise ValueError('Columns overlap but no suffixes supplied')
+
+        # need to ensure that some str suffixes are passed to merge
+        lsuffix = '' if lsuffix is None else lsuffix
+        rsuffix = '' if rsuffix is None else rsuffix
+
+        # TODO: pandas is more flexible, e.g. allows the index names to be different when joining on index
+        # TODO i.e. df(ind + a, b) join df(ind2 + b, c) does work and the index is now called ind
+
+        return self.merge(other, how, on, (lsuffix, rsuffix), algorithm, is_on_sorted, is_on_unique)
