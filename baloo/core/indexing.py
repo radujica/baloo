@@ -32,26 +32,27 @@ class _ILocIndexer(object):
         elif isinstance(item, LazyArrayResult):
             check_weld_long_array(item)
 
-            if isinstance(self.data, Series):
-                return Series(weld_iloc_indices(self.data.weld_expr,
-                                                self.data.weld_type,
-                                                item.weld_expr),
-                              self.data.index._iloc_indices(item.weld_expr),
-                              self.data.dtype,
-                              self.data.name)
-            elif isinstance(self.data, DataFrame):
-                raise NotImplementedError()
+            return self._iloc(item.weld_expr)
         else:
             raise TypeError('Expected an int, slice, or indices array')
 
-    def _with_missing(self, item):
-        check_weld_long_array(item)
+    def _iloc(self, item):
+        if isinstance(self.data, Series):
+            return Series(weld_iloc_indices(self.data.weld_expr,
+                                            self.data.weld_type,
+                                            item),
+                          self.data.index._iloc_indices(item),
+                          self.data.dtype,
+                          self.data.name)
+        elif isinstance(self.data, DataFrame):
+            raise NotImplementedError()
 
+    def _iloc_with_missing(self, item):
         if isinstance(self.data, Series):
             return Series(weld_iloc_indices_with_missing(self.data.weld_expr,
                                                          self.data.weld_type,
-                                                         item.weld_expr),
-                          self.data.index._iloc_indices_with_missing(item.weld_expr),
+                                                         item),
+                          self.data.index._iloc_indices_with_missing(item),
                           self.data.dtype,
                           self.data.name)
         elif isinstance(self.data, DataFrame):

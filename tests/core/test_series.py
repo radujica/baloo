@@ -154,7 +154,7 @@ class TestSeries(object):
     def test_iloc_indices_missing(self, series_float):
         indices = Series(np.array([0, 3, 5]))
 
-        actual = series_float.iloc._with_missing(indices)
+        actual = series_float.iloc._iloc_with_missing(indices.weld_expr)
         expected = Series(np.array([1, 4, -999], dtype=np.float32), Index(np.array([0, 3, -999])), np.dtype(np.float32))
 
         assert_series_equal(actual, expected)
