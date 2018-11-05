@@ -6,6 +6,9 @@ from .utils import check_type, check_weld_long_array
 from ..weld import LazyScalarResult, weld_iloc_int, LazyArrayResult, weld_iloc_indices, weld_iloc_indices_with_missing
 
 
+# TODO: perhaps instead make Series and DataFrame inherit an ILoc interface and each implement their own
+# TODO internal methods for iloc; then can just call directly on self.data
+# TODO ~ simplifying this class but making others longer
 class _ILocIndexer(object):
     """Implements iloc indexing.
 
@@ -59,13 +62,16 @@ class _ILocIndexer(object):
 
             return DataFrame(new_data, new_index)
 
+    def _iloc_series_with_missing(self, item, new_index):
+        return Series(weld_iloc_indices_with_missing(self.data.weld_expr,
+                                                     self.data.weld_type,
+                                                     item),
+                      new_index,
+                      self.data.dtype,
+                      self.data.name)
+
     def _iloc_with_missing(self, item):
         if isinstance(self.data, Series):
-            return Series(weld_iloc_indices_with_missing(self.data.weld_expr,
-                                                         self.data.weld_type,
-                                                         item),
-                          self.data.index._iloc_indices_with_missing(item),
-                          self.data.dtype,
-                          self.data.name)
+            return self._iloc_series_with_missing(item, self.data.index._iloc_indices_with_missing(item))
         elif isinstance(self.data, DataFrame):
             raise NotImplementedError()

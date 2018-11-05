@@ -937,15 +937,15 @@ class DataFrame(BinaryOps):
 
             if how == 'inner':
                 index_filter_func = weld_iloc_indices
-                data_filter_func = '_iloc'
+                data_filter_func = '_iloc_series'
                 weld_merge_func = weld_merge_join
             elif how in {'left', 'right'}:
                 index_filter_func = fake_filter_func
-                data_filter_func = '_iloc_with_missing'
+                data_filter_func = '_iloc_series_with_missing'
                 weld_merge_func = weld_merge_join
             else:
                 index_filter_func = fake_filter_func
-                data_filter_func = '_iloc_with_missing'
+                data_filter_func = '_iloc_series_with_missing'
                 weld_merge_func = weld_merge_outer_join
 
             weld_objects_indexes = weld_merge_func(self_on_cols._gather_data_for_weld(),
@@ -969,10 +969,12 @@ class DataFrame(BinaryOps):
                                                                            suffixes)
 
             for column_name, new_name in zip(self_no_on, self_new_names):
-                new_data[new_name] = getattr(self_no_on[column_name].iloc, data_filter_func)(weld_objects_indexes[0])
+                new_data[new_name] = getattr(self_no_on[column_name].iloc,
+                                             data_filter_func)(weld_objects_indexes[0], new_index)
 
             for column_name, new_name in zip(other_no_on, other_new_names):
-                new_data[new_name] = getattr(other_no_on[column_name].iloc, data_filter_func)(weld_objects_indexes[1])
+                new_data[new_name] = getattr(other_no_on[column_name].iloc,
+                                             data_filter_func)(weld_objects_indexes[1], new_index)
 
             return DataFrame(new_data, new_index)
         elif algorithm == 'hash':
