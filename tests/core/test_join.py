@@ -88,3 +88,19 @@ class TestJoins(object):
                              Index(np.arange(0, 6), np.dtype(np.int64), 'a'))
 
         assert_dataframe_equal(actual, expected)
+
+    # seems unnecessary to run for all cases since join just delegates to merge
+    def test_join(self):
+        df1 = DataFrame(OrderedDict((('a', np.arange(5)), ('b', np.arange(1, 6, dtype=np.float64)))),
+                        Index(np.arange(0, 5)))
+        df2 = DataFrame(OrderedDict((('b', np.arange(3, 6, dtype=np.float32)), ('c', np.arange(4, 7)))),
+                        Index(np.array(np.array([1, 3, 5]))))
+
+        actual = df1.join(df2, lsuffix='_x')
+        expected = DataFrame(OrderedDict((('a', np.arange(5)),
+                                          ('b_x', np.arange(1, 6, dtype=np.float64)),
+                                          ('b', Series(np.array([-999., 3., -999., 4., -999.], dtype=np.float32))),
+                                          ('c', np.array([-999, 4, -999, 5, -999])))),
+                             Index(np.arange(0, 5), np.dtype(np.int64), 'index'))
+
+        assert_dataframe_equal(actual, expected)
