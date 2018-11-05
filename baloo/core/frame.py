@@ -7,7 +7,7 @@ from .generic import BinaryOps
 from .indexes import RangeIndex, Index, MultiIndex
 from .series import Series
 from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
-    check_weld_bit_array, check_valid_int_slice
+    check_weld_bit_array, check_valid_int_slice, as_list
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
     weld_cast_double, WeldDouble, weld_sort, LazyLongResult, weld_merge_join, weld_iloc_indices, \
     weld_merge_outer_join
@@ -688,6 +688,17 @@ class DataFrame(BinaryOps):
         else:
             raise TypeError('Expected a string or a list of strings')
 
+    @staticmethod
+    def _extract_index_names(index):
+        if isinstance(index, MultiIndex):
+            return index.names
+        else:
+            name = index.name
+            if name is None:
+                name = 'index'
+
+            return [name]
+
     def sort_index(self, ascending=True):
         """Sort the index of the DataFrame.
 
@@ -706,44 +717,22 @@ class DataFrame(BinaryOps):
 
         """
         if isinstance(self.index, MultiIndex):
-            # TODO: whenever that gets implemented, change the i=1 & weld_sort [0]
             raise NotImplementedError('Weld does not yet support sorting on multiple columns')
 
-        check_type(ascending, bool)
-
-        all_data = self.reset_index()
-
-        weld_objects = weld_sort(all_data._gather_data_for_weld(),
-                                 all_data._gather_weld_types(),
-                                 [0],
-                                 'sort_index',
-                                 ascending=ascending)
-
-        all_dtypes = list(all_data._gather_dtypes().values())
-        all_names = all_data._gather_column_names()
-        i = 1
-
-        if isinstance(self.index, MultiIndex):
-            new_index = MultiIndex(weld_objects[:i], all_names[:i])
-        else:
-            new_index = Index(weld_objects[0], all_dtypes[0], all_names[0])
-
-        new_data = [Series(data, new_index, dtype, name)
-                    for data, dtype, name in zip(weld_objects[i:], all_dtypes[i:], all_names[i:])]
-
-        return DataFrame(OrderedDict(zip(all_names[i:], new_data)), new_index)
+        return self.sort_values(DataFrame._extract_index_names(self.index), ascending)
 
     def sort_values(self, by, ascending=True):
         """Sort the DataFrame based on a column.
 
-        Currently possible to sort only on a single column since Weld is missing multiple-column sort.
+        Unlike Pandas, one can sort by data from both index and regular columns.
 
+        Currently possible to sort only on a single column since Weld is missing multiple-column sort.
         Note this is an expensive operation (brings all data to Weld).
 
         Parameters
         ----------
-        by : str
-            Column name to sort.
+        by : str or list of str
+            Column names to sort.
         ascending : bool, optional
 
         Returns
@@ -753,30 +742,27 @@ class DataFrame(BinaryOps):
 
         """
         check_type(ascending, bool)
-        check_type(by, str)
+        check_inner_types(by, str) if isinstance(by, list) else check_type(by, str)
+        by = as_list(by)
+
+        if len(by) > 1:
+            raise NotImplementedError('Weld does not yet support sorting on multiple columns')
 
         all_data = self.reset_index()
-        all_names = all_data._gather_column_names()
+        by_data = all_data[by]
 
-        # TODO: whenever sorting on multiple columns gets implemented by Weld, change the i=1 & weld_sort [0]
-        weld_objects = weld_sort(all_data._gather_data_for_weld(),
-                                 all_data._gather_weld_types(),
-                                 [all_names.index(by)],
-                                 'sort_index',
-                                 ascending=ascending)
+        sorted_indices = weld_sort(by_data._gather_data_for_weld(),
+                                   by_data._gather_weld_types(),
+                                   'sort_index',
+                                   ascending=ascending)
 
-        all_dtypes = list(all_data._gather_dtypes().values())
-        i = 1
+        new_index = self.index._iloc_indices(sorted_indices)
+        new_columns = [self[column_name] for column_name in self]
+        new_column_names = [column.name for column in new_columns]
+        new_columns = [column.iloc._iloc_series(sorted_indices, new_index) for column in new_columns]
+        new_data = OrderedDict(zip(new_column_names, new_columns))
 
-        if isinstance(self.index, MultiIndex):
-            new_index = MultiIndex(weld_objects[:i], all_names[:i])
-        else:
-            new_index = Index(weld_objects[0], all_dtypes[0], all_names[0])
-
-        new_data = [Series(data, new_index, dtype, name)
-                    for data, dtype, name in zip(weld_objects[i:], all_dtypes[i:], all_names[i:])]
-
-        return DataFrame(OrderedDict(zip(all_names[i:], new_data)), new_index)
+        return DataFrame(new_data, new_index)
 
     @staticmethod
     def _compute_on(self, other, on, all_names_self, all_names_other):

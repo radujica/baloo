@@ -298,6 +298,7 @@ def weld_vec_of_struct_to_struct_of_vec(vec_of_structs, weld_types):
     -------
     WeldObject
         Representation of this computation.
+
     """
     obj_id, weld_obj = create_weld_object(vec_of_structs)
 
@@ -319,5 +320,31 @@ def weld_vec_of_struct_to_struct_of_vec(vec_of_structs, weld_types):
                                               types=types,
                                               merges=merges,
                                               result=result)
+
+    return weld_obj
+
+
+def weld_select_from_struct(struct_of_vec, index_to_select):
+    """Select a single vector from the struct of vectors.
+
+    Parameters
+    ----------
+    struct_of_vec : WeldObject
+        Encoding a struct of vectors.
+    index_to_select : int
+        Which vec to select from the struct.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    obj_id, weld_obj = create_weld_object(struct_of_vec)
+
+    weld_template = '{struct}.${index}'
+
+    weld_obj.weld_code = weld_template.format(struct=obj_id,
+                                              index=index_to_select)
 
     return weld_obj
