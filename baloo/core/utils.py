@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..weld import WeldObject, weld_count, WeldBit, WeldLong
+from ..weld import WeldObject, weld_count, WeldBit, WeldLong, LazyResult
 
 
 def check_type(data, expected_types):
@@ -53,11 +53,15 @@ def infer_length(data):
 def default_index(data):
     from .indexes import RangeIndex
 
-    if isinstance(data, np.ndarray):
+    if isinstance(data, int):
+        return RangeIndex(data)
+    elif isinstance(data, np.ndarray):
         return RangeIndex(len(data))
     elif isinstance(data, WeldObject):
         # must be WeldObject then
         return RangeIndex(weld_count(data))
+    elif isinstance(data, LazyResult):
+        return RangeIndex(weld_count(data.values))
     else:
         raise ValueError('Unsupported data type: {}'.format(str(type(data))))
 

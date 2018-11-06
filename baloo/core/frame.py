@@ -7,7 +7,7 @@ from .generic import BinaryOps, BalooCommon
 from .indexes import RangeIndex, Index, MultiIndex
 from .series import Series
 from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
-    check_weld_bit_array, check_valid_int_slice, as_list
+    check_weld_bit_array, check_valid_int_slice, as_list, default_index
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
     weld_cast_double, WeldDouble, weld_sort, LazyLongResult, weld_merge_join, weld_iloc_indices, \
     weld_merge_outer_join
@@ -15,6 +15,7 @@ from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, w
 
 # TODO: handle empty dataframe case throughout operations
 # TODO: wrap all internal data in Series to avoid always checking for raw/weldobject ~ like in multiindex
+# TODO: maybe add type hints
 class DataFrame(BinaryOps, BalooCommon):
     """ Weld-ed pandas DataFrame.
 
@@ -100,25 +101,30 @@ class DataFrame(BinaryOps, BalooCommon):
     """
     @staticmethod
     def _default_dataframe_index(data, length):
-        from .indexes import RangeIndex
-
         if length is not None:
-            return RangeIndex(length)
+            return default_index(length)
         else:
-            # empty
             if len(data) == 0:
                 return None
             else:
                 # must encode from a random column then
-                keys = list(data.keys())
-
-                return RangeIndex(weld_count(data[keys[0]]))
+                return default_index(data[list(data.keys())[0]])
 
     @staticmethod
-    def _preprocess_data(data):
+    def _process_index(index, data, length):
+        if index is None:
+            return DataFrame._default_dataframe_index(data, length)
+        else:
+            return check_type(index, (Index, MultiIndex))
+
+    @staticmethod
+    def _process_data(data, index):
         for k, v in data.items():
             if isinstance(v, Series):
                 v.name = k
+            else:
+                # must be ndarray
+                data[k] = Series(v, index, name=k)
 
         return data
 
@@ -135,10 +141,10 @@ class DataFrame(BinaryOps, BalooCommon):
 
         """
         check_inner_types(check_type(data, dict).values(), (np.ndarray, Series))
-        self.data = DataFrame._preprocess_data(data)
         # TODO: length could also be inferred from index, if passed
         self._length = infer_length(data.values())
-        self.index = DataFrame._default_dataframe_index(data, self._length) if index is None else index
+        self.index = DataFrame._process_index(index, data, self._length)
+        self._data = DataFrame._process_data(data, self.index)
 
     @property
     def values(self):
@@ -150,10 +156,10 @@ class DataFrame(BinaryOps, BalooCommon):
             The internal dict data representation.
 
         """
-        return self.data
+        return self._data
 
     def _gather_dtypes(self):
-        return OrderedDict(((k, v.dtype) for k, v in self.data.items()))
+        return OrderedDict(((k, v.dtype) for k, v in self._data.items()))
 
     @property
     def dtypes(self):
@@ -161,17 +167,17 @@ class DataFrame(BinaryOps, BalooCommon):
                       self.keys())
 
     def _gather_column_names(self):
-        return list(self.data.keys())
+        return list(self._data.keys())
 
     @property
     def columns(self):
         return Index(np.array(self._gather_column_names(), dtype=np.bytes_), np.dtype(np.bytes_))
 
     def _gather_data_for_weld(self):
-        return [self[column_name].values for column_name in self]
+        return [column.values for column in self._data.values()]
 
     def _gather_weld_types(self):
-        return [self[column_name].weld_type for column_name in self]
+        return [column.weld_type for column in self._data.values()]
 
     def __len__(self):
         """Eagerly get the length of the DataFrame.
@@ -189,16 +195,16 @@ class DataFrame(BinaryOps, BalooCommon):
             return self._length
         else:
             # first check again for raw data
-            length = infer_length(self.data.values())
+            length = infer_length(self._data.values())
             if length is None:
-                keys = list(self.data.keys())
+                keys = list(self._data.keys())
 
                 # empty DataFrame
                 if len(keys) == 0:
                     return 0
 
                 # pick a 'random' column (which is a Series) and compute its length
-                length = len(self.data[keys[0]])
+                length = len(self._data[keys[0]])
 
             self._length = length
 
@@ -251,13 +257,13 @@ class DataFrame(BinaryOps, BalooCommon):
         str_data[index_name] = shorten_data(self.index.values)
 
         for column_name in self:
-            str_data[column_name] = shorten_data(self[column_name].values)
+            str_data[column_name] = shorten_data(self._data[column_name].values)
 
         return tabulate(str_data, headers='keys')
 
     def _comparison(self, other, comparison):
         if is_scalar(other):
-            new_data = OrderedDict((column_name, self[column_name]._comparison(other, comparison))
+            new_data = OrderedDict((column_name, self._data[column_name]._comparison(other, comparison))
                                    for column_name in self)
 
             return DataFrame(new_data, self.index)
@@ -266,12 +272,12 @@ class DataFrame(BinaryOps, BalooCommon):
 
     def _element_wise_operation(self, other, operation):
         if isinstance(other, LazyArrayResult):
-            new_data = OrderedDict((column_name, Series._series_array_op(self[column_name], other, operation))
+            new_data = OrderedDict((column_name, Series._series_array_op(self._data[column_name], other, operation))
                                    for column_name in self)
 
             return DataFrame(new_data, self.index)
         elif is_scalar(other):
-            new_data = OrderedDict((column_name, Series._series_element_wise_op(self[column_name], other, operation))
+            new_data = OrderedDict((column_name, Series._series_element_wise_op(self._data[column_name], other, operation))
                                    for column_name in self)
 
             return DataFrame(new_data, self.index)
@@ -302,14 +308,7 @@ class DataFrame(BinaryOps, BalooCommon):
 
         """
         if isinstance(item, str):
-            value = self.data[item]
-
-            if isinstance(value, np.ndarray):
-                value = Series(value, self.index, value.dtype, item)
-                # store the newly created Series to avoid remaking it
-                self.data[item] = value
-
-            return value
+            return self._data[item]
         elif isinstance(item, list):
             check_inner_types(item, str)
             new_data = OrderedDict()
@@ -318,14 +317,14 @@ class DataFrame(BinaryOps, BalooCommon):
                 if column_name not in self:
                     raise KeyError('Column name not in DataFrame: {}'.format(str(column_name)))
 
-                new_data[column_name] = self.data[column_name]
+                new_data[column_name] = self._data[column_name]
 
             return DataFrame(new_data, self.index)
         elif isinstance(item, LazyArrayResult):
             check_weld_bit_array(item)
 
             new_index = self.index[item]
-            new_data = OrderedDict((column_name, Series._filter_series(self[column_name], item, new_index))
+            new_data = OrderedDict((column_name, Series._filter_series(self._data[column_name], item, new_index))
                                    for column_name in self)
 
             return DataFrame(new_data, new_index)
@@ -333,7 +332,7 @@ class DataFrame(BinaryOps, BalooCommon):
             check_valid_int_slice(item)
 
             new_index = self.index[item]
-            new_data = OrderedDict((column_name, Series._slice_series(self[column_name], item, new_index))
+            new_data = OrderedDict((column_name, Series._slice_series(self._data[column_name], item, new_index))
                                    for column_name in self)
 
             return DataFrame(new_data, new_index)
@@ -372,15 +371,17 @@ class DataFrame(BinaryOps, BalooCommon):
         if isinstance(value, Series):
             value.index = self.index
             value.name = key
+        else:
+            value = Series(value, self.index, value.dtype, key)
 
-        self.data[key] = value
+        self._data[key] = value
 
     def __iter__(self):
-        for column_name in self.data:
+        for column_name in self._data:
             yield column_name
 
     def __contains__(self, item):
-        return item in self.data
+        return item in self._data
 
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
         """Evaluates by creating a DataFrame containing evaluated data and index.
@@ -397,8 +398,8 @@ class DataFrame(BinaryOps, BalooCommon):
 
         evaluated_data = OrderedDict()
         for column_name in self:
-            evaluated_data[column_name] = self[column_name].evaluate(verbose, decode, passes,
-                                                                     num_threads, apply_experimental)
+            evaluated_data[column_name] = self._data[column_name].evaluate(verbose, decode, passes,
+                                                                           num_threads, apply_experimental)
 
         return DataFrame(evaluated_data, evaluated_index)
 
@@ -454,14 +455,14 @@ class DataFrame(BinaryOps, BalooCommon):
             length = self._length
         else:
             # first check again for raw data
-            length = infer_length(self.data.values())
+            length = infer_length(self._data.values())
             # if still None, get a random column and encode length
             if length is None:
-                keys = list(self.data.keys())
-                length = LazyLongResult(weld_count(self[keys[0]]))
+                keys = list(self._data.keys())
+                length = LazyLongResult(weld_count(self._data[keys[0]]))
 
         new_index = self.index.tail(n)
-        new_data = OrderedDict((column_name, Series._tail_series(self[column_name], new_index, length, n))
+        new_data = OrderedDict((column_name, Series._tail_series(self._data[column_name], new_index, length, n))
                                for column_name in self)
 
         return DataFrame(new_data, new_index)
@@ -475,9 +476,7 @@ class DataFrame(BinaryOps, BalooCommon):
              Column names as an Index.
 
         """
-        data = np.array(list(self.data.keys()), dtype=np.bytes_)
-
-        return Index(data, np.dtype(np.bytes_))
+        return self.columns
 
     def rename(self, columns):
         """Returns a new DataFrame with renamed columns.
@@ -498,9 +497,9 @@ class DataFrame(BinaryOps, BalooCommon):
         new_data = OrderedDict()
         for column_name in self:
             if column_name in columns.keys():
-                new_data[columns[column_name]] = self.data[column_name]
+                new_data[columns[column_name]] = self._data[column_name]
             else:
-                new_data[column_name] = self.data[column_name]
+                new_data[column_name] = self._data[column_name]
 
         return DataFrame(new_data, self.index)
 
@@ -525,14 +524,14 @@ class DataFrame(BinaryOps, BalooCommon):
             new_data = OrderedDict()
             for column_name in self:
                 if column_name != columns:
-                    new_data[column_name] = self.data[column_name]
+                    new_data[column_name] = self._data[column_name]
 
             return DataFrame(new_data, self.index)
         elif isinstance(columns, list):
             new_data = OrderedDict()
             for column_name in self:
                 if column_name not in columns:
-                    new_data[column_name] = self.data[column_name]
+                    new_data[column_name] = self._data[column_name]
 
             return DataFrame(new_data, self.index)
         else:
@@ -601,7 +600,7 @@ class DataFrame(BinaryOps, BalooCommon):
         check_type(aggregations, list)
 
         new_index = Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_))
-        new_data = OrderedDict((column_name, Series._agg_series(self[column_name], aggregations, new_index))
+        new_data = OrderedDict((column_name, Series._agg_series(self._data[column_name], aggregations, new_index))
                                for column_name in self)
 
         return DataFrame(new_data, new_index)
@@ -620,9 +619,9 @@ class DataFrame(BinaryOps, BalooCommon):
         # assumes at least 1 column
         length = self._length
         if length is None:
-            length = infer_length(self.data.values())
+            length = infer_length(self._data.values())
         if length is None:
-            a_column = self[list(self.data.keys())[-1]]
+            a_column = self._data[list(self._data.keys())[-1]]
             length = weld_count(a_column.values)
         new_index = RangeIndex(0, length, 1)
 
@@ -630,7 +629,7 @@ class DataFrame(BinaryOps, BalooCommon):
             new_columns[name] = Series(data.values, new_index, data.dtype, name)
 
         # the data/columns
-        new_columns.update(self.data)
+        new_columns.update(self._data)
 
         return DataFrame(new_columns, new_index)
 
@@ -651,7 +650,7 @@ class DataFrame(BinaryOps, BalooCommon):
 
         """
         if isinstance(keys, str):
-            column = self[keys]
+            column = self._data[keys]
             new_index = Index(column.values, column.dtype, column.name)
 
             new_data = OrderedDict(self.values)
@@ -663,7 +662,7 @@ class DataFrame(BinaryOps, BalooCommon):
 
             new_index_data = []
             for column_name in keys:
-                column = self[column_name]
+                column = self._data[column_name]
                 new_index_data.append(Index(column.values, column.dtype, column.name))
             new_index = MultiIndex(new_index_data, keys)
 
@@ -733,7 +732,7 @@ class DataFrame(BinaryOps, BalooCommon):
                                    ascending=ascending)
 
         new_index = self.index._iloc_indices(sorted_indices)
-        new_columns = [self[column_name] for column_name in self]
+        new_columns = [column for column in self._data.values()]
         new_column_names = [column.name for column in new_columns]
         new_columns = [column.iloc._iloc_series(sorted_indices, new_index) for column in new_columns]
         new_data = OrderedDict(zip(new_column_names, new_columns))

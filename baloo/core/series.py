@@ -1,7 +1,7 @@
 import numpy as np
 
 from .generic import BinaryOps, BitOps, BalooCommon
-from .indexes import RangeIndex, Index, MultiIndex
+from .indexes import Index, MultiIndex
 from .utils import infer_dtype, default_index, check_type, is_scalar, check_valid_int_slice, check_weld_bit_array
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
     weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, LazyDoubleResult, LazyScalarResult, \
@@ -58,6 +58,12 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
     [0. 1.]
 
     """
+    @staticmethod
+    def _process_index(index, data):
+        if index is None:
+            return default_index(data)
+        else:
+            return check_type(index, (Index, MultiIndex))
 
     # TODO: when passed a dtype, pandas converts to it; do the same?
     def __init__(self, data, index=None, dtype=None, name=None):
@@ -77,7 +83,7 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
 
         """
         check_type(data, (np.ndarray, WeldObject))
-        self.index = default_index(data) if index is None else check_type(index, (RangeIndex, Index, MultiIndex))
+        self.index = Series._process_index(index, data)
         self.dtype = infer_dtype(data, check_type(dtype, np.dtype))
         self.name = check_type(name, str)
         # TODO: this should be used to annotate Weld code for speedups

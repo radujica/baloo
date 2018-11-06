@@ -20,8 +20,8 @@ def assert_dataframe_equal(actual, expected):
     assert len(actual) == len(expected)
     assert_series_equal(actual.dtypes, expected.dtypes)
     assert_indexes_equal(actual.index, expected.index)
-    assert len(actual.data) == len(expected.data)
-    assert actual.data.keys() == expected.data.keys()
+    assert len(actual._data) == len(expected._data)
+    assert actual._data.keys() == expected._data.keys()
     for column_name in actual:
         np.testing.assert_array_equal(actual[column_name].values, expected[column_name].values)
 
