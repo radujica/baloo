@@ -82,14 +82,13 @@ weld::vec<double> numpy_to_weld_double_arr(PyObject* in) {
  */
 extern "C"
 weld::vec<uint8_t> str_to_weld_char_arr(PyObject* in) {
+  Py_IncRef(in);
   int64_t dimension = (int64_t) PyString_Size(in);
-  // No clue why it needs to be copied.
   const char *str = PyString_AsString(in);
-  const char *copied = strdup(str);
 
   weld::vec<uint8_t> t;
   t.size = dimension;
-  t.ptr = (uint8_t*) copied;
+  t.ptr = (uint8_t*) str;
   return t;
 }
 
