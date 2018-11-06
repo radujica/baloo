@@ -27,7 +27,7 @@ class BalooCommon(abc.ABC):
 
     @abc.abstractmethod
     def evaluate(self):
-        # evaluate internal data returning object containing raw data
+        # evaluate internal data returning object of same type containing raw data
         raise NotImplementedError
 
 
@@ -86,7 +86,7 @@ class BitOps(abc.ABC):
         return self._bitwise_operation(other, '||')
 
 
-class IlocIndex(abc.ABC):
+class IndexCommon(abc.ABC):
     @abc.abstractmethod
     def _iloc_indices(self, indices):
         """Filter based on indices.
@@ -107,4 +107,24 @@ class IlocIndex(abc.ABC):
         indices : numpy.ndarray or WeldObject
 
         """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _gather_names(self):
+        # returns the names of the index columns as a list replacing None's with default values
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _gather_data(self):
+        # returns the Indexes in a list
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _gather_data_for_weld(self):
+        # returns the raw/WeldObjects in a list s.t. can be passed directly to weld_* methods
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _gather_weld_types(self):
+        # returns the raw/WeldObjects in a list s.t. can be passed directly to weld_* methods
         raise NotImplementedError

@@ -86,11 +86,11 @@ class DataFrame(BinaryOps, BalooCommon):
       0    6
       2    7
     >>> print(df.sort_values('b').evaluate())
-      index    a    b
-    -------  ---  ---
-          1    6    0
-          0    5    1
-          2    7    2
+           a    b
+    ---  ---  ---
+      1    6    0
+      0    5    1
+      2    7    2
     >>> df2 = bl.DataFrame({'b': np.array([0, 2])})
     >>> print(df.merge(df2, on='b').evaluate())
       b    index_x    a    index_y
@@ -626,21 +626,8 @@ class DataFrame(BinaryOps, BalooCommon):
             length = weld_count(a_column.values)
         new_index = RangeIndex(0, length, 1)
 
-        # first add the index, then the other columns
-        old_index = self.index
-        if isinstance(old_index, Index):
-            old_index.name = 'index'
-            old_index = [old_index]
-        elif isinstance(old_index, MultiIndex):
-            old_index = old_index.values
-
-        for i, column in enumerate(old_index):
-            if column.name is None:
-                new_name = 'level_' + str(i)
-            else:
-                new_name = column.name
-
-            new_columns[new_name] = Series(column.values, new_index, column.dtype, new_name)
+        for name, data in zip(self.index._gather_names(), self.index._gather_data()):
+            new_columns[name] = Series(data.values, new_index, data.dtype, name)
 
         # the data/columns
         new_columns.update(self.data)
@@ -688,17 +675,6 @@ class DataFrame(BinaryOps, BalooCommon):
         else:
             raise TypeError('Expected a string or a list of strings')
 
-    @staticmethod
-    def _extract_index_names(index):
-        if isinstance(index, MultiIndex):
-            return index.names
-        else:
-            name = index.name
-            if name is None:
-                name = 'index'
-
-            return [name]
-
     def sort_index(self, ascending=True):
         """Sort the index of the DataFrame.
 
@@ -719,7 +695,7 @@ class DataFrame(BinaryOps, BalooCommon):
         if isinstance(self.index, MultiIndex):
             raise NotImplementedError('Weld does not yet support sorting on multiple columns')
 
-        return self.sort_values(DataFrame._extract_index_names(self.index), ascending)
+        return self.sort_values(self.index._gather_names(), ascending)
 
     def sort_values(self, by, ascending=True):
         """Sort the DataFrame based on a column.
@@ -767,32 +743,25 @@ class DataFrame(BinaryOps, BalooCommon):
     @staticmethod
     def _compute_on(self, other, on, all_names_self, all_names_other):
         if on is None:
-            if not isinstance(self.index, type(other.index)):
-                raise ValueError('Expected indexes to be of the same type when on=None')
+            self_index_names = self.index._gather_names()
+            other_index_names = other.index._gather_names()
 
-            error_message = 'When on=None, the names of both indexes must be the same'
-            # TODO: could make MultiIndex.name property point to .names
-            if isinstance(self.index, MultiIndex):
-                if self.index.names == other.index.names:
-                    return self.index.names
-                else:
-                    raise ValueError(error_message)
+            if len(self_index_names) != len(other_index_names):
+                raise ValueError('Expected indexes to be of the same dimensions when on=None')
+            elif self_index_names != other_index_names:
+                raise ValueError('When on=None, the names of both indexes must be the same')
             else:
-                if self.index.name == other.index.name:
-                    return [self.index.name]
-                else:
-                    raise ValueError(error_message)
+                return self_index_names
         else:
-            if isinstance(on, str):
-                on = [on]
-
+            on = as_list(on)
             set_on = set(on)
+
             if not set_on.issubset(set(all_names_self)):
                 raise ValueError('On column(s) not included in the self DataFrame')
-            if not set_on.issubset(set(all_names_other)):
+            elif not set_on.issubset(set(all_names_other)):
                 raise ValueError('On column(s) not included in the other DataFrame')
-
-        return on
+            else:
+                return on
 
     @staticmethod
     def _compute_new_names(names_self, names_other, suffixes):
@@ -807,7 +776,7 @@ class DataFrame(BinaryOps, BalooCommon):
 
         return self_new_names, other_new_names
 
-    # TODO: feels too intricate/complicated after generalization; review later
+    # TODO: perhaps just split into 4 methods for each join type
     @staticmethod
     def _compute_new_index(weld_objects_indexes, how, on, self_on_cols, other_on_cols, filter_func):
         if how in ['inner', 'left']:
@@ -822,24 +791,19 @@ class DataFrame(BinaryOps, BalooCommon):
         else:
             data_arg = 'column.values'
 
+        new_indexes = []
+        data_arg = data_arg if how != 'outer' else data_arg + '[i]'
+        for i, column_name in enumerate(on):
+            column = extract_index_from[column_name]
+            new_indexes.append(Index(filter_func(eval(data_arg),
+                                                 column.weld_type,
+                                                 weld_objects_indexes[index_index]),
+                                     column.dtype,
+                                     column.name))
         if len(on) > 1:
-            new_indexes = []
-            data_arg = data_arg if how != 'outer' else data_arg + '[i]'
-            for i, column_name in enumerate(on):
-                column = extract_index_from[column_name]
-                new_indexes.append(Index(filter_func(eval(data_arg),
-                                                     column.weld_type,
-                                                     weld_objects_indexes[index_index]),
-                                         column.dtype,
-                                         column.name))
             new_index = MultiIndex(new_indexes, on)
         else:
-            column = extract_index_from[on[0]]
-            new_index = Index(filter_func(eval(data_arg),
-                                          column.weld_type,
-                                          weld_objects_indexes[index_index]),
-                              column.dtype,
-                              column.name)
+            new_index = new_indexes[0]
 
         return new_index
 

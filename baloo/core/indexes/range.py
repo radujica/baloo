@@ -1,12 +1,11 @@
 import numpy as np
 
 from .base import Index
-from ..generic import BalooCommon
 from ..utils import check_type
 from ...weld import weld_range, WeldObject
 
 
-class RangeIndex(Index, BalooCommon):
+class RangeIndex(Index):
     """Weld-ed Pandas RangeIndex.
 
     Attributes

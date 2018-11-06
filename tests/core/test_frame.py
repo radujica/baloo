@@ -351,7 +351,7 @@ class TestDataFrame(object):
 
         actual = df.sort_index()
 
-        expected_index = Index(np.arange(1, 6), np.dtype(np.int64), 'index')
+        expected_index = Index(np.arange(1, 6), np.dtype(np.int64))
         expected_data = [Series(np.array([2, 3, 1, 5, 4], dtype=np.float32), expected_index, np.dtype(np.float32), 'a'),
                          Series(np.array([1, 2, 0, 4, 3], dtype=np.int64), expected_index, np.dtype(np.int64), 'b')]
         expected = DataFrame(OrderedDict((('a', expected_data[0]),
@@ -368,7 +368,7 @@ class TestDataFrame(object):
 
         actual = df.sort_index(ascending=False)
 
-        expected_index = Index(np.arange(5, 0, -1), np.dtype(np.int64), 'index')
+        expected_index = Index(np.arange(5, 0, -1), np.dtype(np.int64))
         expected_data = [Series(np.array([4, 5, 1, 3, 2], dtype=np.float32), expected_index, np.dtype(np.float32), 'a'),
                          Series(np.array([3, 4, 0, 2, 1], dtype=np.int64), expected_index, np.dtype(np.int64), 'b')]
         expected = DataFrame(OrderedDict((('a', expected_data[0]),
@@ -402,7 +402,7 @@ class TestDataFrame(object):
 
         actual = df.sort_values('a')
 
-        expected_index = Index(np.array([2, 3, 1, 5, 4]), np.dtype(np.int64), 'index')
+        expected_index = Index(np.array([2, 3, 1, 5, 4]), np.dtype(np.int64))
         expected_data = [Series(np.array(np.arange(1, 6), dtype=np.float32), expected_index, np.dtype(np.float32), 'a'),
                          Series(np.array([1, 2, 0, 4, 3], dtype=np.int64), expected_index, np.dtype(np.int64), 'b')]
         expected = DataFrame(OrderedDict((('a', expected_data[0]),

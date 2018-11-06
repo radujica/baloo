@@ -283,4 +283,4 @@ def weld_merge_outer_join(arrays_self, weld_types_self, arrays_other, weld_types
                                                                          readable_text,
                                                                          2)
 
-    return weld_objects_indexes + weld_objects_new_index
+    return weld_objects_indexes + [weld_objects_new_index]
