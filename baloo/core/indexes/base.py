@@ -1,13 +1,13 @@
 import numpy as np
 
-from ..generic import BinaryOps, IlocIndex
+from ..generic import BinaryOps, IlocIndex, BalooCommon
 from ...core.utils import check_type, infer_dtype, is_scalar, check_weld_bit_array, check_valid_int_slice
 from ...weld import LazyArrayResult, numpy_to_weld_type, weld_filter, weld_slice, \
     weld_compare, weld_tail, weld_array_op, weld_element_wise_op, WeldObject, weld_iloc_indices, \
     weld_iloc_indices_with_missing
 
 
-class Index(LazyArrayResult, BinaryOps, IlocIndex):
+class Index(LazyArrayResult, BinaryOps, IlocIndex, BalooCommon):
     """Weld-ed Pandas Index.
 
     Attributes

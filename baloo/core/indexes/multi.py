@@ -4,13 +4,13 @@ import numpy as np
 from tabulate import tabulate
 
 from .base import Index
-from ..generic import IlocIndex
+from ..generic import IlocIndex, BalooCommon
 from ..utils import check_inner_types, check_type, infer_length, shorten_data, check_weld_bit_array, \
     check_valid_int_slice
 from ...weld import LazyArrayResult
 
 
-class MultiIndex(IlocIndex):
+class MultiIndex(IlocIndex, BalooCommon):
     """Weld-ed MultiIndex, however completely different to Pandas.
 
     This version merely groups a few columns together to act as an index

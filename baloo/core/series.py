@@ -1,6 +1,6 @@
 import numpy as np
 
-from .generic import BinaryOps, BitOps
+from .generic import BinaryOps, BitOps, BalooCommon
 from .indexes import RangeIndex, Index, MultiIndex
 from .utils import infer_dtype, default_index, check_type, is_scalar, check_valid_int_slice, check_weld_bit_array
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
@@ -8,7 +8,7 @@ from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filte
     weld_mean, weld_variance, weld_standard_deviation, WeldObject, weld_agg
 
 
-class Series(LazyArrayResult, BinaryOps, BitOps):
+class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
     """Weld-ed Pandas Series.
 
     Attributes

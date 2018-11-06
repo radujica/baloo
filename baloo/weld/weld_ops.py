@@ -1,11 +1,9 @@
 from weld.weldobject import WeldObject
 
 from .convertors import default_missing_data_literal
-from .lazy_array_result import LazyArrayResult
-from .lazy_result import WeldVec, WeldChar, WeldLong
+from .lazy_result import WeldVec, WeldChar, WeldLong, LazyArrayResult
 from .weld_utils import get_weld_obj_id, create_weld_object, to_weld_literal, create_empty_weld_object, \
-    weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, extract_placeholder_weld_objects, Cache, \
-    weld_select_from_struct
+    weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, Cache, weld_select_from_struct
 
 
 def weld_range(start, stop, step):

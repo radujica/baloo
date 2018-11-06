@@ -1,6 +1,34 @@
 import abc
 
-# TODO: maybe write generic class to enforce values, len, repr, str, evaluate?
+
+# To enforce the implementation of these methods such that convention is maintained.
+# Note: inherit from this AFTER any other class that might implement desired default behavior.
+class BalooCommon(abc.ABC):
+    @property
+    @abc.abstractmethod
+    def values(self):
+        # the internal data
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def __len__(self):
+        # eager operation returning the length of the internal data
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def __repr__(self):
+        # lazy repr without any actual raw/lazy data
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def __str__(self):
+        # eager representation including data
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def evaluate(self):
+        # evaluate internal data returning object containing raw data
+        raise NotImplementedError
 
 
 class BinaryOps(abc.ABC):

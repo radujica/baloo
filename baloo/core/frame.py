@@ -3,7 +3,7 @@ from collections import OrderedDict
 import numpy as np
 from tabulate import tabulate
 
-from .generic import BinaryOps
+from .generic import BinaryOps, BalooCommon
 from .indexes import RangeIndex, Index, MultiIndex
 from .series import Series
 from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
@@ -15,7 +15,7 @@ from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, w
 
 # TODO: handle empty dataframe case throughout operations
 # TODO: wrap all internal data in Series to avoid always checking for raw/weldobject ~ like in multiindex
-class DataFrame(BinaryOps):
+class DataFrame(BinaryOps, BalooCommon):
     """ Weld-ed pandas DataFrame.
 
     Attributes
