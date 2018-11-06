@@ -103,17 +103,25 @@ class Index(LazyArrayResult, BinaryOps, IndexCommon, BalooCommon):
         else:
             raise TypeError('Can only apply operation with scalar or LazyArrayResult')
 
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+
     def _gather_names(self):
         return ['index' if self.name is None else self.name]
-
-    def _gather_data(self):
-        return [self]
 
     def _gather_data_for_weld(self):
         return [self.weld_expr]
 
     def _gather_weld_types(self):
         return [self.weld_type]
+
+    def _gather_data(self):
+        return {self._gather_names()[0]: self.weld_expr}
 
     def _iloc_indices(self, indices):
         return Index(weld_iloc_indices(self.weld_expr,

@@ -87,6 +87,11 @@ class BitOps(abc.ABC):
 
 
 class IndexCommon(abc.ABC):
+    @property
+    @abc.abstractmethod
+    def name(self):
+        raise NotImplementedError
+
     @abc.abstractmethod
     def _iloc_indices(self, indices):
         """Filter based on indices.
@@ -112,11 +117,6 @@ class IndexCommon(abc.ABC):
     @abc.abstractmethod
     def _gather_names(self):
         # returns the names of the index columns as a list replacing None's with default values
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def _gather_data(self):
-        # returns the Indexes in a list
         raise NotImplementedError
 
     @abc.abstractmethod

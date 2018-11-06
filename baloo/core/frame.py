@@ -248,16 +248,8 @@ class DataFrame(BinaryOps, BalooCommon):
             return 'Empty DataFrame'
 
         str_data = OrderedDict()
-
-        if self.index.name is None:
-            index_name = ' '
-        else:
-            index_name = self.index.name
-
-        str_data[index_name] = shorten_data(self.index.values)
-
-        for column_name in self:
-            str_data[column_name] = shorten_data(self._data[column_name].values)
+        str_data.update((name, data) for name, data in self.index._gather_data().items())
+        str_data.update((column.name, shorten_data(column.values)) for column in self._iter())
 
         return tabulate(str_data, headers='keys')
 
@@ -375,6 +367,10 @@ class DataFrame(BinaryOps, BalooCommon):
             value = Series(value, self.index, value.dtype, key)
 
         self._data[key] = value
+
+    def _iter(self):
+        for column in self._data.values():
+            yield column
 
     def __iter__(self):
         for column_name in self._data:
@@ -625,7 +621,7 @@ class DataFrame(BinaryOps, BalooCommon):
             length = weld_count(a_column.values)
         new_index = RangeIndex(0, length, 1)
 
-        for name, data in zip(self.index._gather_names(), self.index._gather_data()):
+        for name, data in self.index._gather_data().items():
             new_columns[name] = Series(data.values, new_index, data.dtype, name)
 
         # the data/columns

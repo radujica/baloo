@@ -76,6 +76,7 @@ class MultiIndex(IndexCommon, BalooCommon):
         """
         check_inner_types(check_type(data, list), (np.ndarray, Index))
         self._length = infer_length(data)
+        self.name = None
         self.names = check_inner_types(check_type(names, list), str)
         self._data = MultiIndex._init_indexes(data, names)
 
@@ -149,15 +150,23 @@ class MultiIndex(IndexCommon, BalooCommon):
 
         return MultiIndex(evaluated_data, self.names)
 
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+
     def _gather_names(self):
         names = [None] * len(self.values) if self.names is None else self.names
         return ['level_' + str(i) if name is None else name for i, name in enumerate(names)]
 
-    def _gather_data(self):
-        return self._data
-
     def _gather_data_for_weld(self):
         return [index.weld_expr for index in self._data]
+
+    def _gather_data(self):
+        return OrderedDict(zip(self._gather_names(), self._gather_data_for_weld()))
 
     def _gather_weld_types(self):
         return [index.weld_type for index in self._data]
