@@ -178,6 +178,25 @@ class DataFrame(BinaryOps, BalooCommon):
     def _gather_weld_types(self):
         return [column.weld_type for column in self._data.values()]
 
+    @staticmethod
+    def _obtain_length(length, data):
+        if length is not None:
+            return length
+        else:
+            # first check again for raw data
+            length = infer_length(data.values())
+            if length is None:
+                keys = list(data.keys())
+
+                # empty DataFrame
+                if len(keys) == 0:
+                    return 0
+
+                # pick first column (which is a Series) and encode its length
+                length = weld_count(data[keys[0]].values)
+
+            return length
+
     def __len__(self):
         """Eagerly get the length of the DataFrame.
 
@@ -190,24 +209,9 @@ class DataFrame(BinaryOps, BalooCommon):
             Length of the DataFrame.
 
         """
-        if self._length is not None:
-            return self._length
-        else:
-            # first check again for raw data
-            length = infer_length(self._data.values())
-            if length is None:
-                keys = list(self._data.keys())
+        self._length = LazyLongResult(DataFrame._obtain_length(self._length, self._data)).evaluate()
 
-                # empty DataFrame
-                if len(keys) == 0:
-                    return 0
-
-                # pick a 'random' column (which is a Series) and compute its length
-                length = len(self._data[keys[0]])
-
-            self._length = length
-
-            return length
+        return self._length
 
     @property
     def iloc(self):
@@ -610,14 +614,7 @@ class DataFrame(BinaryOps, BalooCommon):
         """
         new_columns = OrderedDict()
 
-        # assumes at least 1 column
-        length = self._length
-        if length is None:
-            length = infer_length(self._data.values())
-        if length is None:
-            a_column = self._data[list(self._data.keys())[-1]]
-            length = weld_count(a_column.values)
-        new_index = RangeIndex(0, length, 1)
+        new_index = default_index(DataFrame._obtain_length(self._length, self._data))
 
         new_columns.update((name, Series(data.values, new_index, data.dtype, name))
                            for name, data in self.index._gather_data().items())
