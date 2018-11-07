@@ -145,7 +145,7 @@ class DataFrame(BinaryOps, BalooCommon):
         return Index(np.array(self._gather_column_names(), dtype=np.bytes_), np.dtype(np.bytes_))
 
     def _gather_data_for_weld(self):
-        return [column.values for column in self._data.values()]
+        return [column.weld_expr for column in self._data.values()]
 
     def _gather_weld_types(self):
         return [column.weld_type for column in self._data.values()]
@@ -901,7 +901,7 @@ def _obtain_length(length, dataframe_data):
             if len(keys) == 0:
                 return 0
             # pick first column (which is a Series) and encode its length
-            length = weld_count(dataframe_data[keys[0]].values)
+            length = weld_count(dataframe_data[keys[0]].weld_expr)
 
         return length
 
@@ -954,7 +954,7 @@ def _compute_new_index(weld_objects_indexes, how, on, self_on_cols, other_on_col
     if how == 'outer':
         data_arg = 'weld_objects_indexes[2]'
     else:
-        data_arg = 'column.values'
+        data_arg = 'column.weld_expr'
 
     new_indexes = []
     data_arg = data_arg if how != 'outer' else data_arg + '[i]'
