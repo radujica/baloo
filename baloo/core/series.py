@@ -58,13 +58,6 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
     [0. 1.]
 
     """
-    @staticmethod
-    def _process_index(index, data):
-        if index is None:
-            return default_index(data)
-        else:
-            return check_type(index, (Index, MultiIndex))
-
     # TODO: when passed a dtype, pandas converts to it; do the same?
     def __init__(self, data, index=None, dtype=None, name=None):
         """Initialize a Series object.
@@ -83,7 +76,7 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
 
         """
         check_type(data, (np.ndarray, WeldObject))
-        self.index = Series._process_index(index, data)
+        self.index = _process_index(index, data)
         self.dtype = infer_dtype(data, check_type(dtype, np.dtype))
         self.name = check_type(name, str)
         # TODO: this should be used to annotate Weld code for speedups
@@ -138,60 +131,20 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         else:
             raise TypeError('Can currently only compare with scalars')
 
-    @staticmethod
-    def _series_array_op(series, other, operation):
-        return Series(weld_array_op(series.weld_expr,
-                                    other.weld_expr,
-                                    series.weld_type,
-                                    operation),
-                      series.index,
-                      series.dtype,
-                      series.name)
-
     def _bitwise_operation(self, other, operation):
         check_type(other, LazyArrayResult)
         check_weld_bit_array(other)
         check_weld_bit_array(self)
 
-        return Series._series_array_op(self, other, operation)
-
-    @staticmethod
-    def _series_element_wise_op(series, other, operation):
-        return Series(weld_element_wise_op(series.weld_expr,
-                                           series.weld_type,
-                                           other,
-                                           operation),
-                      series.index,
-                      series.dtype,
-                      series.name)
+        return _series_array_op(self, other, operation)
 
     def _element_wise_operation(self, other, operation):
         if isinstance(other, LazyArrayResult):
-            return Series._series_array_op(self, other, operation)
+            return _series_array_op(self, other, operation)
         elif is_scalar(other):
-            return Series._series_element_wise_op(self, other, operation)
+            return _series_element_wise_op(self, other, operation)
         else:
             raise TypeError('Can only apply operation with scalar or Series')
-
-    @staticmethod
-    def _filter_series(series, item, index):
-        # shortcut of Series.__getitem__ when index is known and item is checked
-        return Series(weld_filter(series.weld_expr,
-                                  series.weld_type,
-                                  item.weld_expr),
-                      index,
-                      series.dtype,
-                      series.name)
-
-    @staticmethod
-    def _slice_series(series, item, index):
-        # shortcut of Series.__getitem__ when index is known and item is checked
-        return Series(weld_slice(series.weld_expr,
-                                 series.weld_type,
-                                 item),
-                      index,
-                      series.dtype,
-                      series.name)
 
     def __getitem__(self, item):
         """Select from the Series.
@@ -216,11 +169,11 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         if isinstance(item, LazyArrayResult):
             check_weld_bit_array(item)
 
-            return Series._filter_series(self, item, self.index[item])
+            return _series_filter(self, item, self.index[item])
         elif isinstance(item, slice):
             check_valid_int_slice(item)
 
-            return Series._slice_series(self, item, self.index[item])
+            return _series_slice(self, item, self.index[item])
         else:
             raise TypeError('Expected a LazyArrayResult or a slice')
 
@@ -281,13 +234,6 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         """
         return self[:n]
 
-    @staticmethod
-    def _tail_series(series, index, length, n):
-        return Series(weld_tail(series.weld_expr, length, n),
-                      index,
-                      series.dtype,
-                      series.name)
-
     def tail(self, n=5):
         """Return Series with the last n values.
 
@@ -313,7 +259,7 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         else:
             length = self._lazy_len().weld_expr
 
-        return Series._tail_series(self, self.index.tail(n), length, n)
+        return _series_tail(self, self.index.tail(n), length, n)
 
     def sum(self):
         return LazyScalarResult(self._aggregate('+').weld_expr, self.weld_type)
@@ -332,14 +278,6 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
 
     def std(self):
         return LazyDoubleResult(weld_standard_deviation(self.weld_expr, self.weld_type))
-
-    @staticmethod
-    def _agg_series(series, aggregations, index):
-        return Series(weld_agg(series.weld_expr,
-                               series.weld_type,
-                               aggregations),
-                      index,
-                      np.dtype(np.float64))
 
     # TODO: currently casting everything to float64 (even if already f64 ~ weld_aggs TODO);
     # maybe for min/max/count/sum/prod/.. cast ints to int64 like pandas does
@@ -361,4 +299,66 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
 
         new_index = Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_))
 
-        return Series._agg_series(self, aggregations, new_index)
+        return _series_agg(self, aggregations, new_index)
+
+
+def _process_index(index, data):
+    if index is None:
+        return default_index(data)
+    else:
+        return check_type(index, (Index, MultiIndex))
+
+
+def _series_agg(series, aggregations, index):
+    return Series(weld_agg(series.weld_expr,
+                           series.weld_type,
+                           aggregations),
+                  index,
+                  np.dtype(np.float64))
+
+
+def _series_array_op(series, other, operation):
+    return Series(weld_array_op(series.weld_expr,
+                                other.weld_expr,
+                                series.weld_type,
+                                operation),
+                  series.index,
+                  series.dtype,
+                  series.name)
+
+
+def _series_element_wise_op(series, other, operation):
+    return Series(weld_element_wise_op(series.weld_expr,
+                                       series.weld_type,
+                                       other,
+                                       operation),
+                  series.index,
+                  series.dtype,
+                  series.name)
+
+
+def _series_filter(series, item, index):
+    # shortcut of Series.__getitem__ when index is known and item is checked
+    return Series(weld_filter(series.weld_expr,
+                              series.weld_type,
+                              item.weld_expr),
+                  index,
+                  series.dtype,
+                  series.name)
+
+
+def _series_slice(series, item, index):
+    # shortcut of Series.__getitem__ when index is known and item is checked
+    return Series(weld_slice(series.weld_expr,
+                             series.weld_type,
+                             item),
+                  index,
+                  series.dtype,
+                  series.name)
+
+
+def _series_tail(series, index, length, n):
+    return Series(weld_tail(series.weld_expr, length, n),
+                  index,
+                  series.dtype,
+                  series.name)

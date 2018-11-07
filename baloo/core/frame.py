@@ -5,7 +5,8 @@ from tabulate import tabulate
 
 from .generic import BinaryOps, BalooCommon
 from .indexes import RangeIndex, Index, MultiIndex
-from .series import Series
+from .series import Series, _series_slice, _series_filter, _series_element_wise_op, _series_array_op, _series_agg, \
+    _series_tail
 from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
     check_weld_bit_array, check_valid_int_slice, as_list, default_index
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
@@ -98,35 +99,6 @@ class DataFrame(BinaryOps, BalooCommon):
       2          2    7          1
 
     """
-    @staticmethod
-    def _default_dataframe_index(data, length):
-        if length is not None:
-            return default_index(length)
-        else:
-            if len(data) == 0:
-                return None
-            else:
-                # must encode from a random column then
-                return default_index(data[list(data.keys())[0]])
-
-    @staticmethod
-    def _process_index(index, data, length):
-        if index is None:
-            return DataFrame._default_dataframe_index(data, length)
-        else:
-            return check_type(index, (Index, MultiIndex))
-
-    @staticmethod
-    def _process_data(data, index):
-        for k, v in data.items():
-            if isinstance(v, Series):
-                v.name = k
-            else:
-                # must be ndarray
-                data[k] = Series(v, index, name=k)
-
-        return data
-
     def __init__(self, data, index=None):
         """Initialize a DataFrame object.
 
@@ -142,8 +114,8 @@ class DataFrame(BinaryOps, BalooCommon):
         check_inner_types(check_type(data, dict).values(), (np.ndarray, Series))
         # TODO: length could also be inferred from index, if passed
         self._length = infer_length(data.values())
-        self.index = DataFrame._process_index(index, data, self._length)
-        self._data = DataFrame._process_data(data, self.index)
+        self.index = _process_index(index, data, self._length)
+        self._data = _process_data(data, self.index)
 
     @property
     def values(self):
@@ -178,25 +150,6 @@ class DataFrame(BinaryOps, BalooCommon):
     def _gather_weld_types(self):
         return [column.weld_type for column in self._data.values()]
 
-    @staticmethod
-    def _obtain_length(length, data):
-        if length is not None:
-            return length
-        else:
-            # first check again for raw data
-            length = infer_length(data.values())
-            if length is None:
-                keys = list(data.keys())
-
-                # empty DataFrame
-                if len(keys) == 0:
-                    return 0
-
-                # pick first column (which is a Series) and encode its length
-                length = weld_count(data[keys[0]].values)
-
-            return length
-
     def __len__(self):
         """Eagerly get the length of the DataFrame.
 
@@ -209,7 +162,7 @@ class DataFrame(BinaryOps, BalooCommon):
             Length of the DataFrame.
 
         """
-        self._length = LazyLongResult(DataFrame._obtain_length(self._length, self._data)).evaluate()
+        self._length = LazyLongResult(_obtain_length(self._length, self._data)).evaluate()
 
         return self._length
 
@@ -268,12 +221,12 @@ class DataFrame(BinaryOps, BalooCommon):
 
     def _element_wise_operation(self, other, operation):
         if isinstance(other, LazyArrayResult):
-            new_data = OrderedDict((column.name, Series._series_array_op(column, other, operation))
+            new_data = OrderedDict((column.name, _series_array_op(column, other, operation))
                                    for column in self._iter())
 
             return DataFrame(new_data, self.index)
         elif is_scalar(other):
-            new_data = OrderedDict((column.name, Series._series_element_wise_op(column, other, operation))
+            new_data = OrderedDict((column.name, _series_element_wise_op(column, other, operation))
                                    for column in self._iter())
 
             return DataFrame(new_data, self.index)
@@ -320,7 +273,7 @@ class DataFrame(BinaryOps, BalooCommon):
             check_weld_bit_array(item)
 
             new_index = self.index[item]
-            new_data = OrderedDict((column.name, Series._filter_series(column, item, new_index))
+            new_data = OrderedDict((column.name, _series_filter(column, item, new_index))
                                    for column in self._iter())
 
             return DataFrame(new_data, new_index)
@@ -328,7 +281,7 @@ class DataFrame(BinaryOps, BalooCommon):
             check_valid_int_slice(item)
 
             new_index = self.index[item]
-            new_data = OrderedDict((column.name, Series._slice_series(column, item, new_index))
+            new_data = OrderedDict((column.name, _series_slice(column, item, new_index))
                                    for column in self._iter())
 
             return DataFrame(new_data, new_index)
@@ -460,7 +413,7 @@ class DataFrame(BinaryOps, BalooCommon):
                 length = LazyLongResult(weld_count(self._data[keys[0]]))
 
         new_index = self.index.tail(n)
-        new_data = OrderedDict((column.name, Series._tail_series(column, new_index, length, n))
+        new_data = OrderedDict((column.name, _series_tail(column, new_index, length, n))
                                for column in self._iter())
 
         return DataFrame(new_data, new_index)
@@ -598,7 +551,7 @@ class DataFrame(BinaryOps, BalooCommon):
         check_type(aggregations, list)
 
         new_index = Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_))
-        new_data = OrderedDict((column.name, Series._agg_series(column, aggregations, new_index))
+        new_data = OrderedDict((column.name, _series_agg(column, aggregations, new_index))
                                for column in self._iter())
 
         return DataFrame(new_data, new_index)
@@ -614,7 +567,7 @@ class DataFrame(BinaryOps, BalooCommon):
         """
         new_columns = OrderedDict()
 
-        new_index = default_index(DataFrame._obtain_length(self._length, self._data))
+        new_index = default_index(_obtain_length(self._length, self._data))
 
         new_columns.update((name, Series(data.values, new_index, data.dtype, name))
                            for name, data in self.index._gather_data().items())
@@ -730,73 +683,6 @@ class DataFrame(BinaryOps, BalooCommon):
 
         return DataFrame(new_data, new_index)
 
-    @staticmethod
-    def _compute_on(self, other, on, all_names_self, all_names_other):
-        if on is None:
-            self_index_names = self.index._gather_names()
-            other_index_names = other.index._gather_names()
-
-            if len(self_index_names) != len(other_index_names):
-                raise ValueError('Expected indexes to be of the same dimensions when on=None')
-            elif self_index_names != other_index_names:
-                raise ValueError('When on=None, the names of both indexes must be the same')
-            else:
-                return self_index_names
-        else:
-            on = as_list(on)
-            set_on = set(on)
-
-            if not set_on.issubset(set(all_names_self)):
-                raise ValueError('On column(s) not included in the self DataFrame')
-            elif not set_on.issubset(set(all_names_other)):
-                raise ValueError('On column(s) not included in the other DataFrame')
-            else:
-                return on
-
-    @staticmethod
-    def _compute_new_names(names_self, names_other, suffixes):
-        common_names = set(names_self).intersection(set(names_other))
-        self_new_names = names_self
-        other_new_names = names_other
-
-        if len(common_names) != 0:
-            for name in common_names:
-                self_new_names[self_new_names.index(name)] += suffixes[0]
-                other_new_names[other_new_names.index(name)] += suffixes[1]
-
-        return self_new_names, other_new_names
-
-    # TODO: perhaps just split into 4 methods for each join type
-    @staticmethod
-    def _compute_new_index(weld_objects_indexes, how, on, self_on_cols, other_on_cols, filter_func):
-        if how in ['inner', 'left']:
-            extract_index_from = self_on_cols
-            index_index = 0
-        else:
-            extract_index_from = other_on_cols
-            index_index = 1
-
-        if how == 'outer':
-            data_arg = 'weld_objects_indexes[2]'
-        else:
-            data_arg = 'column.values'
-
-        new_indexes = []
-        data_arg = data_arg if how != 'outer' else data_arg + '[i]'
-        for i, column_name in enumerate(on):
-            column = extract_index_from._data[column_name]
-            new_indexes.append(Index(filter_func(eval(data_arg),
-                                                 column.weld_type,
-                                                 weld_objects_indexes[index_index]),
-                                     column.dtype,
-                                     column.name))
-        if len(on) > 1:
-            new_index = MultiIndex(new_indexes, on)
-        else:
-            new_index = new_indexes[0]
-
-        return new_index
-
     def merge(self, other, how='inner', on=None, suffixes=('_x', '_y'),
               algorithm='merge', is_on_sorted=True, is_on_unique=True):
         """Database-like join this DataFrame with the other DataFrame.
@@ -864,9 +750,9 @@ class DataFrame(BinaryOps, BalooCommon):
 
         self_reset = self.reset_index()
         other_reset = other.reset_index()
-        on = DataFrame._compute_on(self, other, on,
-                                   self_reset._gather_column_names(),
-                                   other_reset._gather_column_names())
+        on = _compute_on(self, other, on,
+                         self_reset._gather_column_names(),
+                         other_reset._gather_column_names())
         self_on_cols = self_reset[on]
         other_on_cols = other_reset[on]
 
@@ -894,19 +780,16 @@ class DataFrame(BinaryOps, BalooCommon):
                                                    other_on_cols._gather_weld_types(),
                                                    how, is_on_sorted, is_on_unique, 'merge-join')
 
-            new_index = DataFrame._compute_new_index(weld_objects_indexes,
-                                                     how,
-                                                     on,
-                                                     self_on_cols,
-                                                     other_on_cols,
-                                                     index_filter_func)
+            new_index = _compute_new_index(weld_objects_indexes, how, on,
+                                           self_on_cols, other_on_cols,
+                                           index_filter_func)
 
             new_data = OrderedDict()
             self_no_on = self_reset.drop(on)
             other_no_on = other_reset.drop(on)
-            self_new_names, other_new_names = DataFrame._compute_new_names(self_no_on._gather_column_names(),
-                                                                           other_no_on._gather_column_names(),
-                                                                           suffixes)
+            self_new_names, other_new_names = _compute_new_names(self_no_on._gather_column_names(),
+                                                                 other_no_on._gather_column_names(),
+                                                                 suffixes)
 
             for column_name, new_name in zip(self_no_on, self_new_names):
                 new_data[new_name] = getattr(self_no_on[column_name].iloc,
@@ -976,3 +859,115 @@ class DataFrame(BinaryOps, BalooCommon):
         # TODO i.e. df(ind + a, b) join df(ind2 + b, c) does work and the index is now called ind
 
         return self.merge(other, how, on, (lsuffix, rsuffix), algorithm, is_on_sorted, is_on_unique)
+
+
+def _default_index(dataframe_data, length):
+    if length is not None:
+        return default_index(length)
+    else:
+        if len(dataframe_data) == 0:
+            return None
+        else:
+            # must encode from a random column then
+            return default_index(dataframe_data[list(dataframe_data.keys())[0]])
+
+
+def _process_index(index, data, length):
+    if index is None:
+        return _default_index(data, length)
+    else:
+        return check_type(index, (Index, MultiIndex))
+
+
+def _process_data(data, index):
+    for k, v in data.items():
+        if isinstance(v, Series):
+            v.name = k
+        else:
+            # must be ndarray
+            data[k] = Series(v, index, name=k)
+    return data
+
+
+def _obtain_length(length, dataframe_data):
+    if length is not None:
+        return length
+    else:
+        # first check again for raw data
+        length = infer_length(dataframe_data.values())
+        if length is None:
+            keys = list(dataframe_data.keys())
+            # empty DataFrame
+            if len(keys) == 0:
+                return 0
+            # pick first column (which is a Series) and encode its length
+            length = weld_count(dataframe_data[keys[0]].values)
+
+        return length
+
+
+def _compute_on(self, other, on, all_names_self, all_names_other):
+    if on is None:
+        self_index_names = self.index._gather_names()
+        other_index_names = other.index._gather_names()
+
+        if len(self_index_names) != len(other_index_names):
+            raise ValueError('Expected indexes to be of the same dimensions when on=None')
+        elif self_index_names != other_index_names:
+            raise ValueError('When on=None, the names of both indexes must be the same')
+        else:
+            return self_index_names
+    else:
+        on = as_list(on)
+        set_on = set(on)
+
+        if not set_on.issubset(set(all_names_self)):
+            raise ValueError('On column(s) not included in the self DataFrame')
+        elif not set_on.issubset(set(all_names_other)):
+            raise ValueError('On column(s) not included in the other DataFrame')
+        else:
+            return on
+
+
+def _compute_new_names(names_self, names_other, suffixes):
+    common_names = set(names_self).intersection(set(names_other))
+    self_new_names = names_self
+    other_new_names = names_other
+
+    if len(common_names) != 0:
+        for name in common_names:
+            self_new_names[self_new_names.index(name)] += suffixes[0]
+            other_new_names[other_new_names.index(name)] += suffixes[1]
+
+    return self_new_names, other_new_names
+
+
+# TODO: perhaps just split into 4 methods for each join type
+def _compute_new_index(weld_objects_indexes, how, on, self_on_cols, other_on_cols, filter_func):
+    if how in ['inner', 'left']:
+        extract_index_from = self_on_cols
+        index_index = 0
+    else:
+        extract_index_from = other_on_cols
+        index_index = 1
+
+    if how == 'outer':
+        data_arg = 'weld_objects_indexes[2]'
+    else:
+        data_arg = 'column.values'
+
+    new_indexes = []
+    data_arg = data_arg if how != 'outer' else data_arg + '[i]'
+    for i, column_name in enumerate(on):
+        column = extract_index_from._data[column_name]
+        new_indexes.append(Index(filter_func(eval(data_arg),
+                                             column.weld_type,
+                                             weld_objects_indexes[index_index]),
+                                 column.dtype,
+                                 column.name))
+    if len(on) > 1:
+        new_index = MultiIndex(new_indexes, on)
+    else:
+        new_index = new_indexes[0]
+
+    return new_index

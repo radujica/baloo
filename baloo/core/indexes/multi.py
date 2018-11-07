@@ -45,24 +45,6 @@ class MultiIndex(IndexCommon, BalooCommon):
     3
 
     """
-    @staticmethod
-    def _init_indexes(data, names):
-        if names is not None:
-            if len(data) != len(names):
-                raise ValueError('Expected all or none of the data columns to be named')
-        else:
-            names = [None] * len(data)
-
-        data_as_indexes = []
-
-        for n, v in zip(names, data):
-            if isinstance(v, np.ndarray):
-                v = Index(v, v.dtype, n)
-
-            data_as_indexes.append(v)
-
-        return data_as_indexes
-
     def __init__(self, data, names=None):
         """Initialize a MultiIndex object.
 
@@ -78,7 +60,7 @@ class MultiIndex(IndexCommon, BalooCommon):
         self._length = infer_length(data)
         self.name = None
         self.names = check_inner_types(check_type(names, list), str)
-        self._data = MultiIndex._init_indexes(data, names)
+        self._data = _init_indexes(data, names)
 
     @property
     def values(self):
@@ -227,3 +209,19 @@ class MultiIndex(IndexCommon, BalooCommon):
         """
         # not computing slice here to use with __getitem__ because we'd need to use len which is eager
         return MultiIndex([v.tail(n) for v in self.values], self.names)
+
+
+def _init_indexes(data, names):
+    if names is not None:
+        if len(data) != len(names):
+            raise ValueError('Expected all or none of the data columns to be named')
+    else:
+        names = [None] * len(data)
+
+    data_as_indexes = []
+    for n, v in zip(names, data):
+        if isinstance(v, np.ndarray):
+            v = Index(v, v.dtype, n)
+        data_as_indexes.append(v)
+
+    return data_as_indexes
