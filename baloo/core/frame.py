@@ -14,7 +14,6 @@ from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, w
 
 
 # TODO: handle empty dataframe case throughout operations
-# TODO: wrap all internal data in Series to avoid always checking for raw/weldobject ~ like in multiindex
 # TODO: maybe add type hints
 class DataFrame(BinaryOps, BalooCommon):
     """ Weld-ed pandas DataFrame.
@@ -247,16 +246,17 @@ class DataFrame(BinaryOps, BalooCommon):
         if self.index is None:
             return 'Empty DataFrame'
 
+        default_index_name = ' '
         str_data = OrderedDict()
-        str_data.update((name, data) for name, data in self.index._gather_data().items())
+        str_data.update((name, data.values) for name, data in self.index._gather_data(default_index_name).items())
         str_data.update((column.name, shorten_data(column.values)) for column in self._iter())
 
         return tabulate(str_data, headers='keys')
 
     def _comparison(self, other, comparison):
         if is_scalar(other):
-            new_data = OrderedDict((column_name, self._data[column_name]._comparison(other, comparison))
-                                   for column_name in self)
+            new_data = OrderedDict((column.name, column._comparison(other, comparison))
+                                   for column in self._iter())
 
             return DataFrame(new_data, self.index)
         else:
@@ -264,13 +264,13 @@ class DataFrame(BinaryOps, BalooCommon):
 
     def _element_wise_operation(self, other, operation):
         if isinstance(other, LazyArrayResult):
-            new_data = OrderedDict((column_name, Series._series_array_op(self._data[column_name], other, operation))
-                                   for column_name in self)
+            new_data = OrderedDict((column.name, Series._series_array_op(column, other, operation))
+                                   for column in self._iter())
 
             return DataFrame(new_data, self.index)
         elif is_scalar(other):
-            new_data = OrderedDict((column_name, Series._series_element_wise_op(self._data[column_name], other, operation))
-                                   for column_name in self)
+            new_data = OrderedDict((column.name, Series._series_element_wise_op(column, other, operation))
+                                   for column in self._iter())
 
             return DataFrame(new_data, self.index)
         else:
@@ -316,16 +316,16 @@ class DataFrame(BinaryOps, BalooCommon):
             check_weld_bit_array(item)
 
             new_index = self.index[item]
-            new_data = OrderedDict((column_name, Series._filter_series(self._data[column_name], item, new_index))
-                                   for column_name in self)
+            new_data = OrderedDict((column.name, Series._filter_series(column, item, new_index))
+                                   for column in self._iter())
 
             return DataFrame(new_data, new_index)
         elif isinstance(item, slice):
             check_valid_int_slice(item)
 
             new_index = self.index[item]
-            new_data = OrderedDict((column_name, Series._slice_series(self._data[column_name], item, new_index))
-                                   for column_name in self)
+            new_data = OrderedDict((column.name, Series._slice_series(column, item, new_index))
+                                   for column in self._iter())
 
             return DataFrame(new_data, new_index)
         else:
@@ -391,11 +391,9 @@ class DataFrame(BinaryOps, BalooCommon):
 
         """
         evaluated_index = self.index.evaluate(verbose, decode, passes, num_threads, apply_experimental)
-
-        evaluated_data = OrderedDict()
-        for column_name in self:
-            evaluated_data[column_name] = self._data[column_name].evaluate(verbose, decode, passes,
-                                                                           num_threads, apply_experimental)
+        evaluated_data = OrderedDict((column.name, column.evaluate(verbose, decode, passes,
+                                                                   num_threads, apply_experimental))
+                                     for column in self._iter())
 
         return DataFrame(evaluated_data, evaluated_index)
 
@@ -458,8 +456,8 @@ class DataFrame(BinaryOps, BalooCommon):
                 length = LazyLongResult(weld_count(self._data[keys[0]]))
 
         new_index = self.index.tail(n)
-        new_data = OrderedDict((column_name, Series._tail_series(self._data[column_name], new_index, length, n))
-                               for column_name in self)
+        new_data = OrderedDict((column.name, Series._tail_series(column, new_index, length, n))
+                               for column in self._iter())
 
         return DataFrame(new_data, new_index)
 
@@ -535,14 +533,14 @@ class DataFrame(BinaryOps, BalooCommon):
 
     # TODO: currently if the data has multiple types, the results are casted to f64; perhaps be more flexible about it
     # TODO: cast data to relevant 64-bit format pre-aggregation ~ i16, i32 -> i64, f32 -> f64
-    # TODO: update gather_dtypes, str check
+    # TODO: str check
     def _aggregate_columns(self, func_name):
         new_index = self.keys()
 
         agg_lazy_results = [getattr(self[column_name], func_name)() for column_name in self]
 
         # if there are multiple types, cast to float64
-        if len(set(self.dtypes.values)) > 1:
+        if len(set(self._gather_dtypes().values())) > 1:
             weld_type = WeldDouble()
             dtype = weld_to_numpy_dtype(weld_type)
             agg_lazy_results = (weld_cast_double(result.weld_expr) for result in agg_lazy_results)
@@ -596,8 +594,8 @@ class DataFrame(BinaryOps, BalooCommon):
         check_type(aggregations, list)
 
         new_index = Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_))
-        new_data = OrderedDict((column_name, Series._agg_series(self._data[column_name], aggregations, new_index))
-                               for column_name in self)
+        new_data = OrderedDict((column.name, Series._agg_series(column, aggregations, new_index))
+                               for column in self._iter())
 
         return DataFrame(new_data, new_index)
 
@@ -621,8 +619,8 @@ class DataFrame(BinaryOps, BalooCommon):
             length = weld_count(a_column.values)
         new_index = RangeIndex(0, length, 1)
 
-        for name, data in self.index._gather_data().items():
-            new_columns[name] = Series(data.values, new_index, data.dtype, name)
+        new_columns.update((name, Series(data.values, new_index, data.dtype, name))
+                           for name, data in self.index._gather_data().items())
 
         # the data/columns
         new_columns.update(self._data)
@@ -728,7 +726,7 @@ class DataFrame(BinaryOps, BalooCommon):
                                    ascending=ascending)
 
         new_index = self.index._iloc_indices(sorted_indices)
-        new_columns = [column for column in self._data.values()]
+        new_columns = list(self._iter())
         new_column_names = [column.name for column in new_columns]
         new_columns = [column.iloc._iloc_series(sorted_indices, new_index) for column in new_columns]
         new_data = OrderedDict(zip(new_column_names, new_columns))
@@ -789,7 +787,7 @@ class DataFrame(BinaryOps, BalooCommon):
         new_indexes = []
         data_arg = data_arg if how != 'outer' else data_arg + '[i]'
         for i, column_name in enumerate(on):
-            column = extract_index_from[column_name]
+            column = extract_index_from._data[column_name]
             new_indexes.append(Index(filter_func(eval(data_arg),
                                                  column.weld_type,
                                                  weld_objects_indexes[index_index]),

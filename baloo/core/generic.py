@@ -125,6 +125,11 @@ class IndexCommon(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
+    def _gather_data(self):
+        # returns a dict of names to Indexes, not to raw data for Weld
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def _gather_weld_types(self):
         # returns the raw/WeldObjects in a list s.t. can be passed directly to weld_* methods
         raise NotImplementedError

@@ -158,15 +158,15 @@ class MultiIndex(IndexCommon, BalooCommon):
     def name(self, value):
         self._name = value
 
-    def _gather_names(self):
+    def _gather_names(self, name='level_'):
         names = [None] * len(self.values) if self.names is None else self.names
-        return ['level_' + str(i) if name is None else name for i, name in enumerate(names)]
+        return [name + str(i) if n is None else n for i, n in enumerate(names)]
 
     def _gather_data_for_weld(self):
         return [index.weld_expr for index in self._data]
 
-    def _gather_data(self):
-        return OrderedDict(zip(self._gather_names(), self._gather_data_for_weld()))
+    def _gather_data(self, name='level_'):
+        return OrderedDict(zip(self._gather_names(name), self._data))
 
     def _gather_weld_types(self):
         return [index.weld_type for index in self._data]
