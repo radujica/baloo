@@ -5,7 +5,8 @@ from .indexes import Index, MultiIndex
 from .utils import infer_dtype, default_index, check_type, is_scalar, check_valid_int_slice, check_weld_bit_array
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
     weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, LazyDoubleResult, LazyScalarResult, \
-    weld_mean, weld_variance, weld_standard_deviation, WeldObject, weld_agg
+    weld_mean, weld_variance, weld_standard_deviation, WeldObject, weld_agg, weld_iloc_indices, \
+    weld_iloc_indices_with_missing
 
 
 class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
@@ -309,6 +310,7 @@ def _process_index(index, data):
         return check_type(index, (Index, MultiIndex))
 
 
+# the following methods are shortcuts for DataFrame ops to avoid e.g. recomputing index
 def _series_agg(series, aggregations, index):
     return Series(weld_agg(series.weld_expr,
                            series.weld_type,
@@ -338,7 +340,6 @@ def _series_element_wise_op(series, other, operation):
 
 
 def _series_filter(series, item, index):
-    # shortcut of Series.__getitem__ when index is known and item is checked
     return Series(weld_filter(series.weld_expr,
                               series.weld_type,
                               item.weld_expr),
@@ -348,7 +349,6 @@ def _series_filter(series, item, index):
 
 
 def _series_slice(series, item, index):
-    # shortcut of Series.__getitem__ when index is known and item is checked
     return Series(weld_slice(series.weld_expr,
                              series.weld_type,
                              item),
@@ -360,5 +360,23 @@ def _series_slice(series, item, index):
 def _series_tail(series, index, length, n):
     return Series(weld_tail(series.weld_expr, length, n),
                   index,
+                  series.dtype,
+                  series.name)
+
+
+def _series_iloc(series, item, new_index):
+    return Series(weld_iloc_indices(series.weld_expr,
+                                    series.weld_type,
+                                    item),
+                  new_index,
+                  series.dtype,
+                  series.name)
+
+
+def _series_iloc_with_missing(series, item, new_index):
+    return Series(weld_iloc_indices_with_missing(series.weld_expr,
+                                                 series.weld_type,
+                                                 item),
+                  new_index,
                   series.dtype,
                   series.name)

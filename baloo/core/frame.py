@@ -6,7 +6,7 @@ from tabulate import tabulate
 from .generic import BinaryOps, BalooCommon
 from .indexes import RangeIndex, Index, MultiIndex
 from .series import Series, _series_slice, _series_filter, _series_element_wise_op, _series_array_op, _series_agg, \
-    _series_tail
+    _series_tail, _series_iloc, _series_iloc_with_missing
 from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
     check_weld_bit_array, check_valid_int_slice, as_list, default_index
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
@@ -678,7 +678,7 @@ class DataFrame(BinaryOps, BalooCommon):
         new_index = self.index._iloc_indices(sorted_indices)
         new_columns = list(self._iter())
         new_column_names = [column.name for column in new_columns]
-        new_columns = [column.iloc._iloc_series(sorted_indices, new_index) for column in new_columns]
+        new_columns = [_series_iloc(column, sorted_indices, new_index) for column in new_columns]
         new_data = OrderedDict(zip(new_column_names, new_columns))
 
         return DataFrame(new_data, new_index)
@@ -763,15 +763,15 @@ class DataFrame(BinaryOps, BalooCommon):
 
             if how == 'inner':
                 index_filter_func = weld_iloc_indices
-                data_filter_func = '_iloc_series'
+                data_filter_func = _series_iloc
                 weld_merge_func = weld_merge_join
             elif how in {'left', 'right'}:
                 index_filter_func = fake_filter_func
-                data_filter_func = '_iloc_series_with_missing'
+                data_filter_func = _series_iloc_with_missing
                 weld_merge_func = weld_merge_join
             else:
                 index_filter_func = fake_filter_func
-                data_filter_func = '_iloc_series_with_missing'
+                data_filter_func = _series_iloc_with_missing
                 weld_merge_func = weld_merge_outer_join
 
             weld_objects_indexes = weld_merge_func(self_on_cols._gather_data_for_weld(),
@@ -792,12 +792,10 @@ class DataFrame(BinaryOps, BalooCommon):
                                                                  suffixes)
 
             for column_name, new_name in zip(self_no_on, self_new_names):
-                new_data[new_name] = getattr(self_no_on[column_name].iloc,
-                                             data_filter_func)(weld_objects_indexes[0], new_index)
+                new_data[new_name] = data_filter_func(self_no_on[column_name], weld_objects_indexes[0], new_index)
 
             for column_name, new_name in zip(other_no_on, other_new_names):
-                new_data[new_name] = getattr(other_no_on[column_name].iloc,
-                                             data_filter_func)(weld_objects_indexes[1], new_index)
+                new_data[new_name] = data_filter_func(other_no_on[column_name], weld_objects_indexes[1], new_index)
 
             return DataFrame(new_data, new_index)
         elif algorithm == 'hash':
