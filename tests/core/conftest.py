@@ -64,16 +64,6 @@ def df_empty():
     return DataFrame({})
 
 
-@pytest.fixture(scope='module',
-                params=[df_small(data_f32(),
-                                 series_i64(data_i64_lazy(data_i64()), index_i64()),
-                                 series_str(data_str(), index_i64()),
-                                 index_i64()),
-                        df_empty()])
-def df(request):
-    return request.param
-
-
 @pytest.fixture(scope='module')
 def index_i64_2():
     return Index(np.arange(2, 7), np.dtype(np.int64))

@@ -25,9 +25,9 @@ def assert_dataframe_equal(actual, expected):
 
 # TODO: fix |S11!!
 class TestDataFrame(object):
-    def test_repr_str(self, df):
-        df = df.evaluate()
-        # just testing if they don't crash
+    # just testing if they don't crash
+    def test_repr_str(self, df_small):
+        df = df_small.evaluate()
         repr(df)
         str(df)
 
