@@ -220,6 +220,7 @@ class DataFrame(BinaryOps, BalooCommon):
             raise TypeError('Can currently only compare with scalars')
 
     def _element_wise_operation(self, other, operation):
+        # TODO: pandas behavior seems to be different ~ one value per column
         if isinstance(other, LazyArrayResult):
             new_data = OrderedDict((column.name, _series_array_op(column, other, operation))
                                    for column in self._iter())

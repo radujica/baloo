@@ -60,6 +60,7 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
 
     """
     # TODO: when passed a dtype, pandas converts to it; do the same?
+    # TODO: Fix en/decoding string's dtype; e.g. filter returns max length dtype (|S11) even if actual result is |S7
     def __init__(self, data, index=None, dtype=None, name=None):
         """Initialize a Series object.
 
