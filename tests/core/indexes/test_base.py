@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from baloo import Index, Series
-from baloo.weld import create_placeholder_weld_object
 
 
 def assert_index_equal(actual, expected):
@@ -11,109 +10,92 @@ def assert_index_equal(actual, expected):
 
     np.testing.assert_array_equal(actual.values, expected.values)
     assert actual.dtype.char == expected.dtype.char
+    assert actual._length == expected._length
     # might seem redundant but testing the __len__ function
     assert len(actual) == len(expected)
     assert actual.name == expected.name
 
 
 class TestBaseIndex(object):
-    def test_evaluate(self):
-        data = np.array([1, 2, 3], dtype=np.int64)
-        actual = Index(data)
-        expected = Index(data, np.dtype(np.int64), None)
+    def test_evaluate(self, data_i64):
+        actual = Index(data_i64)
+        expected = Index(data_i64, np.dtype(np.int64), None)
 
         assert_index_equal(actual, expected)
 
-    def test_len_raw(self):
-        ind = Index(np.array([1, 2, 3], dtype=np.int64))
+    def test_len_raw(self, data_i64):
+        ind = Index(data_i64, np.dtype(np.int64))
 
         actual = len(ind)
-        expected = 3
+        expected = 5
 
         assert actual == expected
 
-    def test_len_lazy(self):
-        data = np.array([1, 2, 3], dtype=np.int64)
-        weld_obj = create_placeholder_weld_object(data)
-        ind = Index(weld_obj, np.dtype(np.int64))
+    def test_len_lazy(self, data_i64_lazy):
+        ind = Index(data_i64_lazy, np.dtype(np.int64))
 
         actual = len(ind)
-        expected = 3
+        expected = 5
 
         assert actual == expected
 
-    def test_comparison(self):
-        ind = Index(np.array([1, 2, 3, 4, 5], dtype=np.float32))
-
-        actual = ind < 3.0
-        expected = Index(np.array([True, True, False, False, False]))
+    def test_comparison(self, index_i64):
+        actual = index_i64 < 3
+        expected = Index(np.array([True, True, True, False, False]))
 
         assert_index_equal(actual, expected)
 
-    def test_filter(self):
-        ind = Index(np.array([1, 2, 3, 4, 5], dtype=np.float32))
-
-        actual = ind[Index(np.array([False, True, True, False, False]))]
-        expected = Index(np.array([2, 3]), np.dtype(np.float32))
+    def test_filter(self, index_i64):
+        actual = index_i64[Index(np.array([False, True, True, False, False]))]
+        expected = Index(np.array([1, 2]), np.dtype(np.int64))
 
         assert_index_equal(actual, expected)
 
-    def test_slice(self):
-        ind = Index(np.array([1, 2, 3, 4, 5], dtype=np.float32))
-
-        actual = ind[1:3]
-        expected = Index(np.array([2, 3]), np.dtype(np.float32))
+    def test_slice(self, index_i64):
+        actual = index_i64[1:3]
+        expected = Index(np.array([1, 2]), np.dtype(np.int64))
 
         assert_index_equal(actual, expected)
 
-    def test_head(self):
-        ind = Index(np.array([1, 2, 3, 4, 5], dtype=np.float32))
-
-        actual = ind.head(2)
-        expected = Index(np.array([1, 2]), np.dtype(np.float32))
+    def test_head(self, index_i64):
+        actual = index_i64.head(2)
+        expected = Index(np.array([0, 1]), np.dtype(np.int64))
 
         assert_index_equal(actual, expected)
 
-    def test_tail(self):
-        ind = Index(np.array([1, 2, 3, 4, 5], dtype=np.float32))
-
-        actual = ind.tail(2)
-        expected = Index(np.array([4, 5]), np.dtype(np.float32))
+    def test_tail(self, index_i64):
+        actual = index_i64.tail(2)
+        expected = Index(np.array([3, 4]), np.dtype(np.int64))
 
         assert_index_equal(actual, expected)
 
     # implicitly tests if one can apply operation with Series too
-    @pytest.mark.parametrize('operation, expected', [
-        ('+', Index(np.array(np.arange(2, 7), dtype=np.float32), np.dtype(np.float32))),
-        ('-', Index(np.array(np.arange(-2, 3), dtype=np.float32), np.dtype(np.float32))),
-        ('*', Index(np.array(np.arange(0, 9, 2), dtype=np.float32), np.dtype(np.float32))),
-        ('/', Index(np.array([0, 0.5, 1, 1.5, 2], dtype=np.float32), np.dtype(np.float32))),
-        ('**', Index(np.array([0, 1, 4, 9, 16], dtype=np.float32), np.dtype(np.float32)))
+    @pytest.mark.parametrize('operation, expected_data', [
+        ('+', np.arange(3, 8, dtype=np.float32)),
+        ('-', np.arange(-1, 4, dtype=np.float32)),
+        ('*', np.arange(2, 11, 2, dtype=np.float32)),
+        ('/', np.array([0.5, 1, 1.5, 2, 2.5], dtype=np.float32)),
+        ('**', np.array([1, 4, 9, 16, 25], dtype=np.float32))
     ])
-    def test_op_array(self, operation, expected):
-        data = Index(np.arange(5).astype(np.float32))
-        other = Series(np.array([2] * 5).astype(np.float32))
+    def test_op_array(self, operation, expected_data, data_f32, op_array_other):
+        data = Index(data_f32)
 
-        actual = eval('data {} other'.format(operation))
+        actual = eval('data {} op_array_other'.format(operation))
+        expected = Index(expected_data, np.dtype(np.float32))
 
         assert_index_equal(actual, expected)
 
-    @pytest.mark.parametrize('operation, expected', [
-        ('+', Index(np.array(np.arange(2, 7)), np.dtype(np.int64))),
-        ('-', Index(np.array(np.arange(-2, 3)), np.dtype(np.int64))),
-        ('*', Index(np.array(np.arange(0, 9, 2)), np.dtype(np.int64))),
-        ('/', Index(np.array([0, 0, 1, 1, 2]), np.dtype(np.int64))),
-        ('**', Index(np.array([0, 1, 4, 9, 16], dtype=np.float32), np.dtype(np.float32)))
+    @pytest.mark.parametrize('operation, expected_data', [
+        ('+', np.arange(3, 8, dtype=np.float32)),
+        ('-', np.arange(-1, 4, dtype=np.float32)),
+        ('*', np.arange(2, 11, 2, dtype=np.float32)),
+        ('/', np.array([0.5, 1, 1.5, 2, 2.5], dtype=np.float32)),
+        ('**', np.array([1, 4, 9, 16, 25], dtype=np.float32))
     ])
-    def test_op_scalar(self, operation, expected):
-        data = np.arange(5)
-        # hack until pow is fully supported by Weld
-        if operation == '**':
-            data = data.astype(np.float32)
+    def test_op_scalar(self, operation, expected_data, data_f32):
+        ind = Index(data_f32)
 
-        ind = Index(data)
-        scalar = 2
-
-        actual = eval('ind {} scalar'.format(operation))
+        actual = eval('ind {} 2'.format(operation))
+        expected = Index(expected_data, np.dtype(np.float32))
 
         assert_index_equal(actual, expected)

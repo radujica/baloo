@@ -3,7 +3,7 @@ from collections import OrderedDict
 import numpy as np
 import pytest
 
-from baloo import Series, Index, DataFrame, MultiIndex
+from baloo import Series, Index, DataFrame, MultiIndex, RangeIndex
 from baloo.weld import create_placeholder_weld_object
 
 
@@ -34,6 +34,11 @@ def index_i64():
 
 
 @pytest.fixture(scope='module')
+def range_index():
+    return RangeIndex(0, 5, 1)
+
+
+@pytest.fixture(scope='module')
 def series_f32(data_f32, index_i64):
     return Series(data_f32, index_i64, np.dtype(np.float32))
 
@@ -46,6 +51,11 @@ def series_i64(data_i64_lazy, index_i64):
 @pytest.fixture(scope='module')
 def series_str(data_str, index_i64):
     return Series(data_str, index_i64, data_str.dtype)
+
+
+@pytest.fixture(scope='module')
+def op_array_other():
+    return Series(np.array([2] * 5).astype(np.float32))
 
 
 @pytest.fixture(scope='module')

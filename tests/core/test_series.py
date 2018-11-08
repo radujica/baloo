@@ -149,10 +149,6 @@ class TestSeries(object):
 
         assert_series_equal(actual, expected)
 
-    @pytest.fixture
-    def op_array_other(self):
-        return Series(np.array([2] * 5).astype(np.float32))
-
     @pytest.mark.parametrize('operation, expected_data', [
         ('+', np.array(np.arange(3, 8), dtype=np.float32)),
         ('-', np.array(np.arange(-1, 4), dtype=np.float32)),
