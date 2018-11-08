@@ -68,10 +68,9 @@ def df_small_columns():
     return Index(np.array(['a', 'b', 'c'], dtype=np.bytes_))
 
 
-# TODO: change this to empty constructor
 @pytest.fixture(scope='module')
 def df_empty():
-    return DataFrame({})
+    return DataFrame()
 
 
 @pytest.fixture(scope='module')

@@ -10,6 +10,12 @@ class BalooCommon(abc.ABC):
         # the internal data
         raise NotImplementedError
 
+    @property
+    @abc.abstractmethod
+    def empty(self):
+        # the internal data
+        raise NotImplementedError
+
     @abc.abstractmethod
     def __len__(self):
         # eager operation returning the length of the internal data

@@ -161,12 +161,14 @@ class Index(LazyArrayResult, BinaryOps, IndexCommon, BalooCommon):
                          self.name)
         elif isinstance(item, slice):
             check_valid_int_slice(item)
-
-            return Index(weld_slice(self.weld_expr,
-                                    self.weld_type,
-                                    item),
-                         self.dtype,
-                         self.name)
+            if self.empty:
+                return self
+            else:
+                return Index(weld_slice(self.weld_expr,
+                                        self.weld_type,
+                                        item),
+                             self.dtype,
+                             self.name)
         else:
             raise TypeError('Expected LazyArrayResult or slice')
 
@@ -227,12 +229,15 @@ class Index(LazyArrayResult, BinaryOps, IndexCommon, BalooCommon):
         [1. 2.]
 
         """
-        if self._length is not None:
-            length = self._length
+        if self.empty:
+            return self
         else:
-            length = self._lazy_len().weld_expr
+            if self._length is not None:
+                length = self._length
+            else:
+                length = self._lazy_len().weld_expr
 
-        # not computing slice here to use with __getitem__ because we'd need to use len which is eager
-        return Index(weld_tail(self.weld_expr, length, n),
-                     self.dtype,
-                     self.name)
+            # not computing slice here to use with __getitem__ because we'd need to use len which is eager
+            return Index(weld_tail(self.weld_expr, length, n),
+                         self.dtype,
+                         self.name)

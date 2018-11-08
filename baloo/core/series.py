@@ -61,12 +61,12 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
     """
     # TODO: when passed a dtype, pandas converts to it; do the same?
     # TODO: Fix en/decoding string's dtype; e.g. filter returns max length dtype (|S11) even if actual result is |S7
-    def __init__(self, data, index=None, dtype=None, name=None):
+    def __init__(self, data=None, index=None, dtype=None, name=None):
         """Initialize a Series object.
 
         Parameters
         ----------
-        data : numpy.ndarray or WeldObject
+        data : numpy.ndarray or WeldObject, optional
             Raw data or Weld expression.
         index : Index or RangeIndex or MultiIndex, optional
             Index linked to the data; it is assumed to be of the same length.
@@ -77,7 +77,7 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
             Name of the Series.
 
         """
-        check_type(data, (np.ndarray, WeldObject))
+        data = _process_input_data(data)
         self.index = _process_index(index, data)
         self.dtype = infer_dtype(data, check_type(dtype, np.dtype))
         self.name = check_type(name, str)
@@ -302,6 +302,13 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         new_index = Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_))
 
         return _series_agg(self, aggregations, new_index)
+
+
+def _process_input_data(data):
+    if data is None:
+        return np.empty(0)
+    else:
+        return check_type(data, (np.ndarray, WeldObject))
 
 
 def _process_index(index, data):

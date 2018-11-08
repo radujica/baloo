@@ -75,6 +75,10 @@ class MultiIndex(IndexCommon, BalooCommon):
         return self._data
 
     @property
+    def empty(self):
+        return len(self._data) == 0 or all(index.empty for index in self._data)
+
+    @property
     def dtypes(self):
         return [v.dtype for v in self.values]
 

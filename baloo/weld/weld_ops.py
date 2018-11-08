@@ -130,23 +130,7 @@ def weld_filter(array, weld_type, bool_array):
     return weld_obj
 
 
-def _replace_slice_defaults(slice_, default_start, default_step):
-    start = slice_.start
-    stop = slice_.stop
-    step = slice_.step
-
-    if start is None:
-        start = default_start
-
-    # stop is required when making a slice, no need to replace
-
-    if step is None:
-        step = default_step
-
-    return slice(start, stop, step)
-
-
-def weld_slice(array, weld_type, slice_, default_start=0, default_step=1):
+def weld_slice(array, weld_type, slice_, default_start=0, default_stop=0, default_step=1):
     """Returns a new array according to the given slice.
 
     Parameters
@@ -159,6 +143,8 @@ def weld_slice(array, weld_type, slice_, default_start=0, default_step=1):
         Subset to return. Assumed valid slice.
     default_start : int, optional
         Default value to slice start.
+    default_stop : int, optional
+        Default value to slice stop.
     default_step : int, optional
         Default value to slice step.
 
@@ -168,7 +154,9 @@ def weld_slice(array, weld_type, slice_, default_start=0, default_step=1):
         Representation of this computation.
 
     """
-    slice_ = _replace_slice_defaults(slice_, default_start, default_step)
+    from ..core.utils import replace_slice_defaults
+
+    slice_ = replace_slice_defaults(slice_, default_start, default_stop, default_step)
     obj_id, weld_obj = create_weld_object(array)
 
     if slice_.step == 1:

@@ -97,6 +97,13 @@ class LazyArrayResult(LazyResult):
     def __init__(self, weld_expr, weld_type):
         super(LazyArrayResult, self).__init__(weld_expr, weld_type, 1)
 
+    @property
+    def empty(self):
+        if self.is_raw():
+            return len(self.weld_expr) == 0
+        else:
+            return False
+
     def _aggregate(self, operation):
         return LazyScalarResult(weld_aggregate(self.weld_expr,
                                                self.weld_type,

@@ -97,19 +97,21 @@ class DataFrame(BinaryOps, BalooCommon):
       2          2    7          1
 
     """
-    def __init__(self, data, index=None):
+    _empty_text = 'Empty DataFrame'
+
+    def __init__(self, data=None, index=None):
         """Initialize a DataFrame object.
 
         Parameters
         ----------
-        data : dict
+        data : dict, optional
             Data as a dict of str -> np.ndarray or Series.
         index : Index or RangeIndex or MultiIndex, optional
             Index linked to the data; it is assumed to be of the same length.
             RangeIndex by default.
 
         """
-        check_inner_types(check_type(data, dict).values(), (np.ndarray, Series))
+        data = _check_input_data(data)
         # TODO: length could also be inferred from index, if passed
         self._length = infer_length(data.values())
         self.index = _process_index(index, data, self._length)
@@ -126,6 +128,10 @@ class DataFrame(BinaryOps, BalooCommon):
 
         """
         return self._data
+
+    @property
+    def empty(self):
+        return self.index.empty and (len(self._data) == 0 or all(series.empty for series in self._iter()))
 
     def _gather_dtypes(self):
         return OrderedDict(((k, v.dtype) for k, v in self._data.items()))
@@ -197,9 +203,8 @@ class DataFrame(BinaryOps, BalooCommon):
                                                  columns)
 
     def __str__(self):
-        # TODO: find a better way to handle empty dataframe; this assumes it's impossible to have data with index=None
-        if self.index is None:
-            return 'Empty DataFrame'
+        if self.empty:
+            return self._empty_text
 
         default_index_name = ' '
         str_data = OrderedDict()
@@ -408,15 +413,7 @@ class DataFrame(BinaryOps, BalooCommon):
           2    7    2
 
         """
-        if self._length is not None:
-            length = self._length
-        else:
-            # first check again for raw data
-            length = infer_length(self._data.values())
-            # if still None, get a random column and encode length
-            if length is None:
-                keys = list(self._data.keys())
-                length = LazyLongResult(weld_count(self._data[keys[0]]))
+        length = _obtain_length(self._length, self._data)
 
         new_index = self.index.tail(n)
         new_data = OrderedDict((column.name, _series_tail(column, new_index, length, n))
@@ -479,18 +476,22 @@ class DataFrame(BinaryOps, BalooCommon):
         """
         if isinstance(columns, str):
             new_data = OrderedDict()
+            if columns not in self._gather_column_names():
+                raise KeyError('Key {} not found'.format(columns))
+
             for column_name in self:
                 if column_name != columns:
                     new_data[column_name] = self._data[column_name]
 
             return DataFrame(new_data, self.index)
         elif isinstance(columns, list):
-            new_data = OrderedDict()
-            for column_name in self:
-                if column_name not in columns:
-                    new_data[column_name] = self._data[column_name]
+            check_inner_types(columns, str)
 
-            return DataFrame(new_data, self.index)
+            df = self
+            for column in columns:
+                df = df.drop(column)
+
+            return df
         else:
             raise TypeError('Expected columns as a str or a list of str')
 
@@ -498,6 +499,9 @@ class DataFrame(BinaryOps, BalooCommon):
     # TODO: cast data to relevant 64-bit format pre-aggregation ~ i16, i32 -> i64, f32 -> f64
     def _aggregate_columns(self, func_name):
         df = _drop_str_columns(self)
+        if len(df._data) == 0:
+            return Series()
+
         new_index = df.keys()
 
         agg_lazy_results = [getattr(column, func_name)() for column in df._iter()]
@@ -557,6 +561,10 @@ class DataFrame(BinaryOps, BalooCommon):
         check_type(aggregations, list)
 
         df = _drop_str_columns(self)
+        if len(df._data) == 0:
+            # conforming to what pandas does
+            raise ValueError('No results')
+
         new_index = Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_))
         new_data = OrderedDict((column.name, _series_agg(column, aggregations, new_index))
                                for column in df._iter())
@@ -871,7 +879,7 @@ def _default_index(dataframe_data, length):
         return default_index(length)
     else:
         if len(dataframe_data) == 0:
-            return None
+            return default_index(0)
         else:
             # must encode from a random column then
             return default_index(dataframe_data[list(dataframe_data.keys())[0]])
@@ -884,6 +892,16 @@ def _process_index(index, data, length):
         return check_type(index, (Index, MultiIndex))
 
 
+def _check_input_data(data):
+    if data is None:
+        return OrderedDict()
+    else:
+        check_type(data, dict)
+        check_inner_types(data.values(), (np.ndarray, Series))
+
+        return data
+
+
 def _process_data(data, index):
     for k, v in data.items():
         if isinstance(v, Series):
@@ -891,6 +909,7 @@ def _process_data(data, index):
         else:
             # must be ndarray
             data[k] = Series(v, index, name=k)
+
     return data
 
 

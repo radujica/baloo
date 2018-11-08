@@ -40,14 +40,17 @@ def infer_dtype(data, arg_dtype):
 
 
 def infer_length(data):
-    for value in data:
-        if isinstance(value, np.ndarray):
-            return len(value)
-        # must be a Series then
-        elif isinstance(value.values, np.ndarray):
-            return len(value.values)
+    if len(data) == 0:
+        return 0
+    else:
+        for value in data:
+            if isinstance(value, np.ndarray):
+                return len(value)
+            # must be a Series then
+            elif isinstance(value.values, np.ndarray):
+                return len(value.values)
 
-    return None
+        return None
 
 
 def default_index(data):
@@ -98,3 +101,15 @@ def as_list(data):
         return data
     else:
         return [data]
+
+
+def replace_if_none(value, default):
+    return default if value is None else value
+
+
+def replace_slice_defaults(slice_, default_start, default_stop, default_step):
+    start = replace_if_none(slice_.start, default_start)
+    stop = replace_if_none(slice_.stop, default_stop)
+    step = replace_if_none(slice_.step, default_step)
+
+    return slice(start, stop, step)
