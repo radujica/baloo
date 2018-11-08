@@ -77,8 +77,8 @@ class TestDataFrame(object):
 
     def test_comparison(self, df_small, index_i64):
         actual = df_small < 3
-        expected = DataFrame(OrderedDict((('a', np.array([True, True, True, False, False])),
-                                          ('b', np.array([False, False, False, False, False])))),
+        expected = DataFrame(OrderedDict((('a', np.array([True, True, False, False, False])),
+                                          ('b', np.array([True, True, False, False, False])))),
                              index_i64)
 
         assert_dataframe_equal(actual, expected)
@@ -159,18 +159,17 @@ class TestDataFrame(object):
     def test_keys(self, df_small, df_small_columns):
         assert_indexes_equal(df_small.keys(), df_small_columns)
 
-    def test_op_array(self, df_small, index_i64):
-        actual = df_small * Series(np.array([2] * 5))
-        data = [1, 4, 6, 8, 10]
-        expected = DataFrame(OrderedDict((('a', np.array(data, dtype=np.float32)),
-                                          ('b', np.array(data)))),
+    def test_op_array(self, df_small, index_i64, op_array_other):
+        actual = df_small * [2, 3]
+        expected = DataFrame(OrderedDict((('a', np.array([2, 4, 6, 8, 10], dtype=np.float32)),
+                                          ('b', np.array([3, 6, 9, 12, 15])))),
                              index_i64)
 
         assert_dataframe_equal(actual, expected)
 
     def test_op_scalar(self, df_small, index_i64):
         actual = df_small * 2
-        data = [1, 4, 6, 8, 10]
+        data = [2, 4, 6, 8, 10]
         expected = DataFrame(OrderedDict((('a', np.array(data, dtype=np.float32)),
                                           ('b', np.array(data)))),
                              index_i64)
@@ -178,17 +177,17 @@ class TestDataFrame(object):
         assert_dataframe_equal(actual, expected)
 
     @pytest.mark.parametrize('aggregation, expected_data', [
-        ('min', np.array([1, 2])),
-        ('max', np.array([5, 6])),
-        ('sum', np.array([15, 20])),
-        ('prod', np.array([120, 720])),
-        ('count', np.array([5, 5])),
+        ('min', np.array([1., 1.])),
+        ('max', np.array([5., 5.])),
+        ('sum', np.array([15., 15.])),
+        ('prod', np.array([120., 120.])),
+        ('count', np.array([5., 5.])),
         ('var', np.array([2.5, 2.5])),
         ('std', np.array([1.581139, 1.581139]))
     ])
-    def test_aggregations(self, aggregation, expected_data, df_small, df_small_columns):
+    def test_aggregations(self, aggregation, expected_data, df_small):
         actual = getattr(df_small, aggregation)()
-        expected = Series(expected_data, df_small_columns)
+        expected = Series(expected_data, Index(np.array(['a', 'b'], dtype=np.bytes_)))
 
         assert_series_equal(actual, expected, 5)
 
@@ -197,7 +196,7 @@ class TestDataFrame(object):
 
         actual = df_small.agg(aggregations)
         expected = DataFrame(OrderedDict((('a', np.array([5, 2.5, 5, 3], dtype=np.float64)),
-                                          ('b', np.array([4, 2.5, 5, 2], dtype=np.float64)))),
+                                          ('b', np.array([5, 2.5, 5, 3], dtype=np.float64)))),
                              Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_)))
 
         assert_dataframe_equal(actual, expected)

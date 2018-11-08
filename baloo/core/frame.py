@@ -5,8 +5,8 @@ from tabulate import tabulate
 
 from .generic import BinaryOps, BalooCommon
 from .indexes import RangeIndex, Index, MultiIndex
-from .series import Series, _series_slice, _series_filter, _series_element_wise_op, _series_array_op, _series_agg, \
-    _series_tail, _series_iloc, _series_iloc_with_missing
+from .series import Series, _series_slice, _series_filter, _series_element_wise_op, _series_agg, _series_tail, \
+    _series_iloc, _series_iloc_with_missing
 from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
     check_weld_bit_array, check_valid_int_slice, as_list, default_index
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
@@ -14,7 +14,6 @@ from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, w
     weld_merge_outer_join
 
 
-# TODO: handle empty dataframe case throughout operations
 # TODO: maybe add type hints
 class DataFrame(BinaryOps, BalooCommon):
     """ Weld-ed pandas DataFrame.
@@ -48,19 +47,18 @@ class DataFrame(BinaryOps, BalooCommon):
       2    7    2
     >>> print(len(df))
     3
-    >>> print((df * 2).evaluate())  # note that atm there is no type casting, i.e. if b was float32, it would fail
+    >>> print((df * 2).evaluate())
            a    b
     ---  ---  ---
       0   10    2
       1   12    0
       2   14    4
-    >>> sr = bl.Series(np.array([2] * 3))
-    >>> print((df * sr).evaluate())
+    >>> print((df * [2, 3]).evaluate())
            a    b
     ---  ---  ---
-      0   10    2
+      0   10    3
       1   12    0
-      2   14    4
+      2   14    6
     >>> print(df.min().evaluate())
     [5 0]
     >>> print(df.mean().evaluate())
@@ -212,23 +210,30 @@ class DataFrame(BinaryOps, BalooCommon):
 
     def _comparison(self, other, comparison):
         if is_scalar(other):
+            df = _drop_str_columns(self)
             new_data = OrderedDict((column.name, column._comparison(other, comparison))
-                                   for column in self._iter())
+                                   for column in df._iter())
 
             return DataFrame(new_data, self.index)
         else:
             raise TypeError('Can currently only compare with scalars')
 
     def _element_wise_operation(self, other, operation):
-        # TODO: pandas behavior seems to be different ~ one value per column
-        if isinstance(other, LazyArrayResult):
-            new_data = OrderedDict((column.name, _series_array_op(column, other, operation))
-                                   for column in self._iter())
+        if isinstance(other, list):
+            check_inner_types(other, (int, float))
+
+            df = _drop_str_columns(self)
+            if len(other) != len(df._gather_column_names()):
+                raise ValueError('Expected same number of values in other as the number of non-string columns')
+
+            new_data = OrderedDict((column.name, _series_element_wise_op(column, scalar, operation))
+                                   for column, scalar in zip(df._iter(), other))
 
             return DataFrame(new_data, self.index)
         elif is_scalar(other):
+            df = _drop_str_columns(self)
             new_data = OrderedDict((column.name, _series_element_wise_op(column, other, operation))
-                                   for column in self._iter())
+                                   for column in df._iter())
 
             return DataFrame(new_data, self.index)
         else:
@@ -491,14 +496,14 @@ class DataFrame(BinaryOps, BalooCommon):
 
     # TODO: currently if the data has multiple types, the results are casted to f64; perhaps be more flexible about it
     # TODO: cast data to relevant 64-bit format pre-aggregation ~ i16, i32 -> i64, f32 -> f64
-    # TODO: str check
     def _aggregate_columns(self, func_name):
-        new_index = self.keys()
+        df = _drop_str_columns(self)
+        new_index = df.keys()
 
-        agg_lazy_results = [getattr(self[column_name], func_name)() for column_name in self]
+        agg_lazy_results = [getattr(column, func_name)() for column in df._iter()]
 
         # if there are multiple types, cast to float64
-        if len(set(self._gather_dtypes().values())) > 1:
+        if len(set(df._gather_dtypes().values())) > 1:
             weld_type = WeldDouble()
             dtype = weld_to_numpy_dtype(weld_type)
             agg_lazy_results = (weld_cast_double(result.weld_expr) for result in agg_lazy_results)
@@ -551,9 +556,10 @@ class DataFrame(BinaryOps, BalooCommon):
         """
         check_type(aggregations, list)
 
+        df = _drop_str_columns(self)
         new_index = Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_))
         new_data = OrderedDict((column.name, _series_agg(column, aggregations, new_index))
-                               for column in self._iter())
+                               for column in df._iter())
 
         return DataFrame(new_data, new_index)
 
@@ -970,3 +976,20 @@ def _compute_new_index(weld_objects_indexes, how, on, self_on_cols, other_on_col
         new_index = new_indexes[0]
 
     return new_index
+
+
+def _drop_str_columns(df):
+    """
+
+    Parameters
+    ----------
+    df : DataFrame
+
+    Returns
+    -------
+
+    """
+    str_columns = filter(lambda pair: pair[1].char == 'S', df._gather_dtypes().items())
+    str_column_names = list(map(lambda pair: pair[0], str_columns))
+
+    return df.drop(str_column_names)
