@@ -34,7 +34,7 @@ class DataFrame(BinaryOps, BalooCommon):
     >>> import baloo as bl
     >>> import numpy as np
     >>> from collections import OrderedDict
-    >>> df = bl.DataFrame(OrderedDict((('a', np.arange(5, 8)), ('b', np.array([1, 0, 2])))))
+    >>> df = bl.DataFrame(OrderedDict((('a', np.arange(5, 8)), ('b', [1, 0, 2]))))
     >>> df.index  # repr
     RangeIndex(start=0, stop=3, step=1)
     >>> df  # repr
@@ -105,7 +105,7 @@ class DataFrame(BinaryOps, BalooCommon):
         Parameters
         ----------
         data : dict, optional
-            Data as a dict of str -> np.ndarray or Series.
+            Data as a dict of str -> np.ndarray or Series or list.
         index : Index or RangeIndex or MultiIndex, optional
             Index linked to the data; it is assumed to be of the same length.
             RangeIndex by default.
@@ -910,7 +910,7 @@ def _check_input_data(data):
         return OrderedDict()
     else:
         check_type(data, dict)
-        check_inner_types(data.values(), (np.ndarray, Series))
+        check_inner_types(data.values(), (np.ndarray, Series, list))
 
         return data
 
@@ -920,7 +920,7 @@ def _process_data(data, index):
         if isinstance(v, Series):
             v.name = k
         else:
-            # must be ndarray
+            # must be ndarray or list
             data[k] = Series(v, index, name=k)
 
     return data

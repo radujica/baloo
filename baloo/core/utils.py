@@ -44,9 +44,9 @@ def infer_length(data):
         return 0
     else:
         for value in data:
-            if isinstance(value, np.ndarray):
+            if isinstance(value, (np.ndarray, list)):
                 return len(value)
-            # must be a Series then
+            # Series then
             elif isinstance(value.values, np.ndarray):
                 return len(value.values)
 
