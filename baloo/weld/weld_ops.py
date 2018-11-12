@@ -469,7 +469,7 @@ def _weld_sort(arrays, weld_types, ascending=True):
     weld_obj_vec_of_struct = weld_arrays_to_vec_of_struct(arrays, weld_types)
 
     weld_obj = create_empty_weld_object()
-    weld_obj_struct_id = get_weld_obj_id(weld_obj, weld_obj_vec_of_struct)
+    weld_obj_vec_of_struct_id = get_weld_obj_id(weld_obj, weld_obj_vec_of_struct)
 
     types = '{{{}}}'.format(', '.join((str(weld_type) for weld_type in weld_types)))
     # TODO: update here when sorting on structs is possible
@@ -481,7 +481,7 @@ def _weld_sort(arrays, weld_types, ascending=True):
 
     weld_template = 'sort({struct}, |e: {types}| {sort_func})'
 
-    weld_obj.weld_code = weld_template.format(struct=weld_obj_struct_id,
+    weld_obj.weld_code = weld_template.format(struct=weld_obj_vec_of_struct_id,
                                               types=types,
                                               sort_func=sort_func)
 

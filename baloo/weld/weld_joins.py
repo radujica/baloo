@@ -135,7 +135,6 @@ def weld_merge_join(arrays_self, weld_types_self, arrays_other, weld_types_other
         available in the resulting joined DataFrame.
 
     """
-    assert is_on_sorted
     assert is_on_unique
 
     weld_obj_vec_of_struct_self = weld_arrays_to_vec_of_struct(arrays_self, weld_types_self)
@@ -259,7 +258,6 @@ def weld_merge_outer_join(arrays_self, weld_types_self, arrays_other, weld_types
         actual values, not indices to other rows.
 
     """
-    assert is_on_sorted
     assert is_on_unique
 
     weld_obj_vec_of_struct_self = weld_arrays_to_vec_of_struct(arrays_self, weld_types_self)
