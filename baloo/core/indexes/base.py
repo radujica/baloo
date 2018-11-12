@@ -12,10 +12,8 @@ class Index(LazyArrayResult, BinaryOps, IndexCommon, BalooCommon):
 
     Attributes
     ----------
-    dtype : np.dtype
-        Numpy dtype of the elements.
-    name : str
-        Name of the series.
+    dtype
+    name
 
     See Also
     --------

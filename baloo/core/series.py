@@ -14,12 +14,10 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
 
     Attributes
     ----------
-    index : Index or RangeIndex
-        Index linked to the data; it is assumed to be of the same length.
-    dtype : numpy.dtype
-        Numpy dtype of the elements.
-    name : str
-        Name of the Series.
+    index
+    dtype
+    name
+    iloc
 
     See Also
     --------
@@ -94,7 +92,6 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
     def name(self, value):
         self._name = value
 
-    # TODO: maybe worthwhile to cache; chose not to init in __init__ for lazy approach
     @property
     def iloc(self):
         """Retrieve Indexer by index.
@@ -282,7 +279,7 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         return LazyDoubleResult(weld_standard_deviation(self.weld_expr, self.weld_type))
 
     # TODO: currently casting everything to float64 (even if already f64 ~ weld_aggs TODO);
-    # maybe for min/max/count/sum/prod/.. cast ints to int64 like pandas does
+    # TODO maybe for min/max/count/sum/prod/.. cast ints to int64 like pandas does
     def agg(self, aggregations):
         """Multiple aggregations optimized.
 

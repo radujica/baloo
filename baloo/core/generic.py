@@ -7,13 +7,19 @@ class BalooCommon(abc.ABC):
     @property
     @abc.abstractmethod
     def values(self):
-        # the internal data
+        """The internal data representation."""
         raise NotImplementedError
 
     @property
     @abc.abstractmethod
     def empty(self):
-        # the internal data
+        """Check whether the data structure is empty.
+
+        Returns
+        -------
+        bool
+
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -33,7 +39,7 @@ class BalooCommon(abc.ABC):
 
     @abc.abstractmethod
     def evaluate(self):
-        # evaluate internal data returning object of same type containing raw data
+        """Evaluate by returning object of the same type but now containing raw data."""
         raise NotImplementedError
 
 
@@ -96,6 +102,14 @@ class IndexCommon(abc.ABC):
     @property
     @abc.abstractmethod
     def name(self):
+        """Name of the Index.
+
+        Returns
+        -------
+        str
+            name
+
+        """
         raise NotImplementedError
 
     @abc.abstractmethod

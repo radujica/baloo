@@ -15,6 +15,7 @@ baloo.core.frame module
 .. automodule:: baloo.core.frame
     :members:
     :special-members: __init__, __getitem__, __len__, __setitem__
+    :show-inheritance:
 
 baloo.core.series module
 ------------------------
@@ -23,3 +24,9 @@ baloo.core.series module
     :members:
     :special-members: __init__, __getitem__, __len__
     :show-inheritance:
+
+baloo.core.generic module
+-------------------------
+
+.. automodule:: baloo.core.generic
+    :members:

@@ -18,13 +18,8 @@ class MultiIndex(IndexCommon, BalooCommon):
 
     Attributes
     ----------
-    data : list of Index
-        The internal data.
-    names : list of str
-        The names of the data.
-    dtypes : list of numpy.dtype
-        The Numpy dtypes of the data in the same order
-        as the data and the names themselves.
+    names
+    dtypes
 
     Examples
     --------

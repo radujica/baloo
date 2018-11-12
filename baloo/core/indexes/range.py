@@ -10,11 +10,10 @@ class RangeIndex(Index):
 
     Attributes
     ----------
-    start : int
-    stop : int or WeldObject
-    step : int
-    dtype : np.dtype
-        Always int64.
+    start
+    stop
+    step
+    dtype
 
     See Also
     --------

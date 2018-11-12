@@ -4,7 +4,7 @@ import numpy as np
 from tabulate import tabulate
 
 from .generic import BinaryOps, BalooCommon
-from .indexes import RangeIndex, Index, MultiIndex
+from .indexes import Index, MultiIndex
 from .series import Series, _series_slice, _series_filter, _series_element_wise_op, _series_agg, _series_tail, \
     _series_iloc, _series_iloc_with_missing
 from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
@@ -20,10 +20,10 @@ class DataFrame(BinaryOps, BalooCommon):
 
     Attributes
     ----------
-    data : dict
-        Data as a dict of column names -> numpy.ndarray or Series.
-    index : Index or RangeIndex
-        Index of the data.
+    index
+    dtypes
+    columns
+    iloc
 
     See Also
     --------
@@ -137,6 +137,13 @@ class DataFrame(BinaryOps, BalooCommon):
 
     @property
     def dtypes(self):
+        """Series of NumPy dtypes present in the DataFrame with index of column names.
+
+        Returns
+        -------
+        Series
+
+        """
         return Series(np.array(list(self._gather_dtypes().values()), dtype=np.bytes_),
                       self.keys())
 
@@ -145,6 +152,13 @@ class DataFrame(BinaryOps, BalooCommon):
 
     @property
     def columns(self):
+        """Index of the column names present in the DataFrame in order.
+
+        Returns
+        -------
+        Index
+
+        """
         return Index(np.array(self._gather_column_names(), dtype=np.bytes_), np.dtype(np.bytes_))
 
     def _gather_data_for_weld(self):
