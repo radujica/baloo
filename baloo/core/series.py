@@ -7,7 +7,7 @@ from .utils import infer_dtype, default_index, check_type, is_scalar, check_vali
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
     weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, LazyDoubleResult, LazyScalarResult, \
     weld_mean, weld_variance, weld_standard_deviation, WeldObject, weld_agg, weld_iloc_indices, \
-    weld_iloc_indices_with_missing
+    weld_iloc_indices_with_missing, weld_unique
 
 
 class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
@@ -300,6 +300,21 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         new_index = Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_))
 
         return _series_agg(self, aggregations, new_index)
+
+    def unique(self):
+        """Return unique values in the Series.
+
+        Note that because it is hash-based, the result will NOT be in the same order (unlike pandas).
+
+        Returns
+        -------
+        LazyArrayResult
+            Unique values in random order.
+
+        """
+        return LazyArrayResult(weld_unique(self.values,
+                                           self.weld_type),
+                               self.weld_type)
 
 
 def _process_input_data(data):

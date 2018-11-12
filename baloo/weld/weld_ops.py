@@ -521,3 +521,46 @@ def weld_sort(arrays, weld_types, readable_text, ascending=True):
     Cache.cache_fake_input(obj_id, fake_weld_input)
 
     return weld_obj
+
+
+def weld_unique(array, weld_type):
+    """Return the unique elements of the array.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input array.
+    weld_type : WeldType
+        Type of each element in the input array.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    obj_id, weld_obj = create_weld_object(array)
+
+    weld_template = """map(
+    tovec(
+        result(
+            for(
+                map(
+                    {array},
+                    |e| 
+                        {{e, 0si}}
+                ),
+                dictmerger[{type}, i16, +],
+                |b: dictmerger[{type}, i16, +], i: i64, e: {{{type}, i16}}| 
+                    merge(b, e)
+            )
+        )
+    ),
+    |e| 
+        e.$0
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=obj_id,
+                                              type=weld_type)
+
+    return weld_obj
