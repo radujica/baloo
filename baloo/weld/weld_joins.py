@@ -111,11 +111,11 @@ def weld_merge_join(arrays_self, weld_types_self, arrays_other, weld_types_other
 
     Parameters
     ----------
-    arrays_self : list of numpy.ndarray or WeldObject
+    arrays_self : list of (numpy.ndarray or WeldObject)
         Columns from the self DataFrame on which to join.
     weld_types_self : list of WeldType
         Corresponding Weld types.
-    arrays_other : list of numpy.ndarray or WeldObject
+    arrays_other : list of (numpy.ndarray or WeldObject)
         Columns from the other DataFrame on which to join.
     weld_types_other : list of WeldType
         Corresponding Weld types.
@@ -234,11 +234,11 @@ def weld_merge_outer_join(arrays_self, weld_types_self, arrays_other, weld_types
 
     Parameters
     ----------
-    arrays_self : list of numpy.ndarray or WeldObject
+    arrays_self : list of (numpy.ndarray or WeldObject)
         Columns from the self DataFrame on which to join.
     weld_types_self : list of WeldType
         Corresponding Weld types.
-    arrays_other : list of numpy.ndarray or WeldObject
+    arrays_other : list of (numpy.ndarray or WeldObject)
         Columns from the other DataFrame on which to join.
     weld_types_other : list of WeldType
         Corresponding Weld types.
