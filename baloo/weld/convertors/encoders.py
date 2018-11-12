@@ -7,6 +7,8 @@ from .utils import to_shared_lib, to_weld_vec
 # Python3: str _is_ unicode -> 'Bürgermeister'.encode() => b'B\xc3\xbcrgermeister'
 # Python2: str is ascii -> 'Bürgermeister' does not exist; u'Bürgermeister'.encode() => 'B\xc3\xbcrgermeister'
 
+supported_dtype_chars = ['h', 'i', 'l', 'f', 'd', '?', 'S']
+
 # TODO: datetime support
 _numpy_to_weld_type_mapping = {
     'S': WeldVec(WeldChar()),

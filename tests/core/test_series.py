@@ -40,6 +40,18 @@ class TestSeries(object):
         with pytest.raises(ValueError):
             Series(data_i64_lazy)
 
+    def test_init_list(self):
+        data = [1, 2, 3]
+        sr = Series(data)
+
+        np.testing.assert_array_equal(sr.values, np.array(data))
+        assert sr.dtype == np.dtype(np.int64)
+
+    def test_init_list_wrong_dtype(self):
+        data = [1, 2, 'abc']
+        with pytest.raises(TypeError):
+            Series(data)
+
     def test_len_lazy(self, data_i64):
         weld_obj = create_placeholder_weld_object(data_i64)
         sr = Series(weld_obj, dtype=np.dtype(np.int64))

@@ -6,7 +6,7 @@ from .utils import infer_dtype, default_index, check_type, is_scalar, check_vali
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
     weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, LazyDoubleResult, LazyScalarResult, \
     weld_mean, weld_variance, weld_standard_deviation, WeldObject, weld_agg, weld_iloc_indices, \
-    weld_iloc_indices_with_missing
+    weld_iloc_indices_with_missing, supported_dtype_chars
 
 
 class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
@@ -27,7 +27,7 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
     --------
     >>> import baloo as bl
     >>> import numpy as np
-    >>> sr = bl.Series(np.arange(3))
+    >>> sr = bl.Series([0, 1, 2])
     >>> sr
     Series(name=None, dtype=int64)
     >>> sr.index
@@ -64,7 +64,7 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
 
         Parameters
         ----------
-        data : numpy.ndarray or WeldObject, optional
+        data : numpy.ndarray or WeldObject or list, optional
             Raw data or Weld expression.
         index : Index or RangeIndex or MultiIndex, optional
             Index linked to the data; it is assumed to be of the same length.
@@ -305,7 +305,14 @@ def _process_input_data(data):
     if data is None:
         return np.empty(0)
     else:
-        return check_type(data, (np.ndarray, WeldObject))
+        check_type(data, (np.ndarray, WeldObject, list))
+
+        if isinstance(data, list):
+            data = np.array(data)
+            if data.dtype.char not in supported_dtype_chars:
+                raise TypeError('dtype {} is not supported'.format(data.dtype))
+
+        return data
 
 
 def _process_index(index, data):
