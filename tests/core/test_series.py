@@ -211,3 +211,11 @@ class TestSeries(object):
                           np.dtype(np.float64))
 
         assert_series_equal(actual, expected)
+
+    def test_unique(self):
+        sr = Series([3, 2, 2, 5, 6, 6, 6])
+
+        actual = sr.unique().evaluate()
+        expected = np.array([3, 2, 5, 6])
+
+        np.testing.assert_array_equal(np.sort(actual), np.sort(expected))
