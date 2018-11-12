@@ -94,6 +94,7 @@ class DataFrame(BinaryOps, BalooCommon):
     >>> print(df.merge(df2, on='b').evaluate())
       b    index_x    a    index_y
     ---  ---------  ---  ---------
+      0          1    6          0
       2          2    7          1
 
     """
@@ -712,11 +713,10 @@ class DataFrame(BinaryOps, BalooCommon):
         return DataFrame(new_data, new_index)
 
     def merge(self, other, how='inner', on=None, suffixes=('_x', '_y'),
-              algorithm='merge', is_on_sorted=True, is_on_unique=True):
+              algorithm='merge', is_on_sorted=False, is_on_unique=True):
         """Database-like join this DataFrame with the other DataFrame.
 
-        Currently assumes the `on` columns are sorted and the on-column(s) values are unique!
-        Next work handles the other cases.
+        Currently assumes the on-column(s) values are unique!
 
         Note there's no automatic cast if the type of the on columns differs.
 
@@ -754,7 +754,8 @@ class DataFrame(BinaryOps, BalooCommon):
         algorithm : {'merge', 'hash'}, optional
             Which algorithm to use. Note that for 'hash', the `other` DataFrame is the one hashed.
         is_on_sorted : bool, optional
-            If we know that the on columns are already sorted, can employ faster algorithm.
+            If we know that the on columns are already sorted, can employ faster algorithm. If False,
+            the DataFrame will first be sorted by the on columns.
         is_on_unique : bool, optional
             If we know that the values are unique, can employ faster algorithm.
 
@@ -772,13 +773,22 @@ class DataFrame(BinaryOps, BalooCommon):
         check_type(is_on_sorted, bool)
         check_type(is_on_unique, bool)
 
-        # TODO: change defaults on flags & remove after implementation
-        assert is_on_sorted
+        # TODO: change defaults on flag & remove after implementation
         assert is_on_unique
 
-        self_reset = self.reset_index()
-        other_reset = other.reset_index()
-        on = _compute_on(self, other, on,
+        # TODO: this materialization/cache step could be skipped by encoding the whole sort + merge;
+        # TODO this would use the sorted on columns from weld_sort ($.1) in the join to obtain join-output-indices
+        # TODO which would then be passed through a 'translation table' (of $.0) to obtain the original indices to keep
+        if not is_on_sorted:
+            self_df = self.sort_values(on)
+            other_df = other.sort_values(on)
+        else:
+            self_df = self
+            other_df = other
+
+        self_reset = self_df.reset_index()
+        other_reset = other_df.reset_index()
+        on = _compute_on(self_df, other_df, on,
                          self_reset._gather_column_names(),
                          other_reset._gather_column_names())
         self_on_cols = self_reset[on]

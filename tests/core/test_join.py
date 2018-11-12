@@ -20,7 +20,7 @@ class TestJoins(object):
         assert_dataframe_equal(actual, expected)
 
     def test_merge_sorted_unique_multi_on_inner(self, df1, df2):
-        actual = df1.merge(df2, on=['a', 'b'])
+        actual = df1.merge(df2, on=['a', 'b'], is_on_sorted=True)
         expected = DataFrame(OrderedDict((('index', np.array([5])),
                                           ('d', np.array(['def'], dtype=np.dtype('|S4'))),
                                           ('c', np.array([5])))),
@@ -74,5 +74,20 @@ class TestJoins(object):
                                           ('b', Series(np.array([-999., 3., -999., 4., -999.], dtype=np.float32))),
                                           ('c', np.array([-999, 4, -999, 5, -999])))),
                              Index(np.arange(0, 5), np.dtype(np.int64), 'index'))
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_merge_unsorted_unique_single_on_inner(self, df2, data_f32, index_i64_2):
+        df1 = DataFrame(OrderedDict((('a', Series(np.array([3, 2, 0, 4, 1]))),
+                                     ('b', np.array([4, 3, 1, 5, 2], dtype=np.float32)))),
+                        Index([5, 4, 2, 6, 3]))
+
+        actual = df1.merge(df2, on='a')
+        expected = DataFrame(OrderedDict((('index', np.array([3, 5])),
+                                          ('b_x', np.array([2, 4], dtype=np.float32)),
+                                          ('d', np.array(['abc', 'def'], dtype=np.dtype('|S4'))),
+                                          ('b_y', Series(np.arange(3, 5, dtype=np.float32))),
+                                          ('c', np.arange(4, 6)))),
+                             Index(np.array([1, 3]), np.dtype(np.int64), 'a'))
 
         assert_dataframe_equal(actual, expected)
