@@ -11,7 +11,7 @@ from .utils import check_type, is_scalar, check_inner_types, infer_length, short
     check_weld_bit_array, check_valid_int_slice, as_list, default_index
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
     weld_cast_double, WeldDouble, weld_sort, LazyLongResult, weld_merge_join, weld_iloc_indices, \
-    weld_merge_outer_join
+    weld_merge_outer_join, weld_align
 
 
 # TODO: maybe add type hints
@@ -316,14 +316,19 @@ class DataFrame(BinaryOps, BalooCommon):
     def __setitem__(self, key, value):
         """Add/update DataFrame column.
 
+        Note that for raw data, it does NOT check for the same length with the DataFrame due to possibly not knowing
+        the length before evaluation. Hence, columns of different lengths are possible if using raw data which might
+        lead to unexpected behavior. To avoid this, use the more expensive setitem by wrapping with a Series.
+        This, in turn, means that if knowing the indexes match and the data has the same length as the DataFrame,
+        it is more efficient to setitem using the raw data.
+
         Parameters
         ----------
         key : str
             Column name.
         value : numpy.ndarray or Series
-            Note that it does NOT check for the same length as the other columns due to possibly not knowing
-            the length before evaluation. Also note that for Series, it currently does NOT match Index as in a join but
-            the Series inherits the index of the DataFrame.
+            If a Series, the data will be aligned based on the index of the DataFrame,
+            i.e. df.index left join sr.index.
 
         Examples
         --------
@@ -340,11 +345,16 @@ class DataFrame(BinaryOps, BalooCommon):
         key = check_type(key, str)
         value = check_type(value, (np.ndarray, Series))
 
-        # inherit the index, no join/alignment atm
-        # TODO: add the inner join alignment
         if isinstance(value, Series):
-            value.index = self.index
-            value.name = key
+            value = Series(weld_align(self.index._gather_data_for_weld(),
+                                      self.index._gather_weld_types(),
+                                      value.index._gather_data_for_weld(),
+                                      value.index._gather_weld_types(),
+                                      value.values,
+                                      value.weld_type),
+                           self.index,
+                           value.dtype,
+                           key)
         else:
             value = Series(value, self.index, value.dtype, key)
 
