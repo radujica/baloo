@@ -40,7 +40,6 @@ class RangeIndex(Index):
     array([-1, -1, -1])
 
     """
-    # TODO: this needs revision in __init__: RangeIndex(step=1) is allowed, RangeIndex() is not, etc
     def __init__(self, start=None, stop=None, step=None, name=None):
         """Initialize a RangeIndex object.
 

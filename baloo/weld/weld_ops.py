@@ -225,11 +225,11 @@ def weld_tail(array, length, n):
     return weld_obj
 
 
+# TODO: what happens if not?
 def weld_array_op(array1, array2, result_type, operation):
     """Applies operation to each pair of elements in the arrays.
 
     Their lengths and types are assumed to be the same.
-    TODO: what happens if not?
 
     Parameters
     ----------

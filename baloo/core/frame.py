@@ -112,8 +112,7 @@ class DataFrame(BinaryOps, BalooCommon):
 
         """
         data = _check_input_data(data)
-        # TODO: length could also be inferred from index, if passed
-        self._length = infer_length(data.values())
+        self._length = _infer_length(index, data)
         self.index = _process_index(index, data, self._length)
         self._data = _process_data(data, self.index)
 
@@ -911,6 +910,17 @@ def _process_data(data, index):
             data[k] = Series(v, index, name=k)
 
     return data
+
+
+def _infer_length(index, data):
+    index_length = None
+    if index is not None:
+        index_length = infer_length(index._gather_data().values())
+
+    if index_length is not None:
+        return index_length
+    else:
+        return infer_length(data.values())
 
 
 def _obtain_length(length, dataframe_data):
