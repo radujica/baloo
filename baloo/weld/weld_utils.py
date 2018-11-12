@@ -348,3 +348,48 @@ def weld_select_from_struct(struct_of_vec, index_to_select):
                                               index=index_to_select)
 
     return weld_obj
+
+
+# TODO: support multiple values
+def weld_data_to_dict(keys, keys_weld_types, values, values_weld_types):
+    """Adds the key-value pairs in a dictionary. Overlapping keys are max-ed.
+
+    Note this cannot be evaluated!
+
+    Parameters
+    ----------
+    keys : list of (numpy.ndarray or WeldObject)
+    keys_weld_types : list of WeldType
+    values : numpy.ndarray or WeldObject
+    values_weld_types : WeldType
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    weld_obj_keys = weld_arrays_to_vec_of_struct(keys, keys_weld_types)
+
+    weld_obj = create_empty_weld_object()
+    keys_obj_id = get_weld_obj_id(weld_obj, weld_obj_keys)
+    values_obj_id = get_weld_obj_id(weld_obj, values)
+
+    keys_types = '{{{}}}'.format(', '.join(str(type_) for type_ in keys_weld_types))
+    values_types = values_weld_types
+
+    weld_template = """result(
+    for(
+        zip({keys}, {values}),
+        dictmerger[{keys_types}, {values_types}, max],
+        |b: dictmerger[{keys_types}, {values_types}, max], i: i64, e: {{{keys_types}, {values_types}}}|
+            merge(b, e)
+    )
+)"""
+
+    weld_obj.weld_code = weld_template.format(keys=keys_obj_id,
+                                              values=values_obj_id,
+                                              keys_types=keys_types,
+                                              values_types=values_types)
+
+    return weld_obj

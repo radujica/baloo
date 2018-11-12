@@ -131,6 +131,17 @@ class TestDataFrame(object):
 
         assert_dataframe_equal(actual, expected)
 
+    def test_setitem_alignment(self, data_f32, index_i64):
+        df = DataFrame({'a': data_f32}, index_i64)
+
+        df['b'] = Series(np.array([4, 7, 5, 6, 8]), Index(np.array([0, 3, 1, 2, 5])))
+        actual = df
+        expected = DataFrame({'a': data_f32,
+                              'b': np.array([4, 5, 6, 7, -999])},
+                             index_i64)
+
+        assert_dataframe_equal(actual, expected)
+
     def test_head(self, df_small):
         actual = df_small.head(2)
         data = [1, 2]

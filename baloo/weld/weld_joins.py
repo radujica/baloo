@@ -1,7 +1,8 @@
 from .cache import Cache
-from .lazy_result import LazyStructOfVecResult, WeldLong, WeldStruct, LazyStructResult, WeldVec
+from .convertors import default_missing_data_literal
+from .lazy_result import LazyStructOfVecResult, WeldLong, WeldStruct, LazyStructResult, WeldVec, WeldChar
 from .weld_utils import weld_arrays_to_vec_of_struct, create_empty_weld_object, get_weld_obj_id, \
-    extract_placeholder_weld_objects, extract_placeholder_weld_objects_from_index
+    extract_placeholder_weld_objects, extract_placeholder_weld_objects_from_index, weld_data_to_dict
 
 
 # e.g. n is the number of if statements;
@@ -282,3 +283,60 @@ def weld_merge_outer_join(arrays_self, weld_types_self, arrays_other, weld_types
                                                                          2)
 
     return weld_objects_indexes + [weld_objects_new_index]
+
+
+def weld_align(df_index_arrays, df_index_weld_types, series_index_arrays, series_index_weld_types,
+               series_data, series_weld_type):
+    """Returns the data from the Series aligned to the DataFrame index.
+
+    Parameters
+    ----------
+    df_index_arrays : list of (numpy.ndarray or WeldObject)
+        The index columns as a list.
+    df_index_weld_types : list of WeldType
+    series_index_arrays : numpy.ndarray or WeldObject
+        The index of the Series.
+    series_index_weld_types : list of WeldType
+    series_data : numpy.ndarray or WeldObject
+        The data of the Series.
+    series_weld_type : WeldType
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    weld_obj_index_df = weld_arrays_to_vec_of_struct(df_index_arrays, df_index_weld_types)
+    weld_obj_series_dict = weld_data_to_dict(series_index_arrays,
+                                             series_index_weld_types,
+                                             series_data,
+                                             series_weld_type)
+
+    weld_obj = create_empty_weld_object()
+    df_index_obj_id = get_weld_obj_id(weld_obj, weld_obj_index_df)
+    series_dict_obj_id = get_weld_obj_id(weld_obj, weld_obj_series_dict)
+
+    index_type = '{{{}}}'.format(', '.join(str(type_) for type_ in df_index_weld_types))
+    missing_literal = default_missing_data_literal(series_weld_type)
+    if series_weld_type == WeldVec(WeldChar()):
+        missing_literal = get_weld_obj_id(weld_obj, missing_literal)
+
+    weld_template = """result(
+    for({df_index},
+        appender[{data_type}],
+        |b: appender[{data_type}], i: i64, e: {index_type}|
+            if(keyexists({series_dict}, e),
+                merge(b, lookup({series_dict}, e)),
+                merge(b, {missing})
+            )
+    )
+)"""
+
+    weld_obj.weld_code = weld_template.format(series_dict=series_dict_obj_id,
+                                              df_index=df_index_obj_id,
+                                              index_type=index_type,
+                                              data_type=series_weld_type,
+                                              missing=missing_literal)
+
+    return weld_obj
