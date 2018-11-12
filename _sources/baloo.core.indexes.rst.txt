@@ -16,3 +16,11 @@ baloo.core.indexes.range module
     :members:
     :special-members: __init__, __getitem__, __len__
     :show-inheritance:
+
+baloo.core.indexes.multi module
+-------------------------------
+
+.. automodule:: baloo.core.indexes.multi
+    :members:
+    :special-members: __init__, __getitem__, __len__
+    :show-inheritance:

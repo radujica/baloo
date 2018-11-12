@@ -13,6 +13,7 @@
     <script type="text/javascript" src="../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
    
@@ -36,23 +37,28 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">tabulate</span> <span class="k">import</span> <span class="n">tabulate</span>
-<span class="kn">from</span> <span class="nn">weld.types</span> <span class="k">import</span> <span class="n">WeldBit</span>
 
-<span class="kn">from</span> <span class="nn">.indexes</span> <span class="k">import</span> <span class="n">RangeIndex</span><span class="p">,</span> <span class="n">Index</span>
-<span class="kn">from</span> <span class="nn">.series</span> <span class="k">import</span> <span class="n">Series</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">check_type</span><span class="p">,</span> <span class="n">is_scalar</span><span class="p">,</span> <span class="n">valid_int_slice</span>
-<span class="kn">from</span> <span class="nn">..weld</span> <span class="k">import</span> <span class="n">weld_count</span><span class="p">,</span> <span class="n">LazyResult</span><span class="p">,</span> <span class="n">WeldLong</span>
+<span class="kn">from</span> <span class="nn">.generic</span> <span class="k">import</span> <span class="n">BinaryOps</span><span class="p">,</span> <span class="n">BalooCommon</span>
+<span class="kn">from</span> <span class="nn">.indexes</span> <span class="k">import</span> <span class="n">Index</span><span class="p">,</span> <span class="n">MultiIndex</span>
+<span class="kn">from</span> <span class="nn">.series</span> <span class="k">import</span> <span class="n">Series</span><span class="p">,</span> <span class="n">_series_slice</span><span class="p">,</span> <span class="n">_series_filter</span><span class="p">,</span> <span class="n">_series_element_wise_op</span><span class="p">,</span> <span class="n">_series_agg</span><span class="p">,</span> <span class="n">_series_tail</span><span class="p">,</span> \
+    <span class="n">_series_iloc</span><span class="p">,</span> <span class="n">_series_iloc_with_missing</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">check_type</span><span class="p">,</span> <span class="n">is_scalar</span><span class="p">,</span> <span class="n">check_inner_types</span><span class="p">,</span> <span class="n">infer_length</span><span class="p">,</span> <span class="n">shorten_data</span><span class="p">,</span> \
+    <span class="n">check_weld_bit_array</span><span class="p">,</span> <span class="n">check_valid_int_slice</span><span class="p">,</span> <span class="n">as_list</span><span class="p">,</span> <span class="n">default_index</span>
+<span class="kn">from</span> <span class="nn">..weld</span> <span class="k">import</span> <span class="n">LazyArrayResult</span><span class="p">,</span> <span class="n">weld_to_numpy_dtype</span><span class="p">,</span> <span class="n">weld_combine_scalars</span><span class="p">,</span> <span class="n">weld_count</span><span class="p">,</span> \
+    <span class="n">weld_cast_double</span><span class="p">,</span> <span class="n">WeldDouble</span><span class="p">,</span> <span class="n">weld_sort</span><span class="p">,</span> <span class="n">LazyLongResult</span><span class="p">,</span> <span class="n">weld_merge_join</span><span class="p">,</span> <span class="n">weld_iloc_indices</span><span class="p">,</span> \
+    <span class="n">weld_merge_outer_join</span>
 
 
-<div class="viewcode-block" id="DataFrame"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame">[docs]</a><span class="k">class</span> <span class="nc">DataFrame</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="c1"># TODO: maybe add type hints</span>
+<div class="viewcode-block" id="DataFrame"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame">[docs]</a><span class="k">class</span> <span class="nc">DataFrame</span><span class="p">(</span><span class="n">BinaryOps</span><span class="p">,</span> <span class="n">BalooCommon</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Weld-ed pandas DataFrame.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
-<span class="sd">    data : dict</span>
-<span class="sd">        Data as a dict of column names -&gt; numpy.ndarray or Series.</span>
-<span class="sd">    index : Index or RangeIndex</span>
-<span class="sd">        Index of the data.</span>
+<span class="sd">    index</span>
+<span class="sd">    dtypes</span>
+<span class="sd">    columns</span>
+<span class="sd">    iloc</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -63,75 +69,87 @@
 <span class="sd">    &gt;&gt;&gt; import baloo as bl</span>
 <span class="sd">    &gt;&gt;&gt; import numpy as np</span>
 <span class="sd">    &gt;&gt;&gt; from collections import OrderedDict</span>
-<span class="sd">    &gt;&gt;&gt; df = bl.DataFrame(OrderedDict([(&#39;a&#39;, np.arange(5, 8)), (&#39;b&#39;, np.arange(3))]))</span>
+<span class="sd">    &gt;&gt;&gt; df = bl.DataFrame(OrderedDict(((&#39;a&#39;, np.arange(5, 8)), (&#39;b&#39;, np.array([1, 0, 2])))))</span>
 <span class="sd">    &gt;&gt;&gt; df.index  # repr</span>
 <span class="sd">    RangeIndex(start=0, stop=3, step=1)</span>
 <span class="sd">    &gt;&gt;&gt; df  # repr</span>
-<span class="sd">    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=[&#39;a&#39;, &#39;b&#39;])</span>
+<span class="sd">    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=[a: int64, b: int64])</span>
 <span class="sd">    &gt;&gt;&gt; print(df.evaluate())  # omitting evaluate would trigger exception as index is now an unevaluated RangeIndex</span>
-<span class="sd">      Index    a    b</span>
-<span class="sd">    -------  ---  ---</span>
-<span class="sd">          0    5    0</span>
-<span class="sd">          1    6    1</span>
-<span class="sd">          2    7    2</span>
+<span class="sd">           a    b</span>
+<span class="sd">    ---  ---  ---</span>
+<span class="sd">      0    5    1</span>
+<span class="sd">      1    6    0</span>
+<span class="sd">      2    7    2</span>
 <span class="sd">    &gt;&gt;&gt; print(len(df))</span>
 <span class="sd">    3</span>
+<span class="sd">    &gt;&gt;&gt; print((df * 2).evaluate())</span>
+<span class="sd">           a    b</span>
+<span class="sd">    ---  ---  ---</span>
+<span class="sd">      0   10    2</span>
+<span class="sd">      1   12    0</span>
+<span class="sd">      2   14    4</span>
+<span class="sd">    &gt;&gt;&gt; print((df * [2, 3]).evaluate())</span>
+<span class="sd">           a    b</span>
+<span class="sd">    ---  ---  ---</span>
+<span class="sd">      0   10    3</span>
+<span class="sd">      1   12    0</span>
+<span class="sd">      2   14    6</span>
+<span class="sd">    &gt;&gt;&gt; print(df.min().evaluate())</span>
+<span class="sd">    [5 0]</span>
+<span class="sd">    &gt;&gt;&gt; print(df.mean().evaluate())</span>
+<span class="sd">    [6. 1.]</span>
+<span class="sd">    &gt;&gt;&gt; print(df.agg([&#39;var&#39;, &#39;count&#39;]).evaluate())</span>
+<span class="sd">             a    b</span>
+<span class="sd">    -----  ---  ---</span>
+<span class="sd">    var      1    1</span>
+<span class="sd">    count    3    3</span>
+<span class="sd">    &gt;&gt;&gt; df.rename({&#39;a&#39;: &#39;c&#39;})</span>
+<span class="sd">    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=[c: int64, b: int64])</span>
+<span class="sd">    &gt;&gt;&gt; df.drop(&#39;a&#39;)</span>
+<span class="sd">    DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=[b: int64])</span>
+<span class="sd">    &gt;&gt;&gt; print(df.reset_index().evaluate())</span>
+<span class="sd">           index    a    b</span>
+<span class="sd">    ---  -------  ---  ---</span>
+<span class="sd">      0        0    5    1</span>
+<span class="sd">      1        1    6    0</span>
+<span class="sd">      2        2    7    2</span>
+<span class="sd">    &gt;&gt;&gt; print(df.set_index(&#39;b&#39;).evaluate())</span>
+<span class="sd">      b    a</span>
+<span class="sd">    ---  ---</span>
+<span class="sd">      1    5</span>
+<span class="sd">      0    6</span>
+<span class="sd">      2    7</span>
+<span class="sd">    &gt;&gt;&gt; print(df.sort_values(&#39;b&#39;).evaluate())</span>
+<span class="sd">           a    b</span>
+<span class="sd">    ---  ---  ---</span>
+<span class="sd">      1    6    0</span>
+<span class="sd">      0    5    1</span>
+<span class="sd">      2    7    2</span>
+<span class="sd">    &gt;&gt;&gt; df2 = bl.DataFrame({&#39;b&#39;: np.array([0, 2])})</span>
+<span class="sd">    &gt;&gt;&gt; print(df.merge(df2, on=&#39;b&#39;).evaluate())</span>
+<span class="sd">      b    index_x    a    index_y</span>
+<span class="sd">    ---  ---------  ---  ---------</span>
+<span class="sd">      2          2    7          1</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_infer_length</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-                <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-            <span class="c1"># must be a Series then</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-                <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="n">_empty_text</span> <span class="o">=</span> <span class="s1">&#39;Empty DataFrame&#39;</span>
 
-        <span class="k">return</span> <span class="kc">None</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_check_data_types</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">check_type</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Series</span><span class="p">))</span>
-
-        <span class="k">return</span> <span class="n">data</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_gather_dtypes</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">dtype</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_default_dataframe_index</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
-        <span class="kn">from</span> <span class="nn">.indexes</span> <span class="k">import</span> <span class="n">RangeIndex</span>
-
-        <span class="k">if</span> <span class="n">length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">RangeIndex</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># empty</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="k">return</span> <span class="kc">None</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c1"># must encode from a random column then</span>
-                <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-
-                <span class="k">return</span> <span class="n">RangeIndex</span><span class="p">(</span><span class="n">weld_count</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]]))</span>
-
-<div class="viewcode-block" id="DataFrame.__init__"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="DataFrame.__init__"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Initialize a DataFrame object.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        data : dict</span>
+<span class="sd">        data : dict, optional</span>
 <span class="sd">            Data as a dict of str -&gt; np.ndarray or Series.</span>
-<span class="sd">        index : Index or RangeIndex, optional</span>
+<span class="sd">        index : Index or RangeIndex or MultiIndex, optional</span>
 <span class="sd">            Index linked to the data; it is assumed to be of the same length.</span>
 <span class="sd">            RangeIndex by default.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_check_data_types</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dtypes</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_gather_dtypes</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_infer_length</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_default_dataframe_index</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span><span class="p">)</span> <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">index</span></div>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">_check_input_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="n">_infer_length</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">_process_index</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">_process_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span></div>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -143,7 +161,46 @@
 <span class="sd">            The internal dict data representation.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">empty</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">all</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">empty</span> <span class="k">for</span> <span class="n">series</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span><span class="p">()))</span>
+
+    <span class="k">def</span> <span class="nf">_gather_dtypes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">OrderedDict</span><span class="p">(((</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dtypes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Series of NumPy dtypes present in the DataFrame with index of column names.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gather_dtypes</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">),</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_gather_column_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">columns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Index of the column names present in the DataFrame in order.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Index</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gather_column_names</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_gather_data_for_weld</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">column</span><span class="o">.</span><span class="n">weld_expr</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+
+    <span class="k">def</span> <span class="nf">_gather_weld_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">column</span><span class="o">.</span><span class="n">weld_type</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
 
 <div class="viewcode-block" id="DataFrame.__len__"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.__len__">[docs]</a>    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Eagerly get the length of the DataFrame.</span>
@@ -157,82 +214,84 @@
 <span class="sd">            Length of the DataFrame.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># first check again for raw data</span>
-            <span class="n">length</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_infer_length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">length</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="n">LazyLongResult</span><span class="p">(</span><span class="n">_obtain_length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">))</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
 
-                <span class="c1"># empty DataFrame</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span></div>
 
-                <span class="c1"># pick a &#39;random&#39; column (which is a Series) and compute its length</span>
-                <span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">iloc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Retrieve Indexer by index.</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="n">length</span>
+<span class="sd">        Supported iloc functionality exemplified below.</span>
 
-            <span class="k">return</span> <span class="n">length</span></div>
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; df = bl.DataFrame(OrderedDict(((&#39;a&#39;, np.arange(5, 8)), (&#39;b&#39;, np.array([1, 0, 2])))))</span>
+<span class="sd">        &gt;&gt;&gt; print(df.iloc[0:2].evaluate())</span>
+<span class="sd">               a    b</span>
+<span class="sd">        ---  ---  ---</span>
+<span class="sd">          0    5    1</span>
+<span class="sd">          1    6    0</span>
+<span class="sd">        &gt;&gt;&gt; print(df.iloc[bl.Series(np.array([0, 2]))].evaluate())</span>
+<span class="sd">               a    b</span>
+<span class="sd">        ---  ---  ---</span>
+<span class="sd">          0    5    1</span>
+<span class="sd">          2    7    2</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">.indexing</span> <span class="k">import</span> <span class="n">_ILocIndexer</span>
+
+        <span class="k">return</span> <span class="n">_ILocIndexer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="s1">&#39;[&#39;</span> <span class="o">+</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gather_dtypes</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span> <span class="o">+</span> <span class="s1">&#39;]&#39;</span>
+
         <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">(index=</span><span class="si">{}</span><span class="s2">, columns=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
                                                  <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">),</span>
-                                                 <span class="nb">repr</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())))</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_shorten_data</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Cannot print unevaluated data. First call evaluate()&#39;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">50</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">data</span><span class="p">[:</span><span class="mi">20</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s1">&#39;...&#39;</span><span class="p">]),</span> <span class="n">data</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">:]]))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">data</span>
+                                                 <span class="n">columns</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># TODO: find a better way to handle empty dataframe; this assumes it&#39;s impossible to have data with index=None</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s1">&#39;Empty DataFrame&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_empty_text</span>
 
+        <span class="n">default_index_name</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span>
         <span class="n">str_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
-
-        <span class="n">str_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_shorten_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-            <span class="n">str_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_shorten_data</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">str_data</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">_gather_data</span><span class="p">(</span><span class="n">default_index_name</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="n">str_data</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">shorten_data</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">values</span><span class="p">))</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span><span class="p">())</span>
 
         <span class="k">return</span> <span class="n">tabulate</span><span class="p">(</span><span class="n">str_data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="s1">&#39;keys&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_comparison</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">comparison</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">is_scalar</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
-            <span class="n">new_data</span> <span class="o">=</span> <span class="p">{</span><span class="n">column_name</span><span class="p">:</span> <span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">comparison</span><span class="p">)</span>
-                        <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">}</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">_drop_str_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">column</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">comparison</span><span class="p">))</span>
+                                   <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">_iter</span><span class="p">())</span>
 
             <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Can currently only compare with scalars&#39;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;&lt;&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_element_wise_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">operation</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">check_inner_types</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;&lt;=&#39;</span><span class="p">)</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">_drop_str_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">_gather_column_names</span><span class="p">()):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected same number of values in other as the number of non-string columns&#39;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;==&#39;</span><span class="p">)</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">_series_element_wise_op</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">scalar</span><span class="p">,</span> <span class="n">operation</span><span class="p">))</span>
+                                   <span class="k">for</span> <span class="n">column</span><span class="p">,</span> <span class="n">scalar</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">_iter</span><span class="p">(),</span> <span class="n">other</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;!=&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">is_scalar</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">_drop_str_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">_series_element_wise_op</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">operation</span><span class="p">))</span>
+                                   <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">_iter</span><span class="p">())</span>
 
-    <span class="k">def</span> <span class="nf">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;&gt;=&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Can only apply operation with scalar or LazyArrayResult&#39;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;&gt;&#39;</span><span class="p">)</span>
-
-    <span class="c1"># TODO: handle empty</span>
 <div class="viewcode-block" id="DataFrame.__getitem__"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Select from the DataFrame.</span>
 
@@ -243,42 +302,50 @@
 <span class="sd">        &gt;&gt;&gt; df = bl.DataFrame(OrderedDict({&#39;a&#39;: np.arange(5, 8)}))</span>
 <span class="sd">        &gt;&gt;&gt; print(df[&#39;a&#39;])</span>
 <span class="sd">        [5 6 7]</span>
+<span class="sd">        &gt;&gt;&gt; print(df[[&#39;a&#39;]].evaluate())</span>
+<span class="sd">               a</span>
+<span class="sd">        ---  ---</span>
+<span class="sd">          0    5</span>
+<span class="sd">          1    6</span>
+<span class="sd">          2    7</span>
 <span class="sd">        &gt;&gt;&gt; print(df[df[&#39;a&#39;] &lt; 7].evaluate())</span>
-<span class="sd">          Index    a</span>
-<span class="sd">        -------  ---</span>
-<span class="sd">              0    5</span>
-<span class="sd">              1    6</span>
+<span class="sd">               a</span>
+<span class="sd">        ---  ---</span>
+<span class="sd">          0    5</span>
+<span class="sd">          1    6</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">check_inner_types</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
 
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="n">Series</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
-                <span class="c1"># store the newly created Series to avoid remaking it</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">item</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">column_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Column name not in DataFrame: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">column_name</span><span class="p">)))</span>
 
-            <span class="k">return</span> <span class="n">value</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">LazyResult</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">weld_type</span> <span class="o">!=</span> <span class="n">WeldBit</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected LazyResult of bool data to filter values&#39;</span><span class="p">)</span>
+                <span class="n">new_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span>
+
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">LazyArrayResult</span><span class="p">):</span>
+            <span class="n">check_weld_bit_array</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
 
             <span class="n">new_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
-            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(((</span><span class="n">column_name</span><span class="p">,</span> <span class="n">Series</span><span class="o">.</span><span class="n">_filter_series</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">],</span> <span class="n">item</span><span class="p">,</span> <span class="n">new_index</span><span class="p">))</span>
-                                    <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">))</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">_series_filter</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">new_index</span><span class="p">))</span>
+                                   <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span><span class="p">())</span>
 
             <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_int_slice</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Can currently only slice with integers&#39;</span><span class="p">)</span>
+            <span class="n">check_valid_int_slice</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
 
             <span class="n">new_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
-            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(((</span><span class="n">column_name</span><span class="p">,</span> <span class="n">Series</span><span class="o">.</span><span class="n">_slice_series</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">],</span> <span class="n">item</span><span class="p">,</span> <span class="n">new_index</span><span class="p">))</span>
-                                    <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">))</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">_series_slice</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">new_index</span><span class="p">))</span>
+                                   <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span><span class="p">())</span>
 
             <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected a column name as a string&#39;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected a column name, list of columns, LazyArrayResult, or a slice&#39;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DataFrame.__setitem__"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.__setitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add/update DataFrame column.</span>
@@ -297,25 +364,36 @@
 <span class="sd">        &gt;&gt;&gt; df = bl.DataFrame(OrderedDict({&#39;a&#39;: np.arange(5, 8)}))</span>
 <span class="sd">        &gt;&gt;&gt; df[&#39;b&#39;] = np.arange(3)</span>
 <span class="sd">        &gt;&gt;&gt; print(df.evaluate())</span>
-<span class="sd">          Index    a    b</span>
-<span class="sd">        -------  ---  ---</span>
-<span class="sd">              0    5    0</span>
-<span class="sd">              1    6    1</span>
-<span class="sd">              2    7    2</span>
+<span class="sd">               a    b</span>
+<span class="sd">        ---  ---  ---</span>
+<span class="sd">          0    5    0</span>
+<span class="sd">          1    6    1</span>
+<span class="sd">          2    7    2</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">key</span> <span class="o">=</span> <span class="n">check_type</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
         <span class="n">value</span> <span class="o">=</span> <span class="n">check_type</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Series</span><span class="p">))</span>
 
-        <span class="c1"># inherit the index, no join atm</span>
+        <span class="c1"># inherit the index, no join/alignment atm</span>
+        <span class="c1"># TODO: add the inner join alignment</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Series</span><span class="p">):</span>
             <span class="n">value</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span>
+            <span class="n">value</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">Series</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
+
+    <span class="k">def</span> <span class="nf">_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">column</span>
 
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">column_name</span>
+
+    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
 
 <div class="viewcode-block" id="DataFrame.evaluate"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">passes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_threads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Evaluates by creating a DataFrame containing evaluated data and index.</span>
@@ -329,11 +407,9 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">evaluated_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="n">decode</span><span class="p">,</span> <span class="n">passes</span><span class="p">,</span> <span class="n">num_threads</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="p">)</span>
-
-        <span class="n">evaluated_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-            <span class="n">evaluated_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="n">decode</span><span class="p">,</span> <span class="n">passes</span><span class="p">,</span>
-                                                                     <span class="n">num_threads</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="p">)</span>
+        <span class="n">evaluated_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">column</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="n">decode</span><span class="p">,</span> <span class="n">passes</span><span class="p">,</span>
+                                                                   <span class="n">num_threads</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="p">))</span>
+                                     <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span><span class="p">())</span>
 
         <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">evaluated_data</span><span class="p">,</span> <span class="n">evaluated_index</span><span class="p">)</span></div>
 
@@ -352,12 +428,12 @@
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; df = bl.DataFrame(OrderedDict([(&#39;a&#39;, np.arange(5, 8)), (&#39;b&#39;, np.arange(3))]))</span>
+<span class="sd">        &gt;&gt;&gt; df = bl.DataFrame(OrderedDict(((&#39;a&#39;, np.arange(5, 8)), (&#39;b&#39;, np.arange(3)))))</span>
 <span class="sd">        &gt;&gt;&gt; print(df.head(2).evaluate())</span>
-<span class="sd">          Index    a    b</span>
-<span class="sd">        -------  ---  ---</span>
-<span class="sd">              0    5    0</span>
-<span class="sd">              1    6    1</span>
+<span class="sd">               a    b</span>
+<span class="sd">        ---  ---  ---</span>
+<span class="sd">          0    5    0</span>
+<span class="sd">          1    6    1</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span></div>
@@ -377,27 +453,19 @@
 
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; df = bl.DataFrame(OrderedDict([(&#39;a&#39;, np.arange(5, 8)), (&#39;b&#39;, np.arange(3))]))</span>
+<span class="sd">        &gt;&gt;&gt; df = bl.DataFrame(OrderedDict(((&#39;a&#39;, np.arange(5, 8)), (&#39;b&#39;, np.arange(3)))))</span>
 <span class="sd">        &gt;&gt;&gt; print(df.tail(2).evaluate())</span>
-<span class="sd">          Index    a    b</span>
-<span class="sd">        -------  ---  ---</span>
-<span class="sd">              1    6    1</span>
-<span class="sd">              2    7    2</span>
+<span class="sd">               a    b</span>
+<span class="sd">        ---  ---  ---</span>
+<span class="sd">          1    6    1</span>
+<span class="sd">          2    7    2</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># first check again for raw data</span>
-            <span class="n">length</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">_infer_length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-            <span class="c1"># if still None, get a random column and encode length</span>
-            <span class="k">if</span> <span class="n">length</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-                <span class="n">length</span> <span class="o">=</span> <span class="n">LazyResult</span><span class="p">(</span><span class="n">weld_count</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]]),</span> <span class="n">WeldLong</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="n">_obtain_length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
 
         <span class="n">new_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
-        <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(((</span><span class="n">column_name</span><span class="p">,</span> <span class="n">Series</span><span class="o">.</span><span class="n">_tail_series</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">column_name</span><span class="p">],</span> <span class="n">new_index</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
-                                <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">))</span>
+        <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">_series_tail</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">new_index</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+                               <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter</span><span class="p">())</span>
 
         <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span></div>
 
@@ -410,9 +478,599 @@
 <span class="sd">             Column names as an Index.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">columns</span></div>
 
-        <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">))</span></div></div>
+<div class="viewcode-block" id="DataFrame.rename"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.rename">[docs]</a>    <span class="k">def</span> <span class="nf">rename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a new DataFrame with renamed columns.</span>
+
+<span class="sd">        Currently a simplified version of Pandas&#39; rename.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        columns : dict</span>
+<span class="sd">            Old names to new names.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataFrame</span>
+<span class="sd">            With columns renamed, if found.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">columns</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">new_data</span><span class="p">[</span><span class="n">columns</span><span class="p">[</span><span class="n">column_name</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrame.drop"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.drop">[docs]</a>    <span class="k">def</span> <span class="nf">drop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Drop 1 or more columns. Any column which does not exist in the DataFrame is skipped, i.e. not removed,</span>
+<span class="sd">        without raising an exception.</span>
+
+<span class="sd">        Unlike Pandas&#39; drop, this is currently restricted to dropping columns.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        columns : str or list of str</span>
+<span class="sd">            Column name or list of column names to drop.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataFrame</span>
+<span class="sd">            A new DataFrame without these columns.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">columns</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gather_column_names</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Key </span><span class="si">{}</span><span class="s1"> not found&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">columns</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">column_name</span> <span class="o">!=</span> <span class="n">columns</span><span class="p">:</span>
+                    <span class="n">new_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span>
+
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">check_inner_types</span><span class="p">(</span><span class="n">columns</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+
+            <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span>
+            <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">columns</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">df</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected columns as a str or a list of str&#39;</span><span class="p">)</span></div>
+
+    <span class="c1"># TODO: currently if the data has multiple types, the results are casted to f64; perhaps be more flexible about it</span>
+    <span class="c1"># TODO: cast data to relevant 64-bit format pre-aggregation ~ i16, i32 -&gt; i64, f32 -&gt; f64</span>
+    <span class="k">def</span> <span class="nf">_aggregate_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func_name</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">_drop_str_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Series</span><span class="p">()</span>
+
+        <span class="n">new_index</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+        <span class="n">agg_lazy_results</span> <span class="o">=</span> <span class="p">[</span><span class="nb">getattr</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">func_name</span><span class="p">)()</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">_iter</span><span class="p">()]</span>
+
+        <span class="c1"># if there are multiple types, cast to float64</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">_gather_dtypes</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">weld_type</span> <span class="o">=</span> <span class="n">WeldDouble</span><span class="p">()</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">weld_to_numpy_dtype</span><span class="p">(</span><span class="n">weld_type</span><span class="p">)</span>
+            <span class="n">agg_lazy_results</span> <span class="o">=</span> <span class="p">(</span><span class="n">weld_cast_double</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">)</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">agg_lazy_results</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">weld_type</span> <span class="o">=</span> <span class="n">agg_lazy_results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">weld_type</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">weld_to_numpy_dtype</span><span class="p">(</span><span class="n">weld_type</span><span class="p">)</span>
+            <span class="n">agg_lazy_results</span> <span class="o">=</span> <span class="p">(</span><span class="n">agg</span><span class="o">.</span><span class="n">weld_expr</span> <span class="k">for</span> <span class="n">agg</span> <span class="ow">in</span> <span class="n">agg_lazy_results</span><span class="p">)</span>
+
+        <span class="n">new_data</span> <span class="o">=</span> <span class="n">weld_combine_scalars</span><span class="p">(</span><span class="n">agg_lazy_results</span><span class="p">,</span> <span class="n">weld_type</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Series</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_index</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">min</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_columns</span><span class="p">(</span><span class="s1">&#39;min&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">max</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_columns</span><span class="p">(</span><span class="s1">&#39;max&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sum</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_columns</span><span class="p">(</span><span class="s1">&#39;sum&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">prod</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_columns</span><span class="p">(</span><span class="s1">&#39;prod&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_columns</span><span class="p">(</span><span class="s1">&#39;count&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">mean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_columns</span><span class="p">(</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_columns</span><span class="p">(</span><span class="s1">&#39;var&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">std</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregate_columns</span><span class="p">(</span><span class="s1">&#39;std&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DataFrame.agg"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.agg">[docs]</a>    <span class="k">def</span> <span class="nf">agg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aggregations</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Multiple aggregations optimized.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        aggregations : list of str</span>
+<span class="sd">            Which aggregations to perform.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataFrame</span>
+<span class="sd">            DataFrame with the aggregations per column.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">aggregations</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">_drop_str_columns</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># conforming to what pandas does</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No results&#39;</span><span class="p">)</span>
+
+        <span class="n">new_index</span> <span class="o">=</span> <span class="n">Index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">aggregations</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">))</span>
+        <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">_series_agg</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">aggregations</span><span class="p">,</span> <span class="n">new_index</span><span class="p">))</span>
+                               <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">_iter</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrame.reset_index"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.reset_index">[docs]</a>    <span class="k">def</span> <span class="nf">reset_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a new DataFrame with previous index as column(s).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataFrame</span>
+<span class="sd">            DataFrame with the new index a RangeIndex of its length.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_columns</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+
+        <span class="n">new_index</span> <span class="o">=</span> <span class="n">default_index</span><span class="p">(</span><span class="n">_obtain_length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_length</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">))</span>
+
+        <span class="n">new_columns</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">Series</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">new_index</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+                           <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">_gather_data</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+        <span class="c1"># the data/columns</span>
+        <span class="n">new_columns</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_columns</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrame.set_index"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.set_index">[docs]</a>    <span class="k">def</span> <span class="nf">set_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the index of the DataFrame to be the keys columns.</span>
+
+<span class="sd">        Note this means that the old index is removed.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        keys : str or list of str</span>
+<span class="sd">            Which column(s) to set as the index.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataFrame</span>
+<span class="sd">            DataFrame with the index set to the column(s) corresponding to the keys.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">keys</span><span class="p">]</span>
+            <span class="n">new_index</span> <span class="o">=</span> <span class="n">Index</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">column</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">del</span> <span class="n">new_data</span><span class="p">[</span><span class="n">keys</span><span class="p">]</span>
+
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">check_inner_types</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+
+            <span class="n">new_index_data</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+                <span class="n">column</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span>
+                <span class="n">new_index_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Index</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">column</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+            <span class="n">new_index</span> <span class="o">=</span> <span class="n">MultiIndex</span><span class="p">(</span><span class="n">new_index_data</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">new_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span>
+
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected a string or a list of strings&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrame.sort_index"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.sort_index">[docs]</a>    <span class="k">def</span> <span class="nf">sort_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sort the index of the DataFrame.</span>
+
+<span class="sd">        Currently MultiIndex is not supported since Weld is missing multiple-column sort.</span>
+
+<span class="sd">        Note this is an expensive operation (brings all data to Weld).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ascending : bool, optional</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataFrame</span>
+<span class="sd">            DataFrame sorted according to the index.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">MultiIndex</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Weld does not yet support sorting on multiple columns&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">_gather_names</span><span class="p">(),</span> <span class="n">ascending</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrame.sort_values"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.sort_values">[docs]</a>    <span class="k">def</span> <span class="nf">sort_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">by</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sort the DataFrame based on a column.</span>
+
+<span class="sd">        Unlike Pandas, one can sort by data from both index and regular columns.</span>
+
+<span class="sd">        Currently possible to sort only on a single column since Weld is missing multiple-column sort.</span>
+<span class="sd">        Note this is an expensive operation (brings all data to Weld).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        by : str or list of str</span>
+<span class="sd">            Column names to sort.</span>
+<span class="sd">        ascending : bool, optional</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataFrame</span>
+<span class="sd">            DataFrame sorted according to the column.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">ascending</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="n">check_inner_types</span><span class="p">(</span><span class="n">by</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">by</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">check_type</span><span class="p">(</span><span class="n">by</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="n">by</span> <span class="o">=</span> <span class="n">as_list</span><span class="p">(</span><span class="n">by</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">by</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Weld does not yet support sorting on multiple columns&#39;</span><span class="p">)</span>
+
+        <span class="n">all_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">by_data</span> <span class="o">=</span> <span class="n">all_data</span><span class="p">[</span><span class="n">by</span><span class="p">]</span>
+
+        <span class="n">sorted_indices</span> <span class="o">=</span> <span class="n">weld_sort</span><span class="p">(</span><span class="n">by_data</span><span class="o">.</span><span class="n">_gather_data_for_weld</span><span class="p">(),</span>
+                                   <span class="n">by_data</span><span class="o">.</span><span class="n">_gather_weld_types</span><span class="p">(),</span>
+                                   <span class="s1">&#39;sort_index&#39;</span><span class="p">,</span>
+                                   <span class="n">ascending</span><span class="o">=</span><span class="n">ascending</span><span class="p">)</span>
+
+        <span class="n">new_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">_iloc_indices</span><span class="p">(</span><span class="n">sorted_indices</span><span class="p">)</span>
+        <span class="n">new_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iter</span><span class="p">())</span>
+        <span class="n">new_column_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">column</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">new_columns</span><span class="p">]</span>
+        <span class="n">new_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">_series_iloc</span><span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">sorted_indices</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">new_columns</span><span class="p">]</span>
+        <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">new_column_names</span><span class="p">,</span> <span class="n">new_columns</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrame.merge"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.merge">[docs]</a>    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;_x&#39;</span><span class="p">,</span> <span class="s1">&#39;_y&#39;</span><span class="p">),</span>
+              <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;merge&#39;</span><span class="p">,</span> <span class="n">is_on_sorted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_on_unique</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Database-like join this DataFrame with the other DataFrame.</span>
+
+<span class="sd">        Currently assumes the `on` columns are sorted and the on-column(s) values are unique!</span>
+<span class="sd">        Next work handles the other cases.</span>
+
+<span class="sd">        Note there&#39;s no automatic cast if the type of the on columns differs.</span>
+
+<span class="sd">        Algorithms and limitations:</span>
+
+<span class="sd">        - Merge algorithms: merge-join or hash-join. Typical pros and cons apply when choosing between the two.</span>
+<span class="sd">          Merge-join shall be used on fairly equally-sized DataFrames while a hash-join would be better when</span>
+<span class="sd">          one of the DataFrames is (much) smaller.</span>
+<span class="sd">        - Limitations:</span>
+
+<span class="sd">          + Hash-join requires the (smaller) hashed DataFrame</span>
+<span class="sd">            (more precisely, the on columns) to contain no duplicates!</span>
+<span class="sd">          + Merge-join requires the on-columns to be sorted!</span>
+<span class="sd">          + For unsorted data can only sort a single column! (current Weld limitation)</span>
+
+<span class="sd">        - Sortedness. If the on-columns are sorted, merge-join does not require to sort the data so it can be</span>
+<span class="sd">          significantly faster. Do add is_on_sorted=True if this is known to be true!</span>
+<span class="sd">        - Uniqueness. If the on-columns data contains duplicates, the algorithm is more complicated, i.e. slow.</span>
+<span class="sd">          Also hash-join cannot be used on a hashed (smaller) DataFrame with duplicates. Do add is_on_unique=True</span>
+<span class="sd">          if this is known to be true!</span>
+<span class="sd">        - Setting the above 2 flags incorrectly, e.g. is_on_sorted to True when data is in fact not sorted,</span>
+<span class="sd">          will produce undefined results.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : DataFrame</span>
+<span class="sd">            With which to merge.</span>
+<span class="sd">        how : {&#39;inner&#39;, &#39;left&#39;, &#39;right&#39;, &#39;outer&#39;}, optional</span>
+<span class="sd">            Which kind of join to do.</span>
+<span class="sd">        on : str or list or None, optional</span>
+<span class="sd">            The columns from both DataFrames on which to join.</span>
+<span class="sd">            If None, will join on the index if it has the same name.</span>
+<span class="sd">        suffixes : tuple of str, optional</span>
+<span class="sd">            To append on columns not in `on` that have the same name in the DataFrames.</span>
+<span class="sd">        algorithm : {&#39;merge&#39;, &#39;hash&#39;}, optional</span>
+<span class="sd">            Which algorithm to use. Note that for &#39;hash&#39;, the `other` DataFrame is the one hashed.</span>
+<span class="sd">        is_on_sorted : bool, optional</span>
+<span class="sd">            If we know that the on columns are already sorted, can employ faster algorithm.</span>
+<span class="sd">        is_on_unique : bool, optional</span>
+<span class="sd">            If we know that the values are unique, can employ faster algorithm.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataFrame</span>
+<span class="sd">            DataFrame containing the merge result, with the `on` columns as index.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">DataFrame</span><span class="p">)</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">how</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">algorithm</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="n">check_inner_types</span><span class="p">(</span><span class="n">on</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">on</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">check_type</span><span class="p">(</span><span class="n">on</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="n">check_inner_types</span><span class="p">(</span><span class="n">check_type</span><span class="p">(</span><span class="n">suffixes</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">),</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">is_on_sorted</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">is_on_unique</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+
+        <span class="c1"># TODO: change defaults on flags &amp; remove after implementation</span>
+        <span class="k">assert</span> <span class="n">is_on_sorted</span>
+        <span class="k">assert</span> <span class="n">is_on_unique</span>
+
+        <span class="n">self_reset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">other_reset</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">on</span> <span class="o">=</span> <span class="n">_compute_on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">on</span><span class="p">,</span>
+                         <span class="n">self_reset</span><span class="o">.</span><span class="n">_gather_column_names</span><span class="p">(),</span>
+                         <span class="n">other_reset</span><span class="o">.</span><span class="n">_gather_column_names</span><span class="p">())</span>
+        <span class="n">self_on_cols</span> <span class="o">=</span> <span class="n">self_reset</span><span class="p">[</span><span class="n">on</span><span class="p">]</span>
+        <span class="n">other_on_cols</span> <span class="o">=</span> <span class="n">other_reset</span><span class="p">[</span><span class="n">on</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;merge&#39;</span><span class="p">:</span>
+            <span class="c1"># for left and right joins, the on columns can just be copied; no need for filter</span>
+            <span class="k">def</span> <span class="nf">fake_filter_func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">x</span>
+
+            <span class="k">if</span> <span class="n">how</span> <span class="o">==</span> <span class="s1">&#39;inner&#39;</span><span class="p">:</span>
+                <span class="n">index_filter_func</span> <span class="o">=</span> <span class="n">weld_iloc_indices</span>
+                <span class="n">data_filter_func</span> <span class="o">=</span> <span class="n">_series_iloc</span>
+                <span class="n">weld_merge_func</span> <span class="o">=</span> <span class="n">weld_merge_join</span>
+            <span class="k">elif</span> <span class="n">how</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="s1">&#39;right&#39;</span><span class="p">}:</span>
+                <span class="n">index_filter_func</span> <span class="o">=</span> <span class="n">fake_filter_func</span>
+                <span class="n">data_filter_func</span> <span class="o">=</span> <span class="n">_series_iloc_with_missing</span>
+                <span class="n">weld_merge_func</span> <span class="o">=</span> <span class="n">weld_merge_join</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">index_filter_func</span> <span class="o">=</span> <span class="n">fake_filter_func</span>
+                <span class="n">data_filter_func</span> <span class="o">=</span> <span class="n">_series_iloc_with_missing</span>
+                <span class="n">weld_merge_func</span> <span class="o">=</span> <span class="n">weld_merge_outer_join</span>
+
+            <span class="n">weld_objects_indexes</span> <span class="o">=</span> <span class="n">weld_merge_func</span><span class="p">(</span><span class="n">self_on_cols</span><span class="o">.</span><span class="n">_gather_data_for_weld</span><span class="p">(),</span>
+                                                   <span class="n">self_on_cols</span><span class="o">.</span><span class="n">_gather_weld_types</span><span class="p">(),</span>
+                                                   <span class="n">other_on_cols</span><span class="o">.</span><span class="n">_gather_data_for_weld</span><span class="p">(),</span>
+                                                   <span class="n">other_on_cols</span><span class="o">.</span><span class="n">_gather_weld_types</span><span class="p">(),</span>
+                                                   <span class="n">how</span><span class="p">,</span> <span class="n">is_on_sorted</span><span class="p">,</span> <span class="n">is_on_unique</span><span class="p">,</span> <span class="s1">&#39;merge-join&#39;</span><span class="p">)</span>
+
+            <span class="n">new_index</span> <span class="o">=</span> <span class="n">_compute_new_index</span><span class="p">(</span><span class="n">weld_objects_indexes</span><span class="p">,</span> <span class="n">how</span><span class="p">,</span> <span class="n">on</span><span class="p">,</span>
+                                           <span class="n">self_on_cols</span><span class="p">,</span> <span class="n">other_on_cols</span><span class="p">,</span>
+                                           <span class="n">index_filter_func</span><span class="p">)</span>
+
+            <span class="n">new_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+            <span class="n">self_no_on</span> <span class="o">=</span> <span class="n">self_reset</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">on</span><span class="p">)</span>
+            <span class="n">other_no_on</span> <span class="o">=</span> <span class="n">other_reset</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">on</span><span class="p">)</span>
+            <span class="n">self_new_names</span><span class="p">,</span> <span class="n">other_new_names</span> <span class="o">=</span> <span class="n">_compute_new_names</span><span class="p">(</span><span class="n">self_no_on</span><span class="o">.</span><span class="n">_gather_column_names</span><span class="p">(),</span>
+                                                                 <span class="n">other_no_on</span><span class="o">.</span><span class="n">_gather_column_names</span><span class="p">(),</span>
+                                                                 <span class="n">suffixes</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">new_name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">self_no_on</span><span class="p">,</span> <span class="n">self_new_names</span><span class="p">):</span>
+                <span class="n">new_data</span><span class="p">[</span><span class="n">new_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_filter_func</span><span class="p">(</span><span class="n">self_no_on</span><span class="p">[</span><span class="n">column_name</span><span class="p">],</span> <span class="n">weld_objects_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_index</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">column_name</span><span class="p">,</span> <span class="n">new_name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">other_no_on</span><span class="p">,</span> <span class="n">other_new_names</span><span class="p">):</span>
+                <span class="n">new_data</span><span class="p">[</span><span class="n">new_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_filter_func</span><span class="p">(</span><span class="n">other_no_on</span><span class="p">[</span><span class="n">column_name</span><span class="p">],</span> <span class="n">weld_objects_indexes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">new_index</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s1">&#39;hash&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Not yet supported&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;Only merge- and hash-join algorithms are supported&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrame.join"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.frame.DataFrame.join">[docs]</a>    <span class="k">def</span> <span class="nf">join</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">lsuffix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rsuffix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">algorithm</span><span class="o">=</span><span class="s1">&#39;merge&#39;</span><span class="p">,</span> <span class="n">is_on_sorted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_on_unique</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Database-like join this DataFrame with the other DataFrame.</span>
+
+<span class="sd">        Currently assumes the `on` columns are sorted and the on-column(s) values are unique!</span>
+<span class="sd">        Next work handles the other cases.</span>
+
+<span class="sd">        Note there&#39;s no automatic cast if the type of the on columns differs.</span>
+
+<span class="sd">        Check DataFrame.merge() for more details.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : DataFrame</span>
+<span class="sd">            With which to merge.</span>
+<span class="sd">        on : str or list or None, optional</span>
+<span class="sd">            The columns from both DataFrames on which to join.</span>
+<span class="sd">            If None, will join on the index if it has the same name.</span>
+<span class="sd">        how : {&#39;inner&#39;, &#39;left&#39;, &#39;right&#39;, &#39;outer&#39;}, optional</span>
+<span class="sd">            Which kind of join to do.</span>
+<span class="sd">        lsuffix : str, optional</span>
+<span class="sd">            Suffix to use on columns that overlap from self.</span>
+<span class="sd">        rsuffix : str, optional</span>
+<span class="sd">            Suffix to use on columns that overlap from other.</span>
+<span class="sd">        algorithm : {&#39;merge&#39;, &#39;hash&#39;}, optional</span>
+<span class="sd">            Which algorithm to use. Note that for &#39;hash&#39;, the `other` DataFrame is the one hashed.</span>
+<span class="sd">        is_on_sorted : bool, optional</span>
+<span class="sd">            If we know that the on columns are already sorted, can employ faster algorithm.</span>
+<span class="sd">        is_on_unique : bool, optional</span>
+<span class="sd">            If we know that the values are unique, can employ faster algorithm.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DataFrame</span>
+<span class="sd">            DataFrame containing the merge result, with the `on` columns as index.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">lsuffix</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">rsuffix</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+
+        <span class="n">self_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gather_column_names</span><span class="p">()</span>
+        <span class="n">other_names</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">_gather_column_names</span><span class="p">()</span>
+        <span class="n">common_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">self_names</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">other_names</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">common_names</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">lsuffix</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">rsuffix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Columns overlap but no suffixes supplied&#39;</span><span class="p">)</span>
+
+        <span class="c1"># need to ensure that some str suffixes are passed to merge</span>
+        <span class="n">lsuffix</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">lsuffix</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">lsuffix</span>
+        <span class="n">rsuffix</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">rsuffix</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">rsuffix</span>
+
+        <span class="c1"># TODO: pandas is more flexible, e.g. allows the index names to be different when joining on index</span>
+        <span class="c1"># TODO i.e. df(ind + a, b) join df(ind2 + b, c) does work and the index is now called ind</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">how</span><span class="p">,</span> <span class="n">on</span><span class="p">,</span> <span class="p">(</span><span class="n">lsuffix</span><span class="p">,</span> <span class="n">rsuffix</span><span class="p">),</span> <span class="n">algorithm</span><span class="p">,</span> <span class="n">is_on_sorted</span><span class="p">,</span> <span class="n">is_on_unique</span><span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_default_index</span><span class="p">(</span><span class="n">dataframe_data</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">default_index</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataframe_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">default_index</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># must encode from a random column then</span>
+            <span class="k">return</span> <span class="n">default_index</span><span class="p">(</span><span class="n">dataframe_data</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">dataframe_data</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]])</span>
+
+
+<span class="k">def</span> <span class="nf">_process_index</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_default_index</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">length</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">check_type</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">Index</span><span class="p">,</span> <span class="n">MultiIndex</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_check_input_data</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">OrderedDict</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="n">check_inner_types</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Series</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">def</span> <span class="nf">_process_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Series</span><span class="p">):</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">k</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># must be ndarray</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">Series</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">k</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">def</span> <span class="nf">_infer_length</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="n">index_length</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">index_length</span> <span class="o">=</span> <span class="n">infer_length</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">_gather_data</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">if</span> <span class="n">index_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">index_length</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">infer_length</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">_obtain_length</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">dataframe_data</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">length</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># first check again for raw data</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="n">infer_length</span><span class="p">(</span><span class="n">dataframe_data</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">length</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dataframe_data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="c1"># empty DataFrame</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">return</span> <span class="mi">0</span>
+            <span class="c1"># pick first column (which is a Series) and encode its length</span>
+            <span class="n">length</span> <span class="o">=</span> <span class="n">weld_count</span><span class="p">(</span><span class="n">dataframe_data</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">length</span>
+
+
+<span class="k">def</span> <span class="nf">_compute_on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">on</span><span class="p">,</span> <span class="n">all_names_self</span><span class="p">,</span> <span class="n">all_names_other</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">on</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">self_index_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">_gather_names</span><span class="p">()</span>
+        <span class="n">other_index_names</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">_gather_names</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">self_index_names</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">other_index_names</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected indexes to be of the same dimensions when on=None&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">self_index_names</span> <span class="o">!=</span> <span class="n">other_index_names</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;When on=None, the names of both indexes must be the same&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">self_index_names</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">on</span> <span class="o">=</span> <span class="n">as_list</span><span class="p">(</span><span class="n">on</span><span class="p">)</span>
+        <span class="n">set_on</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">on</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">set_on</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">all_names_self</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;On column(s) not included in the self DataFrame&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">set_on</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">all_names_other</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;On column(s) not included in the other DataFrame&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">on</span>
+
+
+<span class="k">def</span> <span class="nf">_compute_new_names</span><span class="p">(</span><span class="n">names_self</span><span class="p">,</span> <span class="n">names_other</span><span class="p">,</span> <span class="n">suffixes</span><span class="p">):</span>
+    <span class="n">common_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">names_self</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">names_other</span><span class="p">))</span>
+    <span class="n">self_new_names</span> <span class="o">=</span> <span class="n">names_self</span>
+    <span class="n">other_new_names</span> <span class="o">=</span> <span class="n">names_other</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">common_names</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">common_names</span><span class="p">:</span>
+            <span class="n">self_new_names</span><span class="p">[</span><span class="n">self_new_names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">name</span><span class="p">)]</span> <span class="o">+=</span> <span class="n">suffixes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">other_new_names</span><span class="p">[</span><span class="n">other_new_names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">name</span><span class="p">)]</span> <span class="o">+=</span> <span class="n">suffixes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">self_new_names</span><span class="p">,</span> <span class="n">other_new_names</span>
+
+
+<span class="c1"># TODO: perhaps just split into 4 methods for each join type</span>
+<span class="k">def</span> <span class="nf">_compute_new_index</span><span class="p">(</span><span class="n">weld_objects_indexes</span><span class="p">,</span> <span class="n">how</span><span class="p">,</span> <span class="n">on</span><span class="p">,</span> <span class="n">self_on_cols</span><span class="p">,</span> <span class="n">other_on_cols</span><span class="p">,</span> <span class="n">filter_func</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">how</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="s1">&#39;left&#39;</span><span class="p">]:</span>
+        <span class="n">extract_index_from</span> <span class="o">=</span> <span class="n">self_on_cols</span>
+        <span class="n">index_index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">extract_index_from</span> <span class="o">=</span> <span class="n">other_on_cols</span>
+        <span class="n">index_index</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">how</span> <span class="o">==</span> <span class="s1">&#39;outer&#39;</span><span class="p">:</span>
+        <span class="n">data_arg</span> <span class="o">=</span> <span class="s1">&#39;weld_objects_indexes[2]&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">data_arg</span> <span class="o">=</span> <span class="s1">&#39;column.weld_expr&#39;</span>
+
+    <span class="n">new_indexes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">data_arg</span> <span class="o">=</span> <span class="n">data_arg</span> <span class="k">if</span> <span class="n">how</span> <span class="o">!=</span> <span class="s1">&#39;outer&#39;</span> <span class="k">else</span> <span class="n">data_arg</span> <span class="o">+</span> <span class="s1">&#39;[i]&#39;</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">column_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">on</span><span class="p">):</span>
+        <span class="n">column</span> <span class="o">=</span> <span class="n">extract_index_from</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">column_name</span><span class="p">]</span>
+        <span class="n">new_indexes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Index</span><span class="p">(</span><span class="n">filter_func</span><span class="p">(</span><span class="nb">eval</span><span class="p">(</span><span class="n">data_arg</span><span class="p">),</span>
+                                             <span class="n">column</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
+                                             <span class="n">weld_objects_indexes</span><span class="p">[</span><span class="n">index_index</span><span class="p">]),</span>
+                                 <span class="n">column</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                                 <span class="n">column</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">on</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">new_index</span> <span class="o">=</span> <span class="n">MultiIndex</span><span class="p">(</span><span class="n">new_indexes</span><span class="p">,</span> <span class="n">on</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">new_index</span> <span class="o">=</span> <span class="n">new_indexes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">new_index</span>
+
+
+<span class="k">def</span> <span class="nf">_drop_str_columns</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : DataFrame</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">str_columns</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">pair</span><span class="p">:</span> <span class="n">pair</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;S&#39;</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">_gather_dtypes</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="n">str_column_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">pair</span><span class="p">:</span> <span class="n">pair</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">str_columns</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">str_column_names</span><span class="p">)</span>
 </pre></div>
 
           </div>
@@ -459,6 +1117,14 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -467,8 +1133,8 @@
       &copy;2018, Radu Jica.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
 

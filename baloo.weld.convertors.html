@@ -13,6 +13,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="baloo.weld package" href="baloo.weld.html" />
@@ -69,6 +70,39 @@ a valid Weld type using py_to_weld_type.</p>
 <dd><p>Returns a WeldType corresponding to a Python object</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="function">
+<dt id="baloo.weld.convertors.encoders.default_missing_data_literal">
+<code class="descclassname">baloo.weld.convertors.encoders.</code><code class="descname">default_missing_data_literal</code><span class="sig-paren">(</span><em>weld_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/convertors/encoders.html#default_missing_data_literal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.convertors.encoders.default_missing_data_literal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert from Weld type to missing literal placeholder.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>weld_type</strong> <span class="classifier-delimiter">:</span> <span class="classifier">WeldType</span></dt>
+<dd><p class="first last">Weld type.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">Literal for missing data.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">baloo.weld</span> <span class="k">import</span> <span class="n">default_missing_data_literal</span><span class="p">,</span> <span class="n">WeldDouble</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">default_missing_data_literal</span><span class="p">(</span><span class="n">WeldDouble</span><span class="p">())</span>
+<span class="go">&#39;-999.0&#39;</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -163,14 +197,14 @@ Python 2 str and Python 3 bytes. No unicode.</p>
 
 
 <h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Intro to Baloo</a></li>
+</ul>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="baloo.html">baloo package</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="intro.html">Baloo</a></li>
-<li class="toctree-l2"><a class="reference internal" href="baloo.core.html">baloo.core package</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="baloo.weld.html">baloo.weld package</a><ul class="current">
-<li class="toctree-l3 current"><a class="reference internal" href="baloo.weld.html#subpackages">Subpackages</a></li>
-<li class="toctree-l3"><a class="reference internal" href="baloo.weld.html#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="baloo.weld.html#module-baloo.weld.lazy_result">baloo.weld.lazy_result module</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="baloo.html">Baloo Library</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="baloo.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="baloo.core.html">baloo.core package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="baloo.weld.html">baloo.weld package</a></li>
 </ul>
 </li>
 </ul>
@@ -181,7 +215,7 @@ Python 2 str and Python 3 bytes. No unicode.</p>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-  <li><a href="baloo.html">baloo package</a><ul>
+  <li><a href="baloo.html">Baloo Library</a><ul>
   <li><a href="baloo.weld.html">baloo.weld package</a><ul>
       <li>Previous: <a href="baloo.weld.html" title="previous chapter">baloo.weld package</a></li>
   </ul></li>
@@ -201,6 +235,14 @@ Python 2 str and Python 3 bytes. No unicode.</p>
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -209,8 +251,8 @@ Python 2 str and Python 3 bytes. No unicode.</p>
       &copy;2018, Radu Jica.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/baloo.weld.convertors.rst.txt"

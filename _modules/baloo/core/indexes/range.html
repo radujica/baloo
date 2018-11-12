@@ -13,6 +13,7 @@
     <script type="text/javascript" src="../../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
    
@@ -33,22 +34,21 @@
             
   <h1>Source code for baloo.core.indexes.range</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">weld.types</span> <span class="k">import</span> <span class="n">WeldLong</span>
-<span class="kn">from</span> <span class="nn">weld.weldobject</span> <span class="k">import</span> <span class="n">WeldObject</span>
 
 <span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">Index</span>
-<span class="kn">from</span> <span class="nn">..utils</span> <span class="k">import</span> <span class="n">check_type</span><span class="p">,</span> <span class="n">valid_int_slice</span>
-<span class="kn">from</span> <span class="nn">...weld</span> <span class="k">import</span> <span class="n">weld_range</span><span class="p">,</span> <span class="n">LazyResult</span><span class="p">,</span> <span class="n">WeldBit</span><span class="p">,</span> <span class="n">weld_filter</span><span class="p">,</span> <span class="n">weld_slice</span><span class="p">,</span> <span class="n">weld_compare</span><span class="p">,</span> <span class="n">weld_count</span><span class="p">,</span> <span class="n">weld_tail</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="k">import</span> <span class="n">check_type</span><span class="p">,</span> <span class="n">replace_if_none</span>
+<span class="kn">from</span> <span class="nn">...weld</span> <span class="k">import</span> <span class="n">weld_range</span><span class="p">,</span> <span class="n">WeldObject</span>
 
 
-<div class="viewcode-block" id="RangeIndex"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.range.RangeIndex">[docs]</a><span class="k">class</span> <span class="nc">RangeIndex</span><span class="p">(</span><span class="n">LazyResult</span><span class="p">):</span>
+<div class="viewcode-block" id="RangeIndex"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.range.RangeIndex">[docs]</a><span class="k">class</span> <span class="nc">RangeIndex</span><span class="p">(</span><span class="n">Index</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Weld-ed Pandas RangeIndex.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
-<span class="sd">    start : int</span>
-<span class="sd">    stop : int or WeldObject</span>
-<span class="sd">    step : int</span>
+<span class="sd">    start</span>
+<span class="sd">    stop</span>
+<span class="sd">    step</span>
+<span class="sd">    dtype</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -63,14 +63,18 @@
 <span class="sd">    RangeIndex(start=0, stop=3, step=1)</span>
 <span class="sd">    &gt;&gt;&gt; weld_code = str(ind)  # weld_code</span>
 <span class="sd">    &gt;&gt;&gt; ind.evaluate()</span>
-<span class="sd">    Index(name=Index, dtype=int64)</span>
+<span class="sd">    Index(name=None, dtype=int64)</span>
 <span class="sd">    &gt;&gt;&gt; print(ind.evaluate())</span>
 <span class="sd">    [0 1 2]</span>
 <span class="sd">    &gt;&gt;&gt; len(ind)  # eager</span>
 <span class="sd">    3</span>
+<span class="sd">    &gt;&gt;&gt; (ind * 2).evaluate().values</span>
+<span class="sd">    array([0, 2, 4])</span>
+<span class="sd">    &gt;&gt;&gt; (ind - bl.Series(np.arange(1, 4))).evaluate().values</span>
+<span class="sd">    array([-1, -1, -1])</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-<div class="viewcode-block" id="RangeIndex.__init__"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.range.RangeIndex.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="RangeIndex.__init__"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.range.RangeIndex.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Initialize a RangeIndex object.</span>
 
 <span class="sd">        If only 1 value (`start`) is passed, it will be considered the `stop` value.</span>
@@ -84,69 +88,13 @@
 <span class="sd">        step : int, optional</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">stop</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Must supply at least one integer&#39;</span><span class="p">)</span>
-        <span class="c1"># allow pd.RangeIndex(123) to represent pd.RangeIndex(0, 123, 1)</span>
-        <span class="k">elif</span> <span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">stop</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">step</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">stop</span> <span class="o">=</span> <span class="n">start</span>
-            <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">check_type</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="o">=</span> <span class="n">check_type</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">WeldObject</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">check_type</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="n">_check_input</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">check_type</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">step</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
 
-        <span class="nb">super</span><span class="p">(</span><span class="n">RangeIndex</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">weld_range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">step</span><span class="p">),</span> <span class="n">WeldLong</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span></div>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;The internal data representation.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        numpy.ndarray or WeldObject</span>
-<span class="sd">            The internal data representation.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;The name of the RangeIndex.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        str</span>
-<span class="sd">            The name of the RangeIndex.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
-
-    <span class="nd">@name</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">value</span>
-
-<div class="viewcode-block" id="RangeIndex.__len__"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.range.RangeIndex.__len__">[docs]</a>    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Eagerly get the length of the RangeIndex.</span>
-
-<span class="sd">        Note that if the length is unknown (such as for a WeldObject stop),</span>
-<span class="sd">        it will be eagerly computed.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        int</span>
-<span class="sd">            Length of the RangeIndex.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span></div>
+        <span class="nb">super</span><span class="p">(</span><span class="n">RangeIndex</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">weld_range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">))</span></div>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">(start=</span><span class="si">{}</span><span class="s2">, stop=</span><span class="si">{}</span><span class="s2">, step=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
@@ -154,67 +102,15 @@
                                                        <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span>
                                                        <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">)</span>
-
     <span class="k">def</span> <span class="nf">_comparison</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">comparison</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_compare</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
-                                      <span class="n">other</span><span class="p">,</span>
-                                      <span class="n">comparison</span><span class="p">,</span>
-                                      <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">),</span>
-                         <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">))</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">RangeIndex</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">comparison</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Can only compare with integers&#39;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;&lt;&#39;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;&lt;=&#39;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;==&#39;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;!=&#39;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;&gt;=&#39;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;&gt;&#39;</span><span class="p">)</span>
-
-<div class="viewcode-block" id="RangeIndex.__getitem__"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.range.RangeIndex.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Select from the RangeIndex. Currently used internally through DataFrame and Series.</span>
-
-<span class="sd">        Examples</span>
-<span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; ind = bl.RangeIndex(3)</span>
-<span class="sd">        &gt;&gt;&gt; print(ind[ind &lt; 2].evaluate())</span>
-<span class="sd">        [0 1]</span>
-<span class="sd">        &gt;&gt;&gt; print(ind[1:2].evaluate())</span>
-<span class="sd">        [1]</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">LazyResult</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">weld_type</span> <span class="o">!=</span> <span class="n">WeldBit</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected LazyResult of bool data to filter values&#39;</span><span class="p">)</span>
-
-            <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_filter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
-                                     <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
-                                     <span class="n">item</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">),</span>
-                         <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_int_slice</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Can currently only slice with integers&#39;</span><span class="p">)</span>
-
-            <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
-                                    <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
-                                    <span class="n">item</span><span class="p">),</span>
-                         <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected a LazyResult or a slice&#39;</span><span class="p">)</span></div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">empty</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="o">==</span> <span class="mi">0</span>
 
 <div class="viewcode-block" id="RangeIndex.evaluate"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.range.RangeIndex.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">passes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_threads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Evaluates by creating an Index containing evaluated data.</span>
@@ -227,59 +123,30 @@
 <span class="sd">            Index with evaluated data.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">evaluated_data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">RangeIndex</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="n">decode</span><span class="p">,</span> <span class="n">passes</span><span class="p">,</span> <span class="n">num_threads</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">evaluated_data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">))</span></div>
-
-<div class="viewcode-block" id="RangeIndex.head"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.range.RangeIndex.head">[docs]</a>    <span class="k">def</span> <span class="nf">head</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return Index with first n values.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        n : int</span>
-<span class="sd">            Number of values.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        Series</span>
-<span class="sd">            Index containing the first n values.</span>
-
-<span class="sd">        Examples</span>
-<span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; ind = bl.RangeIndex(3)</span>
-<span class="sd">        &gt;&gt;&gt; print(ind.head(2).evaluate())</span>
-<span class="sd">        [0 1]</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span></div>
-
-<div class="viewcode-block" id="RangeIndex.tail"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.range.RangeIndex.tail">[docs]</a>    <span class="k">def</span> <span class="nf">tail</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return Index with the last n values.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        n : int</span>
-<span class="sd">            Number of values.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        Series</span>
-<span class="sd">            Index containing the last n values.</span>
-
-<span class="sd">        Examples</span>
-<span class="sd">        --------</span>
-<span class="sd">        &gt;&gt;&gt; ind = bl.RangeIndex(3)</span>
-<span class="sd">        &gt;&gt;&gt; print(ind.tail(2).evaluate())</span>
-<span class="sd">        [1 2]</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">evaluated_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">length</span> <span class="o">=</span> <span class="n">LazyResult</span><span class="p">(</span><span class="n">weld_count</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">),</span> <span class="n">WeldLong</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">evaluated_data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Index</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="n">decode</span><span class="p">,</span> <span class="n">passes</span><span class="p">,</span> <span class="n">num_threads</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_tail</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
-                     <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">))</span></div></div>
+        <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">evaluated_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_check_input</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">step</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">stop</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">step</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Must be called with at least one integer&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">stop</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">step</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">start</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">check_type</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+    <span class="n">check_type</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">WeldObject</span><span class="p">))</span>
+    <span class="n">check_type</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+
+    <span class="n">start</span> <span class="o">=</span> <span class="n">replace_if_none</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">stop</span> <span class="o">=</span> <span class="n">replace_if_none</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">step</span> <span class="o">=</span> <span class="n">replace_if_none</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">step</span>
 </pre></div>
 
           </div>
@@ -326,6 +193,14 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -334,8 +209,8 @@
       &copy;2018, Radu Jica.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
 

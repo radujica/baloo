@@ -13,6 +13,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="baloo.weld.convertors package" href="baloo.weld.convertors.html" />
@@ -53,6 +54,64 @@
 <div class="section" id="module-baloo.weld.lazy_result">
 <span id="baloo-weld-lazy-result-module"></span><h2>baloo.weld.lazy_result module<a class="headerlink" href="#module-baloo.weld.lazy_result" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
+<dt id="baloo.weld.lazy_result.LazyArrayResult">
+<em class="property">class </em><code class="descclassname">baloo.weld.lazy_result.</code><code class="descname">LazyArrayResult</code><span class="sig-paren">(</span><em>weld_expr</em>, <em>weld_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/lazy_result.html#LazyArrayResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.lazy_result.LazyArrayResult" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="baloo.weld.lazy_result.LazyArrayResult.empty">
+<code class="descname">empty</code><a class="headerlink" href="#baloo.weld.lazy_result.LazyArrayResult.empty" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="baloo.weld.lazy_result.LazyArrayResult.max">
+<code class="descname">max</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/lazy_result.html#LazyArrayResult.max"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.lazy_result.LazyArrayResult.max" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the maximum value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>LazyScalarResult</strong></dt>
+<dd><p class="first last">The maximum value.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.weld.lazy_result.LazyArrayResult.min">
+<code class="descname">min</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/lazy_result.html#LazyArrayResult.min"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.lazy_result.LazyArrayResult.min" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the minimum value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>LazyScalarResult</strong></dt>
+<dd><p class="first last">The minimum value.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="baloo.weld.lazy_result.LazyDoubleResult">
+<em class="property">class </em><code class="descclassname">baloo.weld.lazy_result.</code><code class="descname">LazyDoubleResult</code><span class="sig-paren">(</span><em>weld_expr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/lazy_result.html#LazyDoubleResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.lazy_result.LazyDoubleResult" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="baloo.weld.lazy_result.LazyLongResult">
+<em class="property">class </em><code class="descclassname">baloo.weld.lazy_result.</code><code class="descname">LazyLongResult</code><span class="sig-paren">(</span><em>weld_expr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/lazy_result.html#LazyLongResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.lazy_result.LazyLongResult" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
 <dt id="baloo.weld.lazy_result.LazyResult">
 <em class="property">class </em><code class="descclassname">baloo.weld.lazy_result.</code><code class="descname">LazyResult</code><span class="sig-paren">(</span><em>weld_expr</em>, <em>weld_type</em>, <em>ndim</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/lazy_result.html#LazyResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.lazy_result.LazyResult" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wrapper class around a yet un-evaluated Weld result.</p>
@@ -61,7 +120,7 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>weld_expr</strong> <span class="classifier-delimiter">:</span> <span class="classifier">WeldObject or np.ndarray</span></dt>
+<dt><strong>weld_expr</strong> <span class="classifier-delimiter">:</span> <span class="classifier">WeldObject or numpy.ndarray</span></dt>
 <dd><p class="first last">Expression that needs to be evaluated.</p>
 </dd>
 <dt><strong>weld_type</strong> <span class="classifier-delimiter">:</span> <span class="classifier">WeldType</span></dt>
@@ -113,7 +172,46 @@
 </table>
 </dd></dl>
 
+<dl class="method">
+<dt id="baloo.weld.lazy_result.LazyResult.is_raw">
+<code class="descname">is_raw</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/lazy_result.html#LazyResult.is_raw"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.lazy_result.LazyResult.is_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="baloo.weld.lazy_result.LazyResult.values">
+<code class="descname">values</code><a class="headerlink" href="#baloo.weld.lazy_result.LazyResult.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>The internal data representation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>numpy.ndarray or WeldObject</strong></dt>
+<dd><p class="first last">The internal data representation.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="baloo.weld.lazy_result.LazyScalarResult">
+<em class="property">class </em><code class="descclassname">baloo.weld.lazy_result.</code><code class="descname">LazyScalarResult</code><span class="sig-paren">(</span><em>weld_expr</em>, <em>weld_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/lazy_result.html#LazyScalarResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.lazy_result.LazyScalarResult" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="baloo.weld.lazy_result.LazyStructOfVecResult">
+<em class="property">class </em><code class="descclassname">baloo.weld.lazy_result.</code><code class="descname">LazyStructOfVecResult</code><span class="sig-paren">(</span><em>weld_expr</em>, <em>weld_types</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/lazy_result.html#LazyStructOfVecResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.lazy_result.LazyStructOfVecResult" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="baloo.weld.lazy_result.LazyStructResult">
+<em class="property">class </em><code class="descclassname">baloo.weld.lazy_result.</code><code class="descname">LazyStructResult</code><span class="sig-paren">(</span><em>weld_expr</em>, <em>weld_types</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/weld/lazy_result.html#LazyStructResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.weld.lazy_result.LazyStructResult" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 </div>
@@ -135,14 +233,14 @@
 
 
 <h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Intro to Baloo</a></li>
+</ul>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="baloo.html">baloo package</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="intro.html">Baloo</a></li>
-<li class="toctree-l2"><a class="reference internal" href="baloo.core.html">baloo.core package</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">baloo.weld package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#subpackages">Subpackages</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-baloo.weld.lazy_result">baloo.weld.lazy_result module</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="baloo.html">Baloo Library</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="baloo.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="baloo.core.html">baloo.core package</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">baloo.weld package</a></li>
 </ul>
 </li>
 </ul>
@@ -153,7 +251,7 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-  <li><a href="baloo.html">baloo package</a><ul>
+  <li><a href="baloo.html">Baloo Library</a><ul>
       <li>Previous: <a href="baloo.core.indexes.html" title="previous chapter">baloo.core.indexes package</a></li>
       <li>Next: <a href="baloo.weld.convertors.html" title="next chapter">baloo.weld.convertors package</a></li>
   </ul></li>
@@ -172,6 +270,14 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -180,8 +286,8 @@
       &copy;2018, Radu Jica.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/baloo.weld.rst.txt"

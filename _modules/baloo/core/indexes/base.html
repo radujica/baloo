@@ -13,6 +13,7 @@
     <script type="text/javascript" src="../../../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
    
@@ -33,21 +34,21 @@
             
   <h1>Source code for baloo.core.indexes.base</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">weld.weldobject</span> <span class="k">import</span> <span class="n">WeldObject</span><span class="p">,</span> <span class="n">WeldLong</span><span class="p">,</span> <span class="n">WeldBit</span>
 
-<span class="kn">from</span> <span class="nn">...core.utils</span> <span class="k">import</span> <span class="n">check_type</span><span class="p">,</span> <span class="n">infer_dtype</span><span class="p">,</span> <span class="n">valid_int_slice</span><span class="p">,</span> <span class="n">is_scalar</span>
-<span class="kn">from</span> <span class="nn">...weld</span> <span class="k">import</span> <span class="n">LazyResult</span><span class="p">,</span> <span class="n">numpy_to_weld_type</span><span class="p">,</span> <span class="n">weld_count</span><span class="p">,</span> <span class="n">weld_filter</span><span class="p">,</span> <span class="n">weld_slice</span><span class="p">,</span> <span class="n">weld_compare</span><span class="p">,</span> <span class="n">weld_tail</span>
+<span class="kn">from</span> <span class="nn">..generic</span> <span class="k">import</span> <span class="n">BinaryOps</span><span class="p">,</span> <span class="n">IndexCommon</span><span class="p">,</span> <span class="n">BalooCommon</span>
+<span class="kn">from</span> <span class="nn">...core.utils</span> <span class="k">import</span> <span class="n">check_type</span><span class="p">,</span> <span class="n">infer_dtype</span><span class="p">,</span> <span class="n">is_scalar</span><span class="p">,</span> <span class="n">check_weld_bit_array</span><span class="p">,</span> <span class="n">check_valid_int_slice</span>
+<span class="kn">from</span> <span class="nn">...weld</span> <span class="k">import</span> <span class="n">LazyArrayResult</span><span class="p">,</span> <span class="n">numpy_to_weld_type</span><span class="p">,</span> <span class="n">weld_filter</span><span class="p">,</span> <span class="n">weld_slice</span><span class="p">,</span> \
+    <span class="n">weld_compare</span><span class="p">,</span> <span class="n">weld_tail</span><span class="p">,</span> <span class="n">weld_array_op</span><span class="p">,</span> <span class="n">weld_element_wise_op</span><span class="p">,</span> <span class="n">WeldObject</span><span class="p">,</span> <span class="n">weld_iloc_indices</span><span class="p">,</span> \
+    <span class="n">weld_iloc_indices_with_missing</span>
 
 
-<div class="viewcode-block" id="Index"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.base.Index">[docs]</a><span class="k">class</span> <span class="nc">Index</span><span class="p">(</span><span class="n">LazyResult</span><span class="p">):</span>
+<div class="viewcode-block" id="Index"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.base.Index">[docs]</a><span class="k">class</span> <span class="nc">Index</span><span class="p">(</span><span class="n">LazyArrayResult</span><span class="p">,</span> <span class="n">BinaryOps</span><span class="p">,</span> <span class="n">IndexCommon</span><span class="p">,</span> <span class="n">BalooCommon</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Weld-ed Pandas Index.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
-<span class="sd">    dtype : np.dtype</span>
-<span class="sd">        Numpy dtype of the elements.</span>
-<span class="sd">    name : str</span>
-<span class="sd">        Name of the series.</span>
+<span class="sd">    dtype</span>
+<span class="sd">    name</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -59,7 +60,7 @@
 <span class="sd">    &gt;&gt;&gt; import numpy as np</span>
 <span class="sd">    &gt;&gt;&gt; ind = bl.Index(np.array([&#39;a&#39;, &#39;b&#39;, &#39;c&#39;], dtype=np.dtype(np.bytes_)))</span>
 <span class="sd">    &gt;&gt;&gt; ind  # repr</span>
-<span class="sd">    Index(name=Index, dtype=|S1)</span>
+<span class="sd">    Index(name=None, dtype=|S1)</span>
 <span class="sd">    &gt;&gt;&gt; print(ind)  # str</span>
 <span class="sd">    [b&#39;a&#39; b&#39;b&#39; b&#39;c&#39;]</span>
 <span class="sd">    &gt;&gt;&gt; ind.values</span>
@@ -81,68 +82,17 @@
 <span class="sd">            Name of the Index.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">check_type</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">WeldObject</span><span class="p">))</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">WeldObject</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">infer_dtype</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">check_type</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">check_type</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
 
-        <span class="nb">super</span><span class="p">(</span><span class="n">Index</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">numpy_to_weld_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span></div>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;The name of the Index.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        str</span>
-<span class="sd">            The name of the Index.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
-
-    <span class="nd">@name</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">value</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;The internal data representation.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        numpy.ndarray or WeldObject</span>
-<span class="sd">            The internal data representation.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span>
-
-<div class="viewcode-block" id="Index.__len__"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.base.Index.__len__">[docs]</a>    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Eagerly get the length of the Index.</span>
-
-<span class="sd">        Note that if the length is unknown (such as for a WeldObject),</span>
-<span class="sd">        it will be eagerly computed.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        int</span>
-<span class="sd">            Length of the Index.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">LazyResult</span><span class="p">(</span><span class="n">weld_count</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">),</span> <span class="n">WeldLong</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span></div>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Index</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">numpy_to_weld_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span></div>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">(name=</span><span class="si">{}</span><span class="s2">, dtype=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
                                               <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                                               <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_comparison</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">comparison</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">is_scalar</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
@@ -155,23 +105,70 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Can currently only compare with scalars&#39;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;&lt;&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_bitwise_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">operation</span><span class="p">):</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">LazyArrayResult</span><span class="p">)</span>
+        <span class="n">check_weld_bit_array</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="n">check_weld_bit_array</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;&lt;=&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_array_op</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
+                                   <span class="n">other</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
+                                   <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
+                                   <span class="n">operation</span><span class="p">),</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;==&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_element_wise_operation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">operation</span><span class="p">):</span>
+        <span class="c1"># Pandas converts result to a Series; unclear why atm</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">LazyArrayResult</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_array_op</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
+                                       <span class="n">other</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
+                                       <span class="n">operation</span><span class="p">),</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">is_scalar</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_element_wise_op</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
+                                              <span class="n">other</span><span class="p">,</span>
+                                              <span class="n">operation</span><span class="p">),</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Can only apply operation with scalar or LazyArrayResult&#39;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;!=&#39;</span><span class="p">)</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
 
-    <span class="k">def</span> <span class="nf">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;&gt;=&#39;</span><span class="p">)</span>
+    <span class="nd">@name</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">value</span>
 
-    <span class="k">def</span> <span class="nf">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_comparison</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s1">&#39;&gt;&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_gather_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">name</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_gather_data_for_weld</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_gather_weld_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_gather_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_gather_names</span><span class="p">(</span><span class="n">name</span><span class="p">)[</span><span class="mi">0</span><span class="p">]:</span> <span class="bp">self</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_iloc_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indices</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_iloc_indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
+                                       <span class="n">indices</span><span class="p">),</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_iloc_indices_with_missing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indices</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_iloc_indices_with_missing</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
+                                                    <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
+                                                    <span class="n">indices</span><span class="p">),</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Index.__getitem__"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.base.Index.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Select from the Index. Currently used internally through DataFrame and Series.</span>
@@ -187,9 +184,8 @@
 <span class="sd">        [1]</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">LazyResult</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">weld_type</span> <span class="o">!=</span> <span class="n">WeldBit</span><span class="p">():</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Expected LazyResult of bool data to filter values&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">LazyArrayResult</span><span class="p">):</span>
+            <span class="n">check_weld_bit_array</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
 
             <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_filter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
                                      <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
@@ -197,16 +193,17 @@
                          <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
                          <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_int_slice</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Can currently only slice with integers&#39;</span><span class="p">)</span>
-
-            <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
-                                    <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
-                                    <span class="n">item</span><span class="p">),</span>
-                         <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                         <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">check_valid_int_slice</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_slice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
+                                        <span class="n">item</span><span class="p">),</span>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected a LazyResult or a slice&#39;</span><span class="p">)</span></div>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected LazyArrayResult or slice&#39;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Index.evaluate"><a class="viewcode-back" href="../../../../baloo.core.indexes.html#baloo.core.indexes.base.Index.evaluate">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">passes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_threads</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">apply_experimental</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Evaluates by creating an Index containing evaluated data.</span>
@@ -265,14 +262,18 @@
 <span class="sd">        [1. 2.]</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">length</span> <span class="o">=</span> <span class="n">LazyResult</span><span class="p">(</span><span class="n">weld_count</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">),</span> <span class="n">WeldLong</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lazy_len</span><span class="p">()</span><span class="o">.</span><span class="n">weld_expr</span>
 
-        <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_tail</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
-                     <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-                     <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div></div>
+            <span class="c1"># not computing slice here to use with __getitem__ because we&#39;d need to use len which is eager</span>
+            <span class="k">return</span> <span class="n">Index</span><span class="p">(</span><span class="n">weld_tail</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                         <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>
@@ -319,6 +320,14 @@
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -327,8 +336,8 @@
       &copy;2018, Radu Jica.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>
 

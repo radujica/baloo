@@ -13,10 +13,11 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="baloo.core.indexes package" href="baloo.core.indexes.html" />
-    <link rel="prev" title="baloo package" href="baloo.html" />
+    <link rel="prev" title="Baloo Library" href="baloo.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
@@ -42,6 +43,7 @@
 <li class="toctree-l1"><a class="reference internal" href="baloo.core.indexes.html">baloo.core.indexes package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="baloo.core.indexes.html#module-baloo.core.indexes.base">baloo.core.indexes.base module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="baloo.core.indexes.html#module-baloo.core.indexes.range">baloo.core.indexes.range module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="baloo.core.indexes.html#module-baloo.core.indexes.multi">baloo.core.indexes.multi module</a></li>
 </ul>
 </li>
 </ul>
@@ -51,8 +53,9 @@
 <span id="baloo-core-frame-module"></span><h2>baloo.core.frame module<a class="headerlink" href="#module-baloo.core.frame" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="baloo.core.frame.DataFrame">
-<em class="property">class </em><code class="descclassname">baloo.core.frame.</code><code class="descname">DataFrame</code><span class="sig-paren">(</span><em>data</em>, <em>index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame" title="Permalink to this definition">¶</a></dt>
-<dd><p>Weld-ed pandas DataFrame.</p>
+<em class="property">class </em><code class="descclassname">baloo.core.frame.</code><code class="descname">DataFrame</code><span class="sig-paren">(</span><em>data=None</em>, <em>index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#baloo.core.generic.BinaryOps" title="baloo.core.generic.BinaryOps"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.core.generic.BinaryOps</span></code></a>, <a class="reference internal" href="#baloo.core.generic.BalooCommon" title="baloo.core.generic.BalooCommon"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.core.generic.BalooCommon</span></code></a></p>
+<p>Weld-ed pandas DataFrame.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
@@ -64,19 +67,67 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">baloo</span> <span class="k">as</span> <span class="nn">bl</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">([(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">(((</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])))))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">index</span>  <span class="c1"># repr</span>
 <span class="go">RangeIndex(start=0, stop=3, step=1)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">df</span>  <span class="c1"># repr</span>
-<span class="go">DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=[&#39;a&#39;, &#39;b&#39;])</span>
+<span class="go">DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=[a: int64, b: int64])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>  <span class="c1"># omitting evaluate would trigger exception as index is now an unevaluated RangeIndex</span>
-<span class="go">  Index    a    b</span>
-<span class="go">-------  ---  ---</span>
-<span class="go">      0    5    0</span>
-<span class="go">      1    6    1</span>
-<span class="go">      2    7    2</span>
+<span class="go">       a    b</span>
+<span class="go">---  ---  ---</span>
+<span class="go">  0    5    1</span>
+<span class="go">  1    6    0</span>
+<span class="go">  2    7    2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
 <span class="go">3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">((</span><span class="n">df</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">       a    b</span>
+<span class="go">---  ---  ---</span>
+<span class="go">  0   10    2</span>
+<span class="go">  1   12    0</span>
+<span class="go">  2   14    4</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">((</span><span class="n">df</span> <span class="o">*</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">       a    b</span>
+<span class="go">---  ---  ---</span>
+<span class="go">  0   10    3</span>
+<span class="go">  1   12    0</span>
+<span class="go">  2   14    6</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[5 0]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[6. 1.]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">agg</span><span class="p">([</span><span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="s1">&#39;count&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">         a    b</span>
+<span class="go">-----  ---  ---</span>
+<span class="go">var      1    1</span>
+<span class="go">count    3    3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="s1">&#39;c&#39;</span><span class="p">})</span>
+<span class="go">DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=[c: int64, b: int64])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+<span class="go">DataFrame(index=RangeIndex(start=0, stop=3, step=1), columns=[b: int64])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">       index    a    b</span>
+<span class="go">---  -------  ---  ---</span>
+<span class="go">  0        0    5    1</span>
+<span class="go">  1        1    6    0</span>
+<span class="go">  2        2    7    2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">  b    a</span>
+<span class="go">---  ---</span>
+<span class="go">  1    5</span>
+<span class="go">  0    6</span>
+<span class="go">  2    7</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">       a    b</span>
+<span class="go">---  ---  ---</span>
+<span class="go">  1    6    0</span>
+<span class="go">  0    5    1</span>
+<span class="go">  2    7    2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df2</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">df2</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">  b    index_x    a    index_y</span>
+<span class="go">---  ---------  ---  ---------</span>
+<span class="go">  2          2    7          1</span>
 </pre></div>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
@@ -84,11 +135,16 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">Data as a dict of column names -&gt; numpy.ndarray or Series.</p>
+<dt><strong>index</strong></dt>
+<dd></dd>
+<dt><a class="reference internal" href="#baloo.core.frame.DataFrame.dtypes" title="baloo.core.frame.DataFrame.dtypes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dtypes</span></code></a></dt>
+<dd><p class="first last">Series of NumPy dtypes present in the DataFrame with index of column names.</p>
 </dd>
-<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Index or RangeIndex</span></dt>
-<dd><p class="first last">Index of the data.</p>
+<dt><a class="reference internal" href="#baloo.core.frame.DataFrame.columns" title="baloo.core.frame.DataFrame.columns"><code class="xref py py-obj docutils literal notranslate"><span class="pre">columns</span></code></a></dt>
+<dd><p class="first last">Index of the column names present in the DataFrame in order.</p>
+</dd>
+<dt><a class="reference internal" href="#baloo.core.frame.DataFrame.iloc" title="baloo.core.frame.DataFrame.iloc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iloc</span></code></a></dt>
+<dd><p class="first last">Retrieve Indexer by index.</p>
 </dd>
 </dl>
 </td>
@@ -104,28 +160,34 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)}))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">])</span>
 <span class="go">[5 6 7]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">[[</span><span class="s1">&#39;a&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">       a</span>
+<span class="go">---  ---</span>
+<span class="go">  0    5</span>
+<span class="go">  1    6</span>
+<span class="go">  2    7</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">7</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">  Index    a</span>
-<span class="go">-------  ---</span>
-<span class="go">      0    5</span>
-<span class="go">      1    6</span>
+<span class="go">       a</span>
+<span class="go">---  ---</span>
+<span class="go">  0    5</span>
+<span class="go">  1    6</span>
 </pre></div>
 </div>
 </dd></dl>
 
 <dl class="method">
 <dt id="baloo.core.frame.DataFrame.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>data</em>, <em>index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>data=None</em>, <em>index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize a DataFrame object.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
 <dd><p class="first last">Data as a dict of str -&gt; np.ndarray or Series.</p>
 </dd>
-<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Index or RangeIndex, optional</span></dt>
+<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Index or RangeIndex or MultiIndex, optional</span></dt>
 <dd><p class="first last">Index linked to the data; it is assumed to be of the same length.
 RangeIndex by default.</p>
 </dd>
@@ -183,13 +245,121 @@ the Series inherits the index of the DataFrame.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)}))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">  Index    a    b</span>
-<span class="go">-------  ---  ---</span>
-<span class="go">      0    5    0</span>
-<span class="go">      1    6    1</span>
-<span class="go">      2    7    2</span>
+<span class="go">       a    b</span>
+<span class="go">---  ---  ---</span>
+<span class="go">  0    5    0</span>
+<span class="go">  1    6    1</span>
+<span class="go">  2    7    2</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.agg">
+<code class="descname">agg</code><span class="sig-paren">(</span><em>aggregations</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.agg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.agg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multiple aggregations optimized.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>aggregations</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of str</span></dt>
+<dd><p class="first last">Which aggregations to perform.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">DataFrame with the aggregations per column.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="baloo.core.frame.DataFrame.columns">
+<code class="descname">columns</code><a class="headerlink" href="#baloo.core.frame.DataFrame.columns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Index of the column names present in the DataFrame in order.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Index</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.drop">
+<code class="descname">drop</code><span class="sig-paren">(</span><em>columns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.drop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.drop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop 1 or more columns. Any column which does not exist in the DataFrame is skipped, i.e. not removed,
+without raising an exception.</p>
+<p>Unlike Pandas’ drop, this is currently restricted to dropping columns.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>columns</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of str</span></dt>
+<dd><p class="first last">Column name or list of column names to drop.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">A new DataFrame without these columns.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="baloo.core.frame.DataFrame.dtypes">
+<code class="descname">dtypes</code><a class="headerlink" href="#baloo.core.frame.DataFrame.dtypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Series of NumPy dtypes present in the DataFrame with index of column names.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="baloo.core.frame.DataFrame.empty">
+<code class="descname">empty</code><a class="headerlink" href="#baloo.core.frame.DataFrame.empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether the data structure is empty.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>bool</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -237,14 +407,87 @@ the Series inherits the index of the DataFrame.</p>
 </tbody>
 </table>
 <p class="rubric">Examples</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">([(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))]))</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">(((</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)))))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">  Index    a    b</span>
-<span class="go">-------  ---  ---</span>
-<span class="go">      0    5    0</span>
-<span class="go">      1    6    1</span>
+<span class="go">       a    b</span>
+<span class="go">---  ---  ---</span>
+<span class="go">  0    5    0</span>
+<span class="go">  1    6    1</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="baloo.core.frame.DataFrame.iloc">
+<code class="descname">iloc</code><a class="headerlink" href="#baloo.core.frame.DataFrame.iloc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve Indexer by index.</p>
+<p>Supported iloc functionality exemplified below.</p>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">(((</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])))))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">       a    b</span>
+<span class="go">---  ---  ---</span>
+<span class="go">  0    5    1</span>
+<span class="go">  1    6    0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]))]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">       a    b</span>
+<span class="go">---  ---  ---</span>
+<span class="go">  0    5    1</span>
+<span class="go">  2    7    2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.join">
+<code class="descname">join</code><span class="sig-paren">(</span><em>other</em>, <em>on=None</em>, <em>how='left'</em>, <em>lsuffix=None</em>, <em>rsuffix=None</em>, <em>algorithm='merge'</em>, <em>is_on_sorted=True</em>, <em>is_on_unique=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.join"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.join" title="Permalink to this definition">¶</a></dt>
+<dd><p>Database-like join this DataFrame with the other DataFrame.</p>
+<p>Currently assumes the <cite>on</cite> columns are sorted and the on-column(s) values are unique!
+Next work handles the other cases.</p>
+<p>Note there’s no automatic cast if the type of the on columns differs.</p>
+<p>Check DataFrame.merge() for more details.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>other</strong> <span class="classifier-delimiter">:</span> <span class="classifier">DataFrame</span></dt>
+<dd><p class="first last">With which to merge.</p>
+</dd>
+<dt><strong>on</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list or None, optional</span></dt>
+<dd><p class="first last">The columns from both DataFrames on which to join.
+If None, will join on the index if it has the same name.</p>
+</dd>
+<dt><strong>how</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘inner’, ‘left’, ‘right’, ‘outer’}, optional</span></dt>
+<dd><p class="first last">Which kind of join to do.</p>
+</dd>
+<dt><strong>lsuffix</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">Suffix to use on columns that overlap from self.</p>
+</dd>
+<dt><strong>rsuffix</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">Suffix to use on columns that overlap from other.</p>
+</dd>
+<dt><strong>algorithm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘merge’, ‘hash’}, optional</span></dt>
+<dd><p class="first last">Which algorithm to use. Note that for ‘hash’, the <cite>other</cite> DataFrame is the one hashed.</p>
+</dd>
+<dt><strong>is_on_sorted</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If we know that the on columns are already sorted, can employ faster algorithm.</p>
+</dd>
+<dt><strong>is_on_unique</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If we know that the values are unique, can employ faster algorithm.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">DataFrame containing the merge result, with the <cite>on</cite> columns as index.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -258,6 +501,205 @@ the Series inherits the index of the DataFrame.</p>
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
 <dt><strong>Index</strong></dt>
 <dd><p class="first last">Column names as an Index.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.merge">
+<code class="descname">merge</code><span class="sig-paren">(</span><em>other</em>, <em>how='inner'</em>, <em>on=None</em>, <em>suffixes=('_x'</em>, <em>'_y')</em>, <em>algorithm='merge'</em>, <em>is_on_sorted=True</em>, <em>is_on_unique=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Database-like join this DataFrame with the other DataFrame.</p>
+<p>Currently assumes the <cite>on</cite> columns are sorted and the on-column(s) values are unique!
+Next work handles the other cases.</p>
+<p>Note there’s no automatic cast if the type of the on columns differs.</p>
+<p>Algorithms and limitations:</p>
+<ul class="simple">
+<li>Merge algorithms: merge-join or hash-join. Typical pros and cons apply when choosing between the two.
+Merge-join shall be used on fairly equally-sized DataFrames while a hash-join would be better when
+one of the DataFrames is (much) smaller.</li>
+<li>Limitations:<ul>
+<li>Hash-join requires the (smaller) hashed DataFrame
+(more precisely, the on columns) to contain no duplicates!</li>
+<li>Merge-join requires the on-columns to be sorted!</li>
+<li>For unsorted data can only sort a single column! (current Weld limitation)</li>
+</ul>
+</li>
+<li>Sortedness. If the on-columns are sorted, merge-join does not require to sort the data so it can be
+significantly faster. Do add is_on_sorted=True if this is known to be true!</li>
+<li>Uniqueness. If the on-columns data contains duplicates, the algorithm is more complicated, i.e. slow.
+Also hash-join cannot be used on a hashed (smaller) DataFrame with duplicates. Do add is_on_unique=True
+if this is known to be true!</li>
+<li>Setting the above 2 flags incorrectly, e.g. is_on_sorted to True when data is in fact not sorted,
+will produce undefined results.</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>other</strong> <span class="classifier-delimiter">:</span> <span class="classifier">DataFrame</span></dt>
+<dd><p class="first last">With which to merge.</p>
+</dd>
+<dt><strong>how</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘inner’, ‘left’, ‘right’, ‘outer’}, optional</span></dt>
+<dd><p class="first last">Which kind of join to do.</p>
+</dd>
+<dt><strong>on</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list or None, optional</span></dt>
+<dd><p class="first last">The columns from both DataFrames on which to join.
+If None, will join on the index if it has the same name.</p>
+</dd>
+<dt><strong>suffixes</strong> <span class="classifier-delimiter">:</span> <span class="classifier">tuple of str, optional</span></dt>
+<dd><p class="first last">To append on columns not in <cite>on</cite> that have the same name in the DataFrames.</p>
+</dd>
+<dt><strong>algorithm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘merge’, ‘hash’}, optional</span></dt>
+<dd><p class="first last">Which algorithm to use. Note that for ‘hash’, the <cite>other</cite> DataFrame is the one hashed.</p>
+</dd>
+<dt><strong>is_on_sorted</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If we know that the on columns are already sorted, can employ faster algorithm.</p>
+</dd>
+<dt><strong>is_on_unique</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If we know that the values are unique, can employ faster algorithm.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">DataFrame containing the merge result, with the <cite>on</cite> columns as index.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.rename">
+<code class="descname">rename</code><span class="sig-paren">(</span><em>columns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.rename"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.rename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a new DataFrame with renamed columns.</p>
+<p>Currently a simplified version of Pandas’ rename.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>columns</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><p class="first last">Old names to new names.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">With columns renamed, if found.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.reset_index">
+<code class="descname">reset_index</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.reset_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.reset_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a new DataFrame with previous index as column(s).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">DataFrame with the new index a RangeIndex of its length.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.set_index">
+<code class="descname">set_index</code><span class="sig-paren">(</span><em>keys</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.set_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.set_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the index of the DataFrame to be the keys columns.</p>
+<p>Note this means that the old index is removed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>keys</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of str</span></dt>
+<dd><p class="first last">Which column(s) to set as the index.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">DataFrame with the index set to the column(s) corresponding to the keys.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.sort_index">
+<code class="descname">sort_index</code><span class="sig-paren">(</span><em>ascending=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.sort_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.sort_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort the index of the DataFrame.</p>
+<p>Currently MultiIndex is not supported since Weld is missing multiple-column sort.</p>
+<p>Note this is an expensive operation (brings all data to Weld).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>ascending</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">DataFrame sorted according to the index.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.sort_values">
+<code class="descname">sort_values</code><span class="sig-paren">(</span><em>by</em>, <em>ascending=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.sort_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.sort_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort the DataFrame based on a column.</p>
+<p>Unlike Pandas, one can sort by data from both index and regular columns.</p>
+<p>Currently possible to sort only on a single column since Weld is missing multiple-column sort.
+Note this is an expensive operation (brings all data to Weld).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>by</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of str</span></dt>
+<dd><p class="first last">Column names to sort.</p>
+</dd>
+<dt><strong>ascending</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">DataFrame sorted according to the column.</p>
 </dd>
 </dl>
 </td>
@@ -291,12 +733,12 @@ the Series inherits the index of the DataFrame.</p>
 </tbody>
 </table>
 <p class="rubric">Examples</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">([(</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))]))</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">(((</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)))))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">  Index    a    b</span>
-<span class="go">-------  ---  ---</span>
-<span class="go">      1    6    1</span>
-<span class="go">      2    7    2</span>
+<span class="go">       a    b</span>
+<span class="go">---  ---  ---</span>
+<span class="go">  1    6    1</span>
+<span class="go">  2    7    2</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -327,8 +769,8 @@ the Series inherits the index of the DataFrame.</p>
 <span id="baloo-core-series-module"></span><h2>baloo.core.series module<a class="headerlink" href="#module-baloo.core.series" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="baloo.core.series.Series">
-<em class="property">class </em><code class="descclassname">baloo.core.series.</code><code class="descname">Series</code><span class="sig-paren">(</span><em>data</em>, <em>index=None</em>, <em>dtype=None</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="baloo.weld.html#baloo.weld.lazy_result.LazyResult" title="baloo.weld.lazy_result.LazyResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.weld.lazy_result.LazyResult</span></code></a></p>
+<em class="property">class </em><code class="descclassname">baloo.core.series.</code><code class="descname">Series</code><span class="sig-paren">(</span><em>data=None</em>, <em>index=None</em>, <em>dtype=None</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="baloo.weld.html#baloo.weld.lazy_result.LazyArrayResult" title="baloo.weld.lazy_result.LazyArrayResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.weld.lazy_result.LazyArrayResult</span></code></a>, <a class="reference internal" href="#baloo.core.generic.BinaryOps" title="baloo.core.generic.BinaryOps"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.core.generic.BinaryOps</span></code></a>, <a class="reference internal" href="#baloo.core.generic.BitOps" title="baloo.core.generic.BitOps"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.core.generic.BitOps</span></code></a>, <a class="reference internal" href="#baloo.core.generic.BalooCommon" title="baloo.core.generic.BalooCommon"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.core.generic.BalooCommon</span></code></a></p>
 <p>Weld-ed Pandas Series.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
@@ -351,13 +793,23 @@ the Series inherits the index of the DataFrame.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="p">)</span>  <span class="c1"># str</span>
 <span class="go">[0 1 2]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span><span class="o">.</span><span class="n">index</span>
-<span class="go">Index(name=Index, dtype=int64)</span>
+<span class="go">Index(name=None, dtype=int64)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 <span class="go">[0 1 2]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">sr</span><span class="p">)</span>  <span class="c1"># eager computation</span>
 <span class="go">3</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span><span class="o">.</span><span class="n">values</span>
 <span class="go">array([0, 1, 2])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="n">sr</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
+<span class="go">array([2, 3, 4])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="n">sr</span> <span class="o">-</span> <span class="n">bl</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">)))</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
+<span class="go">array([0, 0, 0])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">2</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">var</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">1.0</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">agg</span><span class="p">([</span><span class="s1">&#39;min&#39;</span><span class="p">,</span> <span class="s1">&#39;std&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[0. 1.]</span>
 </pre></div>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
@@ -365,14 +817,14 @@ the Series inherits the index of the DataFrame.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Index or RangeIndex</span></dt>
-<dd><p class="first last">Index linked to the data; it is assumed to be of the same length.</p>
-</dd>
-<dt><strong>dtype</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.dtype</span></dt>
-<dd><p class="first last">Numpy dtype of the elements.</p>
-</dd>
-<dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">Name of the Series.</p>
+<dt><strong>index</strong></dt>
+<dd></dd>
+<dt><strong>dtype</strong></dt>
+<dd></dd>
+<dt><strong>name</strong></dt>
+<dd></dd>
+<dt><a class="reference internal" href="#baloo.core.series.Series.iloc" title="baloo.core.series.Series.iloc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iloc</span></code></a></dt>
+<dd><p class="first last">Retrieve Indexer by index.</p>
 </dd>
 </dl>
 </td>
@@ -402,17 +854,17 @@ the Series inherits the index of the DataFrame.</p>
 
 <dl class="method">
 <dt id="baloo.core.series.Series.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>data</em>, <em>index=None</em>, <em>dtype=None</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>data=None</em>, <em>index=None</em>, <em>dtype=None</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize a Series object.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.ndarray or WeldObject</span></dt>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.ndarray or WeldObject, optional</span></dt>
 <dd><p class="first last">Raw data or Weld expression.</p>
 </dd>
-<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Index or RangeIndex, optional</span></dt>
+<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Index or RangeIndex or MultiIndex, optional</span></dt>
 <dd><p class="first last">Index linked to the data; it is assumed to be of the same length.
 RangeIndex by default.</p>
 </dd>
@@ -430,18 +882,23 @@ RangeIndex by default.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="baloo.core.series.Series.__len__">
-<code class="descname">__len__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.__len__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.__len__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Eagerly get the length of the Series.</p>
-<p>Note that if the length is unknown (such as for a WeldObject),
-it will be eagerly computed.</p>
+<dt id="baloo.core.series.Series.agg">
+<code class="descname">agg</code><span class="sig-paren">(</span><em>aggregations</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.agg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.agg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multiple aggregations optimized.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>int</strong></dt>
-<dd><p class="first last">Length of the Series.</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>aggregations</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of str</span></dt>
+<dd><p class="first last">Which aggregations to perform.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd><p class="first last">Series with resulting aggregations.</p>
 </dd>
 </dl>
 </td>
@@ -521,6 +978,8 @@ it will be eagerly computed.</p>
 <span class="go">2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
 <span class="go">[0 1]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]))]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">[0 2]</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -557,17 +1016,70 @@ it will be eagerly computed.</p>
 </div>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="baloo.core.series.Series.values">
-<code class="descname">values</code><a class="headerlink" href="#baloo.core.series.Series.values" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for <cite>data</cite> attribute.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-baloo.core.generic">
+<span id="baloo-core-generic-module"></span><h2>baloo.core.generic module<a class="headerlink" href="#module-baloo.core.generic" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="baloo.core.generic.BalooCommon">
+<em class="property">class </em><code class="descclassname">baloo.core.generic.</code><code class="descname">BalooCommon</code><a class="reference internal" href="_modules/baloo/core/generic.html#BalooCommon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.generic.BalooCommon" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="baloo.core.generic.BalooCommon.empty">
+<code class="descname">empty</code><a class="headerlink" href="#baloo.core.generic.BalooCommon.empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether the data structure is empty.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>numpy.ndarray or WeldObject</strong></dt>
-<dd><p class="first last">The internal data representation.</p>
+<dt><strong>bool</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.generic.BalooCommon.evaluate">
+<code class="descname">evaluate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/generic.html#BalooCommon.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.generic.BalooCommon.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate by returning object of the same type but now containing raw data.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="baloo.core.generic.BalooCommon.values">
+<code class="descname">values</code><a class="headerlink" href="#baloo.core.generic.BalooCommon.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>The internal data representation.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="baloo.core.generic.BinaryOps">
+<em class="property">class </em><code class="descclassname">baloo.core.generic.</code><code class="descname">BinaryOps</code><a class="reference internal" href="_modules/baloo/core/generic.html#BinaryOps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.generic.BinaryOps" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="baloo.core.generic.BitOps">
+<em class="property">class </em><code class="descclassname">baloo.core.generic.</code><code class="descname">BitOps</code><a class="reference internal" href="_modules/baloo/core/generic.html#BitOps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.generic.BitOps" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="baloo.core.generic.IndexCommon">
+<em class="property">class </em><code class="descclassname">baloo.core.generic.</code><code class="descname">IndexCommon</code><a class="reference internal" href="_modules/baloo/core/generic.html#IndexCommon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.generic.IndexCommon" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="attribute">
+<dt id="baloo.core.generic.IndexCommon.name">
+<code class="descname">name</code><a class="headerlink" href="#baloo.core.generic.IndexCommon.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the Index.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>str</strong></dt>
+<dd><p class="first last">name</p>
 </dd>
 </dl>
 </td>
@@ -598,8 +1110,11 @@ it will be eagerly computed.</p>
 
 
 <h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Intro to Baloo</a></li>
+</ul>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="baloo.html">baloo package</a><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="baloo.html">Baloo Library</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="baloo.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#">baloo.core package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baloo.weld.html">baloo.weld package</a></li>
@@ -613,8 +1128,8 @@ it will be eagerly computed.</p>
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
-  <li><a href="baloo.html">baloo package</a><ul>
-      <li>Previous: <a href="baloo.html" title="previous chapter">baloo package</a></li>
+  <li><a href="baloo.html">Baloo Library</a><ul>
+      <li>Previous: <a href="baloo.html" title="previous chapter">Baloo Library</a></li>
       <li>Next: <a href="baloo.core.indexes.html" title="next chapter">baloo.core.indexes package</a></li>
   </ul></li>
   </ul></li>
@@ -632,6 +1147,14 @@ it will be eagerly computed.</p>
     </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -640,8 +1163,8 @@ it will be eagerly computed.</p>
       &copy;2018, Radu Jica.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.8</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.11</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
       <a href="_sources/baloo.core.rst.txt"
