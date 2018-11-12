@@ -494,7 +494,7 @@ def weld_sort(arrays, weld_types, readable_text, ascending=True):
 
     Parameters
     ----------
-    arrays : list of numpy.ndarray or WeldObject
+    arrays : list of (numpy.ndarray or WeldObject)
         Arrays to put in a struct.
     weld_types : list of WeldType
         The Weld types of the arrays in the same order.

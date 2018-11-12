@@ -25,7 +25,7 @@ class MultiIndex(IndexCommon, BalooCommon):
     --------
     >>> import baloo as bl
     >>> import numpy as np
-    >>> ind = bl.MultiIndex([np.array([1, 2, 3]), np.array([4, 5, 6], dtype=np.float64)], names=['i1', 'i2'])
+    >>> ind = bl.MultiIndex([[1, 2, 3], np.array([4, 5, 6], dtype=np.float64)], names=['i1', 'i2'])
     >>> ind  # repr
     MultiIndex(names=['i1', 'i2'], dtypes=[dtype('int64'), dtype('float64')])
     >>> print(ind)  # str
@@ -45,13 +45,13 @@ class MultiIndex(IndexCommon, BalooCommon):
 
         Parameters
         ----------
-        data : list of numpy.ndarray or list of Index
+        data : list of (numpy.ndarray or Index or list)
             The internal data.
         names : list of str, optional
             The names of the data.
 
         """
-        check_inner_types(check_type(data, list), (np.ndarray, Index))
+        check_inner_types(check_type(data, list), (np.ndarray, Index, list))
         self._length = infer_length(data)
         self.name = None
         self.names = check_inner_types(check_type(names, list), str)
@@ -221,6 +221,8 @@ def _init_indexes(data, names):
     for n, v in zip(names, data):
         if isinstance(v, np.ndarray):
             v = Index(v, v.dtype, n)
+        elif isinstance(v, list):
+            v = Index(v, name=n)
         data_as_indexes.append(v)
 
     return data_as_indexes

@@ -1,7 +1,8 @@
 import numpy as np
 
 from ..generic import BinaryOps, IndexCommon, BalooCommon
-from ...core.utils import check_type, infer_dtype, is_scalar, check_weld_bit_array, check_valid_int_slice
+from ...core.utils import check_type, infer_dtype, is_scalar, check_weld_bit_array, check_valid_int_slice, \
+    convert_to_numpy
 from ...weld import LazyArrayResult, numpy_to_weld_type, weld_filter, weld_slice, \
     weld_compare, weld_tail, weld_array_op, weld_element_wise_op, WeldObject, weld_iloc_indices, \
     weld_iloc_indices_with_missing
@@ -39,7 +40,7 @@ class Index(LazyArrayResult, BinaryOps, IndexCommon, BalooCommon):
 
         Parameters
         ----------
-        data : np.ndarray or WeldObject
+        data : np.ndarray or WeldObject or list
             Raw data or Weld expression.
         dtype : np.dtype, optional
             Numpy dtype of the elements. Inferred from `data` by default.
@@ -47,7 +48,7 @@ class Index(LazyArrayResult, BinaryOps, IndexCommon, BalooCommon):
             Name of the Index.
 
         """
-        check_type(data, (np.ndarray, WeldObject))
+        data = _process_input_data(data)
         self.dtype = infer_dtype(data, check_type(dtype, np.dtype))
         self.name = check_type(name, str)
         self._length = len(data) if isinstance(data, np.ndarray) else None
@@ -239,3 +240,12 @@ class Index(LazyArrayResult, BinaryOps, IndexCommon, BalooCommon):
             return Index(weld_tail(self.weld_expr, length, n),
                          self.dtype,
                          self.name)
+
+
+def _process_input_data(data):
+    check_type(data, (np.ndarray, WeldObject, list))
+
+    if isinstance(data, list):
+        data = convert_to_numpy(data)
+
+    return data

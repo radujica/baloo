@@ -2,11 +2,12 @@ import numpy as np
 
 from .generic import BinaryOps, BitOps, BalooCommon
 from .indexes import Index, MultiIndex
-from .utils import infer_dtype, default_index, check_type, is_scalar, check_valid_int_slice, check_weld_bit_array
+from .utils import infer_dtype, default_index, check_type, is_scalar, check_valid_int_slice, check_weld_bit_array, \
+    convert_to_numpy
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
     weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, LazyDoubleResult, LazyScalarResult, \
     weld_mean, weld_variance, weld_standard_deviation, WeldObject, weld_agg, weld_iloc_indices, \
-    weld_iloc_indices_with_missing, supported_dtype_chars
+    weld_iloc_indices_with_missing
 
 
 class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
@@ -308,9 +309,7 @@ def _process_input_data(data):
         check_type(data, (np.ndarray, WeldObject, list))
 
         if isinstance(data, list):
-            data = np.array(data)
-            if data.dtype.char not in supported_dtype_chars:
-                raise TypeError('dtype {} is not supported'.format(data.dtype))
+            data = convert_to_numpy(data)
 
         return data
 

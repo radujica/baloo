@@ -247,7 +247,7 @@ def weld_arrays_to_vec_of_struct(arrays, weld_types):
 
     Parameters
     ----------
-    arrays : list of numpy.ndarray or WeldObject
+    arrays : list of (numpy.ndarray or WeldObject)
         Arrays to put in a struct.
     weld_types : list of WeldType
         The Weld types of the arrays in the same order.

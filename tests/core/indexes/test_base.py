@@ -17,6 +17,13 @@ def assert_index_equal(actual, expected):
 
 
 class TestBaseIndex(object):
+    def test_init_list(self):
+        data = [1, 2, 3]
+        actual = Index(data)
+        expected = Index(np.array(data))
+
+        assert_index_equal(actual, expected)
+
     def test_evaluate(self, data_i64):
         actual = Index(data_i64)
         expected = Index(data_i64, np.dtype(np.int64), None)

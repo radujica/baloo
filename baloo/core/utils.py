@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..weld import WeldObject, weld_count, WeldBit, WeldLong, LazyResult
+from ..weld import WeldObject, weld_count, WeldBit, WeldLong, LazyResult, supported_dtype_chars
 
 
 def check_type(data, expected_types):
@@ -113,3 +113,11 @@ def replace_slice_defaults(slice_, default_start, default_stop, default_step):
     step = replace_if_none(slice_.step, default_step)
 
     return slice(start, stop, step)
+
+
+def convert_to_numpy(data):
+    data = np.array(data)
+    if data.dtype.char not in supported_dtype_chars:
+        raise TypeError('dtype {} is not supported'.format(data.dtype))
+
+    return data
