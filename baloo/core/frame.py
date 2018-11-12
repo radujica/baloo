@@ -3,27 +3,27 @@ from collections import OrderedDict
 import numpy as np
 from tabulate import tabulate
 
-from .generic import BinaryOps
-from .indexes import RangeIndex, Index, MultiIndex
-from .series import Series
+from .generic import BinaryOps, BalooCommon
+from .indexes import Index, MultiIndex
+from .series import Series, _series_slice, _series_filter, _series_element_wise_op, _series_agg, _series_tail, \
+    _series_iloc, _series_iloc_with_missing
 from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
-    check_weld_bit_array, check_valid_int_slice, as_list
+    check_weld_bit_array, check_valid_int_slice, as_list, default_index
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
     weld_cast_double, WeldDouble, weld_sort, LazyLongResult, weld_merge_join, weld_iloc_indices, \
     weld_merge_outer_join
 
 
-# TODO: handle empty dataframe case throughout operations
-# TODO: wrap all internal data in Series to avoid always checking for raw/weldobject ~ like in multiindex
-class DataFrame(BinaryOps):
+# TODO: maybe add type hints
+class DataFrame(BinaryOps, BalooCommon):
     """ Weld-ed pandas DataFrame.
 
     Attributes
     ----------
-    data : dict
-        Data as a dict of column names -> numpy.ndarray or Series.
-    index : Index or RangeIndex
-        Index of the data.
+    index
+    dtypes
+    columns
+    iloc
 
     See Also
     --------
@@ -47,19 +47,18 @@ class DataFrame(BinaryOps):
       2    7    2
     >>> print(len(df))
     3
-    >>> print((df * 2).evaluate())  # note that atm there is no type casting, i.e. if b was float32, it would fail
+    >>> print((df * 2).evaluate())
            a    b
     ---  ---  ---
       0   10    2
       1   12    0
       2   14    4
-    >>> sr = bl.Series(np.array([2] * 3))
-    >>> print((df * sr).evaluate())
+    >>> print((df * [2, 3]).evaluate())
            a    b
     ---  ---  ---
-      0   10    2
+      0   10    3
       1   12    0
-      2   14    4
+      2   14    6
     >>> print(df.min().evaluate())
     [5 0]
     >>> print(df.mean().evaluate())
@@ -86,11 +85,11 @@ class DataFrame(BinaryOps):
       0    6
       2    7
     >>> print(df.sort_values('b').evaluate())
-      index    a    b
-    -------  ---  ---
-          1    6    0
-          0    5    1
-          2    7    2
+           a    b
+    ---  ---  ---
+      1    6    0
+      0    5    1
+      2    7    2
     >>> df2 = bl.DataFrame({'b': np.array([0, 2])})
     >>> print(df.merge(df2, on='b').evaluate())
       b    index_x    a    index_y
@@ -98,47 +97,24 @@ class DataFrame(BinaryOps):
       2          2    7          1
 
     """
-    @staticmethod
-    def _default_dataframe_index(data, length):
-        from .indexes import RangeIndex
+    _empty_text = 'Empty DataFrame'
 
-        if length is not None:
-            return RangeIndex(length)
-        else:
-            # empty
-            if len(data) == 0:
-                return None
-            else:
-                # must encode from a random column then
-                keys = list(data.keys())
-
-                return RangeIndex(weld_count(data[keys[0]]))
-
-    @staticmethod
-    def _preprocess_data(data):
-        for k, v in data.items():
-            if isinstance(v, Series):
-                v.name = k
-
-        return data
-
-    def __init__(self, data, index=None):
+    def __init__(self, data=None, index=None):
         """Initialize a DataFrame object.
 
         Parameters
         ----------
-        data : dict
+        data : dict, optional
             Data as a dict of str -> np.ndarray or Series.
         index : Index or RangeIndex or MultiIndex, optional
             Index linked to the data; it is assumed to be of the same length.
             RangeIndex by default.
 
         """
-        check_inner_types(check_type(data, dict).values(), (np.ndarray, Series))
-        self.data = DataFrame._preprocess_data(data)
-        # TODO: length could also be inferred from index, if passed
-        self._length = infer_length(data.values())
-        self.index = DataFrame._default_dataframe_index(data, self._length) if index is None else index
+        data = _check_input_data(data)
+        self._length = _infer_length(index, data)
+        self.index = _process_index(index, data, self._length)
+        self._data = _process_data(data, self.index)
 
     @property
     def values(self):
@@ -150,28 +126,46 @@ class DataFrame(BinaryOps):
             The internal dict data representation.
 
         """
-        return self.data
+        return self._data
+
+    @property
+    def empty(self):
+        return self.index.empty and (len(self._data) == 0 or all(series.empty for series in self._iter()))
 
     def _gather_dtypes(self):
-        return OrderedDict(((k, v.dtype) for k, v in self.data.items()))
+        return OrderedDict(((k, v.dtype) for k, v in self._data.items()))
 
     @property
     def dtypes(self):
+        """Series of NumPy dtypes present in the DataFrame with index of column names.
+
+        Returns
+        -------
+        Series
+
+        """
         return Series(np.array(list(self._gather_dtypes().values()), dtype=np.bytes_),
                       self.keys())
 
     def _gather_column_names(self):
-        return list(self.data.keys())
+        return list(self._data.keys())
 
     @property
     def columns(self):
+        """Index of the column names present in the DataFrame in order.
+
+        Returns
+        -------
+        Index
+
+        """
         return Index(np.array(self._gather_column_names(), dtype=np.bytes_), np.dtype(np.bytes_))
 
     def _gather_data_for_weld(self):
-        return [self[column_name].values for column_name in self]
+        return [column.weld_expr for column in self._data.values()]
 
     def _gather_weld_types(self):
-        return [self[column_name].weld_type for column_name in self]
+        return [column.weld_type for column in self._data.values()]
 
     def __len__(self):
         """Eagerly get the length of the DataFrame.
@@ -185,24 +179,9 @@ class DataFrame(BinaryOps):
             Length of the DataFrame.
 
         """
-        if self._length is not None:
-            return self._length
-        else:
-            # first check again for raw data
-            length = infer_length(self.data.values())
-            if length is None:
-                keys = list(self.data.keys())
+        self._length = LazyLongResult(_obtain_length(self._length, self._data)).evaluate()
 
-                # empty DataFrame
-                if len(keys) == 0:
-                    return 0
-
-                # pick a 'random' column (which is a Series) and compute its length
-                length = len(self.data[keys[0]])
-
-            self._length = length
-
-            return length
+        return self._length
 
     @property
     def iloc(self):
@@ -237,42 +216,42 @@ class DataFrame(BinaryOps):
                                                  columns)
 
     def __str__(self):
-        # TODO: find a better way to handle empty dataframe; this assumes it's impossible to have data with index=None
-        if self.index is None:
-            return 'Empty DataFrame'
+        if self.empty:
+            return self._empty_text
 
+        default_index_name = ' '
         str_data = OrderedDict()
-
-        if self.index.name is None:
-            index_name = ' '
-        else:
-            index_name = self.index.name
-
-        str_data[index_name] = shorten_data(self.index.values)
-
-        for column_name in self:
-            str_data[column_name] = shorten_data(self[column_name].values)
+        str_data.update((name, data.values) for name, data in self.index._gather_data(default_index_name).items())
+        str_data.update((column.name, shorten_data(column.values)) for column in self._iter())
 
         return tabulate(str_data, headers='keys')
 
     def _comparison(self, other, comparison):
         if is_scalar(other):
-            new_data = OrderedDict((column_name, self[column_name]._comparison(other, comparison))
-                                   for column_name in self)
+            df = _drop_str_columns(self)
+            new_data = OrderedDict((column.name, column._comparison(other, comparison))
+                                   for column in df._iter())
 
             return DataFrame(new_data, self.index)
         else:
             raise TypeError('Can currently only compare with scalars')
 
     def _element_wise_operation(self, other, operation):
-        if isinstance(other, LazyArrayResult):
-            new_data = OrderedDict((column_name, Series._series_array_op(self[column_name], other, operation))
-                                   for column_name in self)
+        if isinstance(other, list):
+            check_inner_types(other, (int, float))
+
+            df = _drop_str_columns(self)
+            if len(other) != len(df._gather_column_names()):
+                raise ValueError('Expected same number of values in other as the number of non-string columns')
+
+            new_data = OrderedDict((column.name, _series_element_wise_op(column, scalar, operation))
+                                   for column, scalar in zip(df._iter(), other))
 
             return DataFrame(new_data, self.index)
         elif is_scalar(other):
-            new_data = OrderedDict((column_name, Series._series_element_wise_op(self[column_name], other, operation))
-                                   for column_name in self)
+            df = _drop_str_columns(self)
+            new_data = OrderedDict((column.name, _series_element_wise_op(column, other, operation))
+                                   for column in df._iter())
 
             return DataFrame(new_data, self.index)
         else:
@@ -302,14 +281,7 @@ class DataFrame(BinaryOps):
 
         """
         if isinstance(item, str):
-            value = self.data[item]
-
-            if isinstance(value, np.ndarray):
-                value = Series(value, self.index, value.dtype, item)
-                # store the newly created Series to avoid remaking it
-                self.data[item] = value
-
-            return value
+            return self._data[item]
         elif isinstance(item, list):
             check_inner_types(item, str)
             new_data = OrderedDict()
@@ -318,23 +290,23 @@ class DataFrame(BinaryOps):
                 if column_name not in self:
                     raise KeyError('Column name not in DataFrame: {}'.format(str(column_name)))
 
-                new_data[column_name] = self.data[column_name]
+                new_data[column_name] = self._data[column_name]
 
             return DataFrame(new_data, self.index)
         elif isinstance(item, LazyArrayResult):
             check_weld_bit_array(item)
 
             new_index = self.index[item]
-            new_data = OrderedDict((column_name, Series._filter_series(self[column_name], item, new_index))
-                                   for column_name in self)
+            new_data = OrderedDict((column.name, _series_filter(column, item, new_index))
+                                   for column in self._iter())
 
             return DataFrame(new_data, new_index)
         elif isinstance(item, slice):
             check_valid_int_slice(item)
 
             new_index = self.index[item]
-            new_data = OrderedDict((column_name, Series._slice_series(self[column_name], item, new_index))
-                                   for column_name in self)
+            new_data = OrderedDict((column.name, _series_slice(column, item, new_index))
+                                   for column in self._iter())
 
             return DataFrame(new_data, new_index)
         else:
@@ -372,15 +344,21 @@ class DataFrame(BinaryOps):
         if isinstance(value, Series):
             value.index = self.index
             value.name = key
+        else:
+            value = Series(value, self.index, value.dtype, key)
 
-        self.data[key] = value
+        self._data[key] = value
+
+    def _iter(self):
+        for column in self._data.values():
+            yield column
 
     def __iter__(self):
-        for column_name in self.data:
+        for column_name in self._data:
             yield column_name
 
     def __contains__(self, item):
-        return item in self.data
+        return item in self._data
 
     def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
         """Evaluates by creating a DataFrame containing evaluated data and index.
@@ -394,11 +372,9 @@ class DataFrame(BinaryOps):
 
         """
         evaluated_index = self.index.evaluate(verbose, decode, passes, num_threads, apply_experimental)
-
-        evaluated_data = OrderedDict()
-        for column_name in self:
-            evaluated_data[column_name] = self[column_name].evaluate(verbose, decode, passes,
-                                                                     num_threads, apply_experimental)
+        evaluated_data = OrderedDict((column.name, column.evaluate(verbose, decode, passes,
+                                                                   num_threads, apply_experimental))
+                                     for column in self._iter())
 
         return DataFrame(evaluated_data, evaluated_index)
 
@@ -450,19 +426,11 @@ class DataFrame(BinaryOps):
           2    7    2
 
         """
-        if self._length is not None:
-            length = self._length
-        else:
-            # first check again for raw data
-            length = infer_length(self.data.values())
-            # if still None, get a random column and encode length
-            if length is None:
-                keys = list(self.data.keys())
-                length = LazyLongResult(weld_count(self[keys[0]]))
+        length = _obtain_length(self._length, self._data)
 
         new_index = self.index.tail(n)
-        new_data = OrderedDict((column_name, Series._tail_series(self[column_name], new_index, length, n))
-                               for column_name in self)
+        new_data = OrderedDict((column.name, _series_tail(column, new_index, length, n))
+                               for column in self._iter())
 
         return DataFrame(new_data, new_index)
 
@@ -475,9 +443,7 @@ class DataFrame(BinaryOps):
              Column names as an Index.
 
         """
-        data = np.array(list(self.data.keys()), dtype=np.bytes_)
-
-        return Index(data, np.dtype(np.bytes_))
+        return self.columns
 
     def rename(self, columns):
         """Returns a new DataFrame with renamed columns.
@@ -498,9 +464,9 @@ class DataFrame(BinaryOps):
         new_data = OrderedDict()
         for column_name in self:
             if column_name in columns.keys():
-                new_data[columns[column_name]] = self.data[column_name]
+                new_data[columns[column_name]] = self._data[column_name]
             else:
-                new_data[column_name] = self.data[column_name]
+                new_data[column_name] = self._data[column_name]
 
         return DataFrame(new_data, self.index)
 
@@ -523,31 +489,38 @@ class DataFrame(BinaryOps):
         """
         if isinstance(columns, str):
             new_data = OrderedDict()
+            if columns not in self._gather_column_names():
+                raise KeyError('Key {} not found'.format(columns))
+
             for column_name in self:
                 if column_name != columns:
-                    new_data[column_name] = self.data[column_name]
+                    new_data[column_name] = self._data[column_name]
 
             return DataFrame(new_data, self.index)
         elif isinstance(columns, list):
-            new_data = OrderedDict()
-            for column_name in self:
-                if column_name not in columns:
-                    new_data[column_name] = self.data[column_name]
+            check_inner_types(columns, str)
 
-            return DataFrame(new_data, self.index)
+            df = self
+            for column in columns:
+                df = df.drop(column)
+
+            return df
         else:
             raise TypeError('Expected columns as a str or a list of str')
 
     # TODO: currently if the data has multiple types, the results are casted to f64; perhaps be more flexible about it
     # TODO: cast data to relevant 64-bit format pre-aggregation ~ i16, i32 -> i64, f32 -> f64
-    # TODO: update gather_dtypes, str check
     def _aggregate_columns(self, func_name):
-        new_index = self.keys()
+        df = _drop_str_columns(self)
+        if len(df._data) == 0:
+            return Series()
 
-        agg_lazy_results = [getattr(self[column_name], func_name)() for column_name in self]
+        new_index = df.keys()
+
+        agg_lazy_results = [getattr(column, func_name)() for column in df._iter()]
 
         # if there are multiple types, cast to float64
-        if len(set(self.dtypes.values)) > 1:
+        if len(set(df._gather_dtypes().values())) > 1:
             weld_type = WeldDouble()
             dtype = weld_to_numpy_dtype(weld_type)
             agg_lazy_results = (weld_cast_double(result.weld_expr) for result in agg_lazy_results)
@@ -600,9 +573,14 @@ class DataFrame(BinaryOps):
         """
         check_type(aggregations, list)
 
+        df = _drop_str_columns(self)
+        if len(df._data) == 0:
+            # conforming to what pandas does
+            raise ValueError('No results')
+
         new_index = Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_))
-        new_data = OrderedDict((column_name, Series._agg_series(self[column_name], aggregations, new_index))
-                               for column_name in self)
+        new_data = OrderedDict((column.name, _series_agg(column, aggregations, new_index))
+                               for column in df._iter())
 
         return DataFrame(new_data, new_index)
 
@@ -617,33 +595,13 @@ class DataFrame(BinaryOps):
         """
         new_columns = OrderedDict()
 
-        # assumes at least 1 column
-        length = self._length
-        if length is None:
-            length = infer_length(self.data.values())
-        if length is None:
-            a_column = self[list(self.data.keys())[-1]]
-            length = weld_count(a_column.values)
-        new_index = RangeIndex(0, length, 1)
+        new_index = default_index(_obtain_length(self._length, self._data))
 
-        # first add the index, then the other columns
-        old_index = self.index
-        if isinstance(old_index, Index):
-            old_index.name = 'index'
-            old_index = [old_index]
-        elif isinstance(old_index, MultiIndex):
-            old_index = old_index.values
-
-        for i, column in enumerate(old_index):
-            if column.name is None:
-                new_name = 'level_' + str(i)
-            else:
-                new_name = column.name
-
-            new_columns[new_name] = Series(column.values, new_index, column.dtype, new_name)
+        new_columns.update((name, Series(data.values, new_index, data.dtype, name))
+                           for name, data in self.index._gather_data().items())
 
         # the data/columns
-        new_columns.update(self.data)
+        new_columns.update(self._data)
 
         return DataFrame(new_columns, new_index)
 
@@ -664,7 +622,7 @@ class DataFrame(BinaryOps):
 
         """
         if isinstance(keys, str):
-            column = self[keys]
+            column = self._data[keys]
             new_index = Index(column.values, column.dtype, column.name)
 
             new_data = OrderedDict(self.values)
@@ -676,7 +634,7 @@ class DataFrame(BinaryOps):
 
             new_index_data = []
             for column_name in keys:
-                column = self[column_name]
+                column = self._data[column_name]
                 new_index_data.append(Index(column.values, column.dtype, column.name))
             new_index = MultiIndex(new_index_data, keys)
 
@@ -687,17 +645,6 @@ class DataFrame(BinaryOps):
             return DataFrame(new_data, new_index)
         else:
             raise TypeError('Expected a string or a list of strings')
-
-    @staticmethod
-    def _extract_index_names(index):
-        if isinstance(index, MultiIndex):
-            return index.names
-        else:
-            name = index.name
-            if name is None:
-                name = 'index'
-
-            return [name]
 
     def sort_index(self, ascending=True):
         """Sort the index of the DataFrame.
@@ -719,7 +666,7 @@ class DataFrame(BinaryOps):
         if isinstance(self.index, MultiIndex):
             raise NotImplementedError('Weld does not yet support sorting on multiple columns')
 
-        return self.sort_values(DataFrame._extract_index_names(self.index), ascending)
+        return self.sort_values(self.index._gather_names(), ascending)
 
     def sort_values(self, by, ascending=True):
         """Sort the DataFrame based on a column.
@@ -757,91 +704,12 @@ class DataFrame(BinaryOps):
                                    ascending=ascending)
 
         new_index = self.index._iloc_indices(sorted_indices)
-        new_columns = [self[column_name] for column_name in self]
+        new_columns = list(self._iter())
         new_column_names = [column.name for column in new_columns]
-        new_columns = [column.iloc._iloc_series(sorted_indices, new_index) for column in new_columns]
+        new_columns = [_series_iloc(column, sorted_indices, new_index) for column in new_columns]
         new_data = OrderedDict(zip(new_column_names, new_columns))
 
         return DataFrame(new_data, new_index)
-
-    @staticmethod
-    def _compute_on(self, other, on, all_names_self, all_names_other):
-        if on is None:
-            if not isinstance(self.index, type(other.index)):
-                raise ValueError('Expected indexes to be of the same type when on=None')
-
-            error_message = 'When on=None, the names of both indexes must be the same'
-            # TODO: could make MultiIndex.name property point to .names
-            if isinstance(self.index, MultiIndex):
-                if self.index.names == other.index.names:
-                    return self.index.names
-                else:
-                    raise ValueError(error_message)
-            else:
-                if self.index.name == other.index.name:
-                    return [self.index.name]
-                else:
-                    raise ValueError(error_message)
-        else:
-            if isinstance(on, str):
-                on = [on]
-
-            set_on = set(on)
-            if not set_on.issubset(set(all_names_self)):
-                raise ValueError('On column(s) not included in the self DataFrame')
-            if not set_on.issubset(set(all_names_other)):
-                raise ValueError('On column(s) not included in the other DataFrame')
-
-        return on
-
-    @staticmethod
-    def _compute_new_names(names_self, names_other, suffixes):
-        common_names = set(names_self).intersection(set(names_other))
-        self_new_names = names_self
-        other_new_names = names_other
-
-        if len(common_names) != 0:
-            for name in common_names:
-                self_new_names[self_new_names.index(name)] += suffixes[0]
-                other_new_names[other_new_names.index(name)] += suffixes[1]
-
-        return self_new_names, other_new_names
-
-    # TODO: feels too intricate/complicated after generalization; review later
-    @staticmethod
-    def _compute_new_index(weld_objects_indexes, how, on, self_on_cols, other_on_cols, filter_func):
-        if how in ['inner', 'left']:
-            extract_index_from = self_on_cols
-            index_index = 0
-        else:
-            extract_index_from = other_on_cols
-            index_index = 1
-
-        if how == 'outer':
-            data_arg = 'weld_objects_indexes[2]'
-        else:
-            data_arg = 'column.values'
-
-        if len(on) > 1:
-            new_indexes = []
-            data_arg = data_arg if how != 'outer' else data_arg + '[i]'
-            for i, column_name in enumerate(on):
-                column = extract_index_from[column_name]
-                new_indexes.append(Index(filter_func(eval(data_arg),
-                                                     column.weld_type,
-                                                     weld_objects_indexes[index_index]),
-                                         column.dtype,
-                                         column.name))
-            new_index = MultiIndex(new_indexes, on)
-        else:
-            column = extract_index_from[on[0]]
-            new_index = Index(filter_func(eval(data_arg),
-                                          column.weld_type,
-                                          weld_objects_indexes[index_index]),
-                              column.dtype,
-                              column.name)
-
-        return new_index
 
     def merge(self, other, how='inner', on=None, suffixes=('_x', '_y'),
               algorithm='merge', is_on_sorted=True, is_on_unique=True):
@@ -910,9 +778,9 @@ class DataFrame(BinaryOps):
 
         self_reset = self.reset_index()
         other_reset = other.reset_index()
-        on = DataFrame._compute_on(self, other, on,
-                                   self_reset._gather_column_names(),
-                                   other_reset._gather_column_names())
+        on = _compute_on(self, other, on,
+                         self_reset._gather_column_names(),
+                         other_reset._gather_column_names())
         self_on_cols = self_reset[on]
         other_on_cols = other_reset[on]
 
@@ -923,15 +791,15 @@ class DataFrame(BinaryOps):
 
             if how == 'inner':
                 index_filter_func = weld_iloc_indices
-                data_filter_func = '_iloc_series'
+                data_filter_func = _series_iloc
                 weld_merge_func = weld_merge_join
             elif how in {'left', 'right'}:
                 index_filter_func = fake_filter_func
-                data_filter_func = '_iloc_series_with_missing'
+                data_filter_func = _series_iloc_with_missing
                 weld_merge_func = weld_merge_join
             else:
                 index_filter_func = fake_filter_func
-                data_filter_func = '_iloc_series_with_missing'
+                data_filter_func = _series_iloc_with_missing
                 weld_merge_func = weld_merge_outer_join
 
             weld_objects_indexes = weld_merge_func(self_on_cols._gather_data_for_weld(),
@@ -940,27 +808,22 @@ class DataFrame(BinaryOps):
                                                    other_on_cols._gather_weld_types(),
                                                    how, is_on_sorted, is_on_unique, 'merge-join')
 
-            new_index = DataFrame._compute_new_index(weld_objects_indexes,
-                                                     how,
-                                                     on,
-                                                     self_on_cols,
-                                                     other_on_cols,
-                                                     index_filter_func)
+            new_index = _compute_new_index(weld_objects_indexes, how, on,
+                                           self_on_cols, other_on_cols,
+                                           index_filter_func)
 
             new_data = OrderedDict()
             self_no_on = self_reset.drop(on)
             other_no_on = other_reset.drop(on)
-            self_new_names, other_new_names = DataFrame._compute_new_names(self_no_on._gather_column_names(),
-                                                                           other_no_on._gather_column_names(),
-                                                                           suffixes)
+            self_new_names, other_new_names = _compute_new_names(self_no_on._gather_column_names(),
+                                                                 other_no_on._gather_column_names(),
+                                                                 suffixes)
 
             for column_name, new_name in zip(self_no_on, self_new_names):
-                new_data[new_name] = getattr(self_no_on[column_name].iloc,
-                                             data_filter_func)(weld_objects_indexes[0], new_index)
+                new_data[new_name] = data_filter_func(self_no_on[column_name], weld_objects_indexes[0], new_index)
 
             for column_name, new_name in zip(other_no_on, other_new_names):
-                new_data[new_name] = getattr(other_no_on[column_name].iloc,
-                                             data_filter_func)(weld_objects_indexes[1], new_index)
+                new_data[new_name] = data_filter_func(other_no_on[column_name], weld_objects_indexes[1], new_index)
 
             return DataFrame(new_data, new_index)
         elif algorithm == 'hash':
@@ -1022,3 +885,154 @@ class DataFrame(BinaryOps):
         # TODO i.e. df(ind + a, b) join df(ind2 + b, c) does work and the index is now called ind
 
         return self.merge(other, how, on, (lsuffix, rsuffix), algorithm, is_on_sorted, is_on_unique)
+
+
+def _default_index(dataframe_data, length):
+    if length is not None:
+        return default_index(length)
+    else:
+        if len(dataframe_data) == 0:
+            return default_index(0)
+        else:
+            # must encode from a random column then
+            return default_index(dataframe_data[list(dataframe_data.keys())[0]])
+
+
+def _process_index(index, data, length):
+    if index is None:
+        return _default_index(data, length)
+    else:
+        return check_type(index, (Index, MultiIndex))
+
+
+def _check_input_data(data):
+    if data is None:
+        return OrderedDict()
+    else:
+        check_type(data, dict)
+        check_inner_types(data.values(), (np.ndarray, Series))
+
+        return data
+
+
+def _process_data(data, index):
+    for k, v in data.items():
+        if isinstance(v, Series):
+            v.name = k
+        else:
+            # must be ndarray
+            data[k] = Series(v, index, name=k)
+
+    return data
+
+
+def _infer_length(index, data):
+    index_length = None
+    if index is not None:
+        index_length = infer_length(index._gather_data().values())
+
+    if index_length is not None:
+        return index_length
+    else:
+        return infer_length(data.values())
+
+
+def _obtain_length(length, dataframe_data):
+    if length is not None:
+        return length
+    else:
+        # first check again for raw data
+        length = infer_length(dataframe_data.values())
+        if length is None:
+            keys = list(dataframe_data.keys())
+            # empty DataFrame
+            if len(keys) == 0:
+                return 0
+            # pick first column (which is a Series) and encode its length
+            length = weld_count(dataframe_data[keys[0]].weld_expr)
+
+        return length
+
+
+def _compute_on(self, other, on, all_names_self, all_names_other):
+    if on is None:
+        self_index_names = self.index._gather_names()
+        other_index_names = other.index._gather_names()
+
+        if len(self_index_names) != len(other_index_names):
+            raise ValueError('Expected indexes to be of the same dimensions when on=None')
+        elif self_index_names != other_index_names:
+            raise ValueError('When on=None, the names of both indexes must be the same')
+        else:
+            return self_index_names
+    else:
+        on = as_list(on)
+        set_on = set(on)
+
+        if not set_on.issubset(set(all_names_self)):
+            raise ValueError('On column(s) not included in the self DataFrame')
+        elif not set_on.issubset(set(all_names_other)):
+            raise ValueError('On column(s) not included in the other DataFrame')
+        else:
+            return on
+
+
+def _compute_new_names(names_self, names_other, suffixes):
+    common_names = set(names_self).intersection(set(names_other))
+    self_new_names = names_self
+    other_new_names = names_other
+
+    if len(common_names) != 0:
+        for name in common_names:
+            self_new_names[self_new_names.index(name)] += suffixes[0]
+            other_new_names[other_new_names.index(name)] += suffixes[1]
+
+    return self_new_names, other_new_names
+
+
+# TODO: perhaps just split into 4 methods for each join type
+def _compute_new_index(weld_objects_indexes, how, on, self_on_cols, other_on_cols, filter_func):
+    if how in ['inner', 'left']:
+        extract_index_from = self_on_cols
+        index_index = 0
+    else:
+        extract_index_from = other_on_cols
+        index_index = 1
+
+    if how == 'outer':
+        data_arg = 'weld_objects_indexes[2]'
+    else:
+        data_arg = 'column.weld_expr'
+
+    new_indexes = []
+    data_arg = data_arg if how != 'outer' else data_arg + '[i]'
+    for i, column_name in enumerate(on):
+        column = extract_index_from._data[column_name]
+        new_indexes.append(Index(filter_func(eval(data_arg),
+                                             column.weld_type,
+                                             weld_objects_indexes[index_index]),
+                                 column.dtype,
+                                 column.name))
+    if len(on) > 1:
+        new_index = MultiIndex(new_indexes, on)
+    else:
+        new_index = new_indexes[0]
+
+    return new_index
+
+
+def _drop_str_columns(df):
+    """
+
+    Parameters
+    ----------
+    df : DataFrame
+
+    Returns
+    -------
+
+    """
+    str_columns = filter(lambda pair: pair[1].char == 'S', df._gather_dtypes().items())
+    str_column_names = list(map(lambda pair: pair[0], str_columns))
+
+    return df.drop(str_column_names)

@@ -4,13 +4,13 @@ import numpy as np
 from tabulate import tabulate
 
 from .base import Index
-from ..generic import IlocIndex
+from ..generic import IndexCommon, BalooCommon
 from ..utils import check_inner_types, check_type, infer_length, shorten_data, check_weld_bit_array, \
     check_valid_int_slice
 from ...weld import LazyArrayResult
 
 
-class MultiIndex(IlocIndex):
+class MultiIndex(IndexCommon, BalooCommon):
     """Weld-ed MultiIndex, however completely different to Pandas.
 
     This version merely groups a few columns together to act as an index
@@ -18,13 +18,8 @@ class MultiIndex(IlocIndex):
 
     Attributes
     ----------
-    data : list of Index
-        The internal data.
-    names : list of str
-        The names of the data.
-    dtypes : list of numpy.dtype
-        The Numpy dtypes of the data in the same order
-        as the data and the names themselves.
+    names
+    dtypes
 
     Examples
     --------
@@ -45,24 +40,6 @@ class MultiIndex(IlocIndex):
     3
 
     """
-    @staticmethod
-    def _init_indexes(data, names):
-        if names is not None:
-            if len(data) != len(names):
-                raise ValueError('Expected all or none of the data columns to be named')
-        else:
-            names = [None] * len(data)
-
-        data_as_indexes = []
-
-        for n, v in zip(names, data):
-            if isinstance(v, np.ndarray):
-                v = Index(v, v.dtype, n)
-
-            data_as_indexes.append(v)
-
-        return data_as_indexes
-
     def __init__(self, data, names=None):
         """Initialize a MultiIndex object.
 
@@ -76,12 +53,13 @@ class MultiIndex(IlocIndex):
         """
         check_inner_types(check_type(data, list), (np.ndarray, Index))
         self._length = infer_length(data)
+        self.name = None
         self.names = check_inner_types(check_type(names, list), str)
-        self._data = MultiIndex._init_indexes(data, names)
+        self._data = _init_indexes(data, names)
 
     @property
     def values(self):
-        """Alias for `data` attribute.
+        """Retrieve internal data.
 
         Returns
         -------
@@ -90,6 +68,10 @@ class MultiIndex(IlocIndex):
 
         """
         return self._data
+
+    @property
+    def empty(self):
+        return len(self._data) == 0 or all(index.empty for index in self._data)
 
     @property
     def dtypes(self):
@@ -149,6 +131,33 @@ class MultiIndex(IlocIndex):
 
         return MultiIndex(evaluated_data, self.names)
 
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+
+    def _gather_names(self, name='level_'):
+        names = [None] * len(self.values) if self.names is None else self.names
+        return [name + str(i) if n is None else n for i, n in enumerate(names)]
+
+    def _gather_data_for_weld(self):
+        return [index.weld_expr for index in self._data]
+
+    def _gather_data(self, name='level_'):
+        return OrderedDict(zip(self._gather_names(name), self._data))
+
+    def _gather_weld_types(self):
+        return [index.weld_type for index in self._data]
+
+    def _iloc_indices(self, indices):
+        return MultiIndex([index._iloc_indices(indices) for index in self.values], self.names)
+
+    def _iloc_indices_with_missing(self, indices):
+        return MultiIndex([index._iloc_indices_with_missing(indices) for index in self.values], self.names)
+
     def __getitem__(self, item):
         """Select from the MultiIndex.
 
@@ -200,8 +209,18 @@ class MultiIndex(IlocIndex):
         # not computing slice here to use with __getitem__ because we'd need to use len which is eager
         return MultiIndex([v.tail(n) for v in self.values], self.names)
 
-    def _iloc_indices(self, indices):
-        return MultiIndex([index._iloc_indices(indices) for index in self.values], self.names)
 
-    def _iloc_indices_with_missing(self, indices):
-        return MultiIndex([index._iloc_indices_with_missing(indices) for index in self.values], self.names)
+def _init_indexes(data, names):
+    if names is not None:
+        if len(data) != len(names):
+            raise ValueError('Expected all or none of the data columns to be named')
+    else:
+        names = [None] * len(data)
+
+    data_as_indexes = []
+    for n, v in zip(names, data):
+        if isinstance(v, np.ndarray):
+            v = Index(v, v.dtype, n)
+        data_as_indexes.append(v)
+
+    return data_as_indexes

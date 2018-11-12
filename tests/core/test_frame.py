@@ -3,16 +3,12 @@ from collections import OrderedDict
 import numpy as np
 import pytest
 
-from baloo import DataFrame, Index, Series, RangeIndex, MultiIndex
-from baloo.weld import create_placeholder_weld_object
+from baloo import DataFrame, Index, Series, MultiIndex
 from .indexes.utils import assert_indexes_equal
 from .test_series import assert_series_equal
 
 
 def assert_dataframe_equal(actual, expected):
-    # assert before evaluating
-    assert_indexes_equal(actual.index, expected.index)
-
     actual = actual.evaluate()
     expected = expected.evaluate()
 
@@ -20,28 +16,27 @@ def assert_dataframe_equal(actual, expected):
     assert len(actual) == len(expected)
     assert_series_equal(actual.dtypes, expected.dtypes)
     assert_indexes_equal(actual.index, expected.index)
-    assert len(actual.data) == len(expected.data)
-    assert actual.data.keys() == expected.data.keys()
+    assert_indexes_equal(actual.columns, expected.columns)
+    assert len(actual._data) == len(expected._data)
+    assert actual._data.keys() == expected._data.keys()
     for column_name in actual:
-        np.testing.assert_array_equal(actual[column_name].values, expected[column_name].values)
+        np.testing.assert_array_equal(actual._data[column_name].values, expected._data[column_name].values)
 
 
+# TODO: fix |S11!!
 class TestDataFrame(object):
-    def test_empty(self):
-        df = DataFrame({})
-
-        assert len(df) == 0
-        # just testing if they don't crash
+    # just testing if they don't crash
+    def test_repr_str(self, df_small):
+        df = df_small.evaluate()
         repr(df)
         str(df)
 
     @pytest.mark.parametrize('size', [10, 1001])
-    def test_evaluate(self, size):
+    def test_evaluate(self, size, data_str):
         data_a = np.arange(size)
-        data_b = np.random.choice(np.array(['abc', 'goosfraba', '   df   '], dtype=np.bytes_), size)
+        data_b = np.random.choice(data_str, size)
         actual = DataFrame({'a': data_a, 'b': data_b})
 
-        assert len(actual) == size
         actual = actual.evaluate()
         assert len(actual) == size
         repr(actual)
@@ -51,333 +46,262 @@ class TestDataFrame(object):
 
         assert_dataframe_equal(actual, expected)
 
-    def test_len_lazy(self):
-        size = 20
-        data = np.arange(size)
-        weld_obj = create_placeholder_weld_object(data)
-        sr = Series(weld_obj, dtype=np.dtype(np.int64))
-        df = DataFrame({'a': sr})
+    def test_len_lazy(self, series_i64):
+        size = 5
+        df = DataFrame({'a': series_i64})
 
         assert df._length is None
         assert len(df) == size
         assert df._length == size
 
-    def test_getitem_str(self):
-        size = 10
-        df = DataFrame({'a': np.arange(size)})
-
-        actual = df['a']
-        expected = Series(np.arange(size), RangeIndex(size), np.dtype(np.int64), 'a')
+    def test_getitem_str(self, df_small, data_f32, index_i64):
+        actual = df_small['a']
+        expected = Series(data_f32, index_i64, np.dtype(np.float32), 'a')
 
         assert_series_equal(actual, expected)
 
         with pytest.raises(KeyError):
-            column = df['b']
+            var = df_small['z']
 
-    def test_getitem_list(self):
-        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5)), np.arange(5)]
-        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]), ('c', data[2]))))
-
-        actual = df[['a', 'c']]
-        expected = DataFrame(OrderedDict((('a', data[0]), ('c', data[2]))))
+    def test_getitem_list(self, df_small, data_f32, data_str):
+        actual = df_small[['a', 'c']]
+        expected = DataFrame(OrderedDict((('a', data_f32), ('c', data_str))))
 
         assert_dataframe_equal(actual, expected)
 
         with pytest.raises(TypeError):
-            result = df[[1]]
+            result = df_small[[1]]
 
         with pytest.raises(KeyError):
-            result = df[['d']]
+            result = df_small[['z']]
 
-    def test_comparison(self):
-        df = DataFrame({'a': np.arange(0, 4),
-                        'b': np.arange(4, 8)})
-
-        actual = df < 3
-        expected = DataFrame({'a': np.array([True, True, True, False]),
-                              'b': np.array([False, False, False, False])},
-                             RangeIndex(4))
+    def test_comparison(self, df_small, index_i64):
+        actual = df_small < 3
+        expected = DataFrame(OrderedDict((('a', np.array([True, True, False, False, False])),
+                                          ('b', np.array([True, True, False, False, False])))),
+                             index_i64)
 
         assert_dataframe_equal(actual, expected)
 
-    def test_filter(self):
-        df = DataFrame({'a': np.arange(0, 4),
-                        'b': np.arange(4, 8)})
-
-        actual = df[Series(np.array([False, True, True, False]))]
-        expected = DataFrame({'a': np.array([1, 2]),
-                              'b': np.array([5, 6])},
+    def test_filter(self, df_small):
+        actual = df_small[Series(np.array([False, True, True, False, False]))]
+        data = [2, 3]
+        expected = DataFrame(OrderedDict((('a', np.array(data, dtype=np.float32)),
+                                          ('b', np.array(data)),
+                                          ('c', np.array(['abc', 'goosfraba'], dtype=np.dtype('|S11'))))),
                              Index(np.array([1, 2])))
 
         assert_dataframe_equal(actual, expected)
 
-    def test_slice(self):
-        df = DataFrame({'a': np.arange(0, 4),
-                        'b': np.arange(4, 8)})
-
-        actual = df[1:3]
-        expected = DataFrame({'a': np.array([1, 2]),
-                              'b': np.array([5, 6])},
+    def test_slice(self, df_small):
+        actual = df_small[1:3]
+        data = [2, 3]
+        expected = DataFrame(OrderedDict((('a', np.array(data, dtype=np.float32)),
+                                          ('b', np.array(data)),
+                                          ('c', np.array(['abc', 'goosfraba'], dtype=np.dtype('|S11'))))),
                              Index(np.array([1, 2])))
 
         assert_dataframe_equal(actual, expected)
 
-    def test_setitem_new_col(self):
-        df = DataFrame({'a': np.arange(0, 4)})
+    def test_setitem_new_col(self, data_f32, series_i64, index_i64):
+        actual = DataFrame(OrderedDict({'a': data_f32}))
 
-        df['b'] = np.arange(4, 8)
-        actual = df
-        expected = DataFrame({'a': np.arange(0, 4),
-                              'b': np.arange(4, 8)})
-
-        assert_dataframe_equal(actual, expected)
-
-    def test_setitem_existing_col(self):
-        df = DataFrame({'a': np.arange(0, 4),
-                        'b': np.arange(8, 12)})
-
-        df['b'] = np.arange(4, 8)
-        actual = df
-        expected = DataFrame({'a': np.arange(0, 4),
-                              'b': np.arange(4, 8)})
+        actual['b'] = series_i64
+        expected = DataFrame(OrderedDict((('a', data_f32),
+                                          ('b', series_i64))),
+                             index_i64)
 
         assert_dataframe_equal(actual, expected)
 
-    def test_head(self):
-        df = DataFrame({'a': np.array([1, 2, 3, 4, 5], dtype=np.float32),
-                        'b': Series(np.arange(5))})
+    def test_setitem_existing_col(self, data_f32, series_i64, data_str, index_i64):
+        actual = DataFrame(OrderedDict((('a', data_f32),
+                                        ('b', data_str))))
 
-        actual = df.head(2)
-        expected = DataFrame({'a': np.array([1, 2], dtype=np.float32),
-                              'b': np.array([0, 1])},
+        actual['b'] = series_i64
+        expected = DataFrame(OrderedDict((('a', data_f32),
+                                          ('b', series_i64))),
+                             index_i64)
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_head(self, df_small):
+        actual = df_small.head(2)
+        data = [1, 2]
+        expected = DataFrame(OrderedDict((('a', np.array(data, dtype=np.float32)),
+                                          ('b', np.array(data)),
+                                          ('c', np.array(['a', 'abc'], dtype=np.dtype('|S11'))))),
                              Index(np.array([0, 1])))
 
         assert_dataframe_equal(actual, expected)
 
-    def test_tail(self):
-        df = DataFrame({'a': np.array([1, 2, 3, 4, 5], dtype=np.float32),
-                        'b': Series(np.arange(5))})
-
-        actual = df.tail(2)
-        expected = DataFrame({'a': np.array([4, 5], dtype=np.float32),
-                              'b': np.array([3, 4])},
+    def test_tail(self, df_small):
+        actual = df_small.tail(2)
+        data = [4, 5]
+        expected = DataFrame(OrderedDict((('a', np.array(data, dtype=np.float32)),
+                                          ('b', np.array(data)),
+                                          ('c', np.array(['   dc  ', 'secretariat'], dtype=np.dtype('|S11'))))),
                              Index(np.array([3, 4])))
 
         assert_dataframe_equal(actual, expected)
 
-    def test_iloc_indices(self):
-        df = DataFrame(OrderedDict((('a', np.array([1, 2, 3, 4, 5])),
-                                    ('b', Series(np.arange(5))))))
+    def test_iloc_indices(self, df_small):
         indices = Series(np.array([0, 2, 3]))
 
-        actual = df.iloc[indices]
-        expected = DataFrame(OrderedDict((('a', np.array([1, 3, 4])),
-                                          ('b', Series(np.array([0, 2, 3]))))),
+        actual = df_small.iloc[indices]
+        data = [1, 3, 4]
+        expected = DataFrame(OrderedDict((('a', np.array(data, dtype=np.float32)),
+                                          ('b', np.array(data)),
+                                          ('c', np.array(['a', 'goosfraba', '   dc  '], dtype=np.dtype('|S11'))))),
                              Index(np.array([0, 2, 3])))
 
         assert_dataframe_equal(actual, expected)
 
-    def test_keys(self):
-        df = DataFrame(OrderedDict((('a', np.array([1, 2, 3, 4, 5], dtype=np.float32)),
-                                    ('b', Series(np.arange(5))))))
+    def test_keys(self, df_small, df_small_columns):
+        assert_indexes_equal(df_small.keys(), df_small_columns)
 
-        actual = df.keys()
-        expected = Index(np.array(['a', 'b'], dtype=np.bytes_))
-
-        assert_indexes_equal(actual, expected)
-
-    def test_op_array(self):
-        df = DataFrame({'a': np.array([1, 2, 3, 4, 5]),
-                        'b': Series(np.arange(5))})
-
-        actual = df * Series(np.array([2] * 5))
-        expected = DataFrame({'a': np.array([2, 4, 6, 8, 10]),
-                              'b': Series(np.arange(0, 10, 2))})
+    def test_op_array(self, df_small, index_i64, op_array_other):
+        actual = df_small * [2, 3]
+        expected = DataFrame(OrderedDict((('a', np.array([2, 4, 6, 8, 10], dtype=np.float32)),
+                                          ('b', np.array([3, 6, 9, 12, 15])))),
+                             index_i64)
 
         assert_dataframe_equal(actual, expected)
 
-    def test_op_scalar(self):
-        df = DataFrame({'a': np.array([1, 2, 3, 4, 5], dtype=np.float32),
-                        'b': Series(np.arange(5))})
-
-        actual = df * 2
-        expected = DataFrame({'a': np.array([2, 4, 6, 8, 10], dtype=np.float32),
-                              'b': Series(np.arange(0, 10, 2))})
+    def test_op_scalar(self, df_small, index_i64):
+        actual = df_small * 2
+        data = [2, 4, 6, 8, 10]
+        expected = DataFrame(OrderedDict((('a', np.array(data, dtype=np.float32)),
+                                          ('b', np.array(data)))),
+                             index_i64)
 
         assert_dataframe_equal(actual, expected)
 
-    @pytest.mark.parametrize('aggregation, expected', [
-        ('min', Series(np.array([1, 2]), Index(np.array(['a', 'b'], dtype=np.bytes_)))),
-        ('max', Series(np.array([5, 6]), Index(np.array(['a', 'b'], dtype=np.bytes_)))),
-        ('sum', Series(np.array([15, 20]), Index(np.array(['a', 'b'], dtype=np.bytes_)))),
-        ('prod', Series(np.array([120, 720]), Index(np.array(['a', 'b'], dtype=np.bytes_)))),
-        ('count', Series(np.array([5, 5]), Index(np.array(['a', 'b'], dtype=np.bytes_)))),
-        ('var', Series(np.array([2.5, 2.5]), Index(np.array(['a', 'b'], dtype=np.bytes_)))),
-        ('std', Series(np.array([1.581139, 1.581139]), Index(np.array(['a', 'b'], dtype=np.bytes_))))
+    @pytest.mark.parametrize('aggregation, expected_data', [
+        ('min', np.array([1., 1.])),
+        ('max', np.array([5., 5.])),
+        ('sum', np.array([15., 15.])),
+        ('prod', np.array([120., 120.])),
+        ('count', np.array([5., 5.])),
+        ('var', np.array([2.5, 2.5])),
+        ('std', np.array([1.581139, 1.581139]))
     ])
-    def test_aggregations(self, aggregation, expected):
-        data = OrderedDict([('a', np.arange(1, 6)), ('b', np.arange(2, 7))])
-        df = DataFrame(data)
-
-        actual = getattr(df, aggregation)()
+    def test_aggregations(self, aggregation, expected_data, df_small):
+        actual = getattr(df_small, aggregation)()
+        expected = Series(expected_data, Index(np.array(['a', 'b'], dtype=np.bytes_)))
 
         assert_series_equal(actual, expected, 5)
 
-    def test_aggregation_diff_types(self):
-        data = OrderedDict([('a', np.arange(1, 6)), ('b', np.arange(2, 7, dtype=np.float32))])
-        df = DataFrame(data)
-
-        actual = df.min()
-        expected = Series(np.array([1, 2], dtype=np.float64), Index(np.array(['a', 'b'], dtype=np.bytes_)))
-
-        assert_series_equal(actual, expected)
-
-    def test_agg(self):
+    def test_agg(self, df_small):
         aggregations = ['max', 'var', 'count', 'mean']
-        df = DataFrame(OrderedDict((('a', np.arange(1, 6, dtype=np.float32)),
-                                    ('b', Series(np.arange(5))))))
 
-        actual = df.agg(aggregations)
-
+        actual = df_small.agg(aggregations)
         expected = DataFrame(OrderedDict((('a', np.array([5, 2.5, 5, 3], dtype=np.float64)),
-                                          ('b', np.array([4, 2.5, 5, 2], dtype=np.float64)))),
+                                          ('b', np.array([5, 2.5, 5, 3], dtype=np.float64)))),
                              Index(np.array(aggregations, dtype=np.bytes_), np.dtype(np.bytes_)))
 
         assert_dataframe_equal(actual, expected)
 
-    def test_rename(self):
-        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
-        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]))))
-
-        actual = df.rename({'a': 'c', 'd': 'nooo'})
-        expected = DataFrame(OrderedDict((('c', data[0]), ('b', data[1]))))
-
-        assert_dataframe_equal(actual, expected)
-
-    def test_drop_single(self):
-        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
-        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]))))
-
-        actual = df.drop('b')
-        expected = DataFrame({'a': data[0]})
+    def test_rename(self, df_small, data_f32, series_i64, data_str, index_i64):
+        actual = df_small.rename({'a': 'd', 'd': 'nooo'})
+        expected = DataFrame(OrderedDict((('d', data_f32),
+                                          ('b', series_i64),
+                                          ('c', data_str))),
+                             index_i64)
 
         assert_dataframe_equal(actual, expected)
 
-    def test_drop_multi(self):
-        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5)), np.arange(5)]
-        df = DataFrame(OrderedDict((('a', data[0]),
-                                    ('b', data[1]),
-                                    ('c', data[2]))))
-
-        actual = df.drop(['a', 'c'])
-        expected = DataFrame({'b': data[1]})
+    def test_drop_single(self, df_small, data_f32, series_i64, index_i64):
+        actual = df_small.drop('c')
+        expected = DataFrame(OrderedDict((('a', data_f32),
+                                          ('b', series_i64))),
+                             index_i64)
 
         assert_dataframe_equal(actual, expected)
 
-    def test_reset_index(self):
-        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
-        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]))))
+    def test_drop_multi(self, df_small, series_i64, index_i64):
+        actual = df_small.drop(['a', 'c'])
+        expected = DataFrame({'b': series_i64})
 
-        actual = df.reset_index()
+        assert_dataframe_equal(actual, expected)
+
+    def test_reset_index(self, df_small, index_i64, data_f32, series_i64, data_str):
+        actual = df_small.reset_index()
         expected = DataFrame(OrderedDict((('index', np.arange(5)),
-                                          ('a', data[0]),
-                                          ('b', data[1]))),
-                             RangeIndex(5))
+                                          ('a', data_f32),
+                                          ('b', series_i64),
+                                          ('c', data_str))),
+                             index_i64)
 
         assert_dataframe_equal(actual, expected)
 
-    def test_reset_multi_index_unnamed(self):
-        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
-        index_data = [np.arange(5, 10), np.arange(10, 15)]
-        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]))),
-                       MultiIndex(index_data))
+    @pytest.mark.parametrize('names,expected_names', [
+        (None, ['level_0', 'level_1']),
+        (['i1', 'i2'], ['i1', 'i2'])
+    ])
+    def test_reset_multi_index(self, data_f32, data_i64, data_str, index_i64, names, expected_names):
+        df = DataFrame(OrderedDict({'c': data_str}),
+                       MultiIndex([data_f32, data_i64], names=names))
 
         actual = df.reset_index()
-        expected = DataFrame(OrderedDict((('level_0', index_data[0]),
-                                          ('level_1', index_data[1]),
-                                          ('a', data[0]),
-                                          ('b', data[1]))),
-                             RangeIndex(5))
+        expected = DataFrame(OrderedDict(((expected_names[0], data_f32),
+                                          (expected_names[1], data_i64),
+                                          ('c', data_str))),
+                             index_i64)
 
         assert_dataframe_equal(actual, expected)
 
-    def test_reset_multi_index_named(self):
-        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
-        index_data = [np.arange(5, 10), np.arange(10, 15)]
-        df = DataFrame(OrderedDict((('a', data[0]), ('b', data[1]))),
-                       MultiIndex(index_data, ['i1', 'i2']))
-
-        actual = df.reset_index()
-        expected = DataFrame(OrderedDict((('i1', index_data[0]),
-                                          ('i2', index_data[1]),
-                                          ('a', data[0]),
-                                          ('b', data[1]))),
-                             RangeIndex(5))
+    def test_set_index(self, df_small, data_f32, data_i64, data_str):
+        actual = df_small.set_index('b')
+        expected = DataFrame(OrderedDict((('a', data_f32),
+                                          ('c', data_str))),
+                             Index(data_i64, np.dtype(np.int64), 'b'))
 
         assert_dataframe_equal(actual, expected)
 
-    def test_set_index(self):
-        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5)), np.arange(5)]
-        df = DataFrame(OrderedDict((('a', data[0]),
-                                    ('b', data[1]),
-                                    ('c', data[2]))))
-
-        actual = df.set_index('b')
-        expected = DataFrame(OrderedDict((('a', data[0]),
-                                          ('c', data[2]))),
-                             Index(data[1].values, np.dtype(np.int64), 'b'))
-
-        assert_dataframe_equal(actual, expected)
-
-    def test_set_multi_index(self):
-        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5)), np.arange(5)]
-        df = DataFrame(OrderedDict((('a', data[0]),
-                                    ('b', data[1]),
-                                    ('c', data[2]))))
-
-        actual = df.set_index(['b', 'c'])
-        expected = DataFrame({'a': data[0]},
-                             MultiIndex([Index(data[1].values, np.dtype(np.int64), 'b'),
-                                         Index(data[2], np.dtype(np.int64), 'c')],
+    def test_set_multi_index(self, df_small, data_f32, data_i64, data_str):
+        actual = df_small.set_index(['b', 'c'])
+        expected = DataFrame({'a': data_f32},
+                             MultiIndex([Index(data_i64, np.dtype(np.int64), 'b'),
+                                         Index(data_str, name='c')],
                                         ['b', 'c']))
 
         assert_dataframe_equal(actual, expected)
 
-    def test_sort_index_index_ascending(self):
-        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
+    def test_sort_index_index_ascending(self, data_f32, series_i64):
+        data = [data_f32, series_i64]
         df = DataFrame(OrderedDict((('a', data[0]),
                                     ('b', data[1]))),
                        Index(np.array([3, 1, 2, 5, 4])))
 
         actual = df.sort_index()
 
-        expected_index = Index(np.arange(1, 6), np.dtype(np.int64), 'index')
+        expected_index = Index(np.arange(1, 6), np.dtype(np.int64))
         expected_data = [Series(np.array([2, 3, 1, 5, 4], dtype=np.float32), expected_index, np.dtype(np.float32), 'a'),
-                         Series(np.array([1, 2, 0, 4, 3], dtype=np.int64), expected_index, np.dtype(np.int64), 'b')]
+                         Series(np.array([2, 3, 1, 5, 4], dtype=np.int64), expected_index, np.dtype(np.int64), 'b')]
         expected = DataFrame(OrderedDict((('a', expected_data[0]),
                                           ('b', expected_data[1]))),
                              expected_index)
 
         assert_dataframe_equal(actual, expected)
 
-    def test_sort_index_index_descending(self):
-        data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
+    def test_sort_index_index_descending(self, data_f32, series_i64):
+        data = [data_f32, series_i64]
         df = DataFrame(OrderedDict((('a', data[0]),
                                     ('b', data[1]))),
                        Index(np.array([3, 1, 2, 5, 4])))
 
         actual = df.sort_index(ascending=False)
 
-        expected_index = Index(np.arange(5, 0, -1), np.dtype(np.int64), 'index')
+        expected_index = Index(np.arange(5, 0, -1), np.dtype(np.int64))
         expected_data = [Series(np.array([4, 5, 1, 3, 2], dtype=np.float32), expected_index, np.dtype(np.float32), 'a'),
-                         Series(np.array([3, 4, 0, 2, 1], dtype=np.int64), expected_index, np.dtype(np.int64), 'b')]
+                         Series(np.array([4, 5, 1, 3, 2], dtype=np.int64), expected_index, np.dtype(np.int64), 'b')]
         expected = DataFrame(OrderedDict((('a', expected_data[0]),
                                           ('b', expected_data[1]))),
                              expected_index)
 
         assert_dataframe_equal(actual, expected)
 
-    # TODO: uncomment when implemented
+    # TODO: uncomment & refactor when implemented
     # def test_sort_index_multi_index_ascending(self):
     #     data = [np.array([1, 2, 3, 4, 5], dtype=np.float32), Series(np.arange(5))]
     #     df = DataFrame(OrderedDict((('a', data[0]),
@@ -394,17 +318,17 @@ class TestDataFrame(object):
     #
     #     assert_dataframe_equal(actual, expected)
 
-    def test_sort_values(self):
-        data = [np.array([3, 1, 2, 5, 4], dtype=np.float32), Series(np.arange(5))]
+    def test_sort_values(self, data_f32, series_i64, data_i64):
+        data = [np.array([3, 1, 2, 5, 4], dtype=np.float32), series_i64]
         df = DataFrame(OrderedDict((('a', data[0]),
                                     ('b', data[1]))),
-                       Index(np.arange(1, 6)))
+                       Index(data_i64))
 
         actual = df.sort_values('a')
 
-        expected_index = Index(np.array([2, 3, 1, 5, 4]), np.dtype(np.int64), 'index')
-        expected_data = [Series(np.array(np.arange(1, 6), dtype=np.float32), expected_index, np.dtype(np.float32), 'a'),
-                         Series(np.array([1, 2, 0, 4, 3], dtype=np.int64), expected_index, np.dtype(np.int64), 'b')]
+        expected_index = Index(np.array([2, 3, 1, 5, 4]), np.dtype(np.int64))
+        expected_data = [Series(data_f32, expected_index, np.dtype(np.float32), 'a'),
+                         Series(np.array([2, 3, 1, 5, 4], dtype=np.int64), expected_index, np.dtype(np.int64), 'b')]
         expected = DataFrame(OrderedDict((('a', expected_data[0]),
                                           ('b', expected_data[1]))),
                              expected_index)

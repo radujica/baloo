@@ -1,11 +1,9 @@
 from weld.weldobject import WeldObject
 
 from .convertors import default_missing_data_literal
-from .lazy_array_result import LazyArrayResult
-from .lazy_result import WeldVec, WeldChar, WeldLong
+from .lazy_result import WeldVec, WeldChar, WeldLong, LazyArrayResult
 from .weld_utils import get_weld_obj_id, create_weld_object, to_weld_literal, create_empty_weld_object, \
-    weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, extract_placeholder_weld_objects, Cache, \
-    weld_select_from_struct
+    weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, Cache, weld_select_from_struct
 
 
 def weld_range(start, stop, step):
@@ -132,23 +130,7 @@ def weld_filter(array, weld_type, bool_array):
     return weld_obj
 
 
-def _replace_slice_defaults(slice_, default_start, default_step):
-    start = slice_.start
-    stop = slice_.stop
-    step = slice_.step
-
-    if start is None:
-        start = default_start
-
-    # stop is required when making a slice, no need to replace
-
-    if step is None:
-        step = default_step
-
-    return slice(start, stop, step)
-
-
-def weld_slice(array, weld_type, slice_, default_start=0, default_step=1):
+def weld_slice(array, weld_type, slice_, default_start=0, default_stop=0, default_step=1):
     """Returns a new array according to the given slice.
 
     Parameters
@@ -161,6 +143,8 @@ def weld_slice(array, weld_type, slice_, default_start=0, default_step=1):
         Subset to return. Assumed valid slice.
     default_start : int, optional
         Default value to slice start.
+    default_stop : int, optional
+        Default value to slice stop.
     default_step : int, optional
         Default value to slice step.
 
@@ -170,7 +154,9 @@ def weld_slice(array, weld_type, slice_, default_start=0, default_step=1):
         Representation of this computation.
 
     """
-    slice_ = _replace_slice_defaults(slice_, default_start, default_step)
+    from ..core.utils import replace_slice_defaults
+
+    slice_ = replace_slice_defaults(slice_, default_start, default_stop, default_step)
     obj_id, weld_obj = create_weld_object(array)
 
     if slice_.step == 1:
@@ -239,11 +225,11 @@ def weld_tail(array, length, n):
     return weld_obj
 
 
+# TODO: what happens if not?
 def weld_array_op(array1, array2, result_type, operation):
     """Applies operation to each pair of elements in the arrays.
 
     Their lengths and types are assumed to be the same.
-    TODO: what happens if not?
 
     Parameters
     ----------

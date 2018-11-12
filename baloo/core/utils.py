@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..weld import WeldObject, weld_count, WeldBit, WeldLong
+from ..weld import WeldObject, weld_count, WeldBit, WeldLong, LazyResult
 
 
 def check_type(data, expected_types):
@@ -40,24 +40,31 @@ def infer_dtype(data, arg_dtype):
 
 
 def infer_length(data):
-    for value in data:
-        if isinstance(value, np.ndarray):
-            return len(value)
-        # must be a Series then
-        elif isinstance(value.values, np.ndarray):
-            return len(value.values)
+    if len(data) == 0:
+        return 0
+    else:
+        for value in data:
+            if isinstance(value, np.ndarray):
+                return len(value)
+            # must be a Series then
+            elif isinstance(value.values, np.ndarray):
+                return len(value.values)
 
-    return None
+        return None
 
 
 def default_index(data):
     from .indexes import RangeIndex
 
-    if isinstance(data, np.ndarray):
+    if isinstance(data, int):
+        return RangeIndex(data)
+    elif isinstance(data, np.ndarray):
         return RangeIndex(len(data))
     elif isinstance(data, WeldObject):
         # must be WeldObject then
         return RangeIndex(weld_count(data))
+    elif isinstance(data, LazyResult):
+        return RangeIndex(weld_count(data.values))
     else:
         raise ValueError('Unsupported data type: {}'.format(str(type(data))))
 
@@ -94,3 +101,15 @@ def as_list(data):
         return data
     else:
         return [data]
+
+
+def replace_if_none(value, default):
+    return default if value is None else value
+
+
+def replace_slice_defaults(slice_, default_start, default_stop, default_step):
+    start = replace_if_none(slice_.start, default_start)
+    stop = replace_if_none(slice_.stop, default_stop)
+    step = replace_if_none(slice_.step, default_step)
+
+    return slice(start, stop, step)

@@ -1,7 +1,7 @@
 import numpy as np
 
 from .base import Index
-from ..utils import check_type
+from ..utils import check_type, replace_if_none
 from ...weld import weld_range, WeldObject
 
 
@@ -10,11 +10,10 @@ class RangeIndex(Index):
 
     Attributes
     ----------
-    start : int
-    stop : int or WeldObject
-    step : int
-    dtype : np.dtype
-        Always int64.
+    start
+    stop
+    step
+    dtype
 
     See Also
     --------
@@ -40,7 +39,7 @@ class RangeIndex(Index):
     array([-1, -1, -1])
 
     """
-    def __init__(self, start=None, stop=None, step=1, name=None):
+    def __init__(self, start=None, stop=None, step=None, name=None):
         """Initialize a RangeIndex object.
 
         If only 1 value (`start`) is passed, it will be considered the `stop` value.
@@ -54,22 +53,13 @@ class RangeIndex(Index):
         step : int, optional
 
         """
-        if start is None and stop is None and step == 1:
-            raise ValueError('Must supply at least one integer')
-        # allow pd.RangeIndex(123) to represent pd.RangeIndex(0, 123, 1)
-        elif start is not None and stop is None and step == 1:
-            stop = start
-            start = 0
-
-        self.start = check_type(start, int)
-        self.stop = check_type(stop, (int, WeldObject))
-        self.step = check_type(step, int)
+        self.start, self.stop, self.step = _check_input(start, stop, step)
         self.name = check_type(name, str)
         self.dtype = np.dtype(np.int64)
 
-        self._length = len(range(start, stop, step)) if isinstance(stop, int) else None
+        self._length = len(range(self.start, self.stop, self.step)) if isinstance(stop, int) else None
 
-        super(RangeIndex, self).__init__(weld_range(start, stop, step), np.dtype(np.int64))
+        super(RangeIndex, self).__init__(weld_range(self.start, self.stop, self.step), np.dtype(np.int64))
 
     def __repr__(self):
         return "{}(start={}, stop={}, step={})".format(self.__class__.__name__,
@@ -82,3 +72,43 @@ class RangeIndex(Index):
             return super(RangeIndex, self)._comparison(other, comparison)
         else:
             raise TypeError('Can only compare with integers')
+
+    @property
+    def empty(self):
+        return self.start == 0 and self.stop == 0
+
+    def evaluate(self, verbose=False, decode=True, passes=None, num_threads=1, apply_experimental=True):
+        """Evaluates by creating an Index containing evaluated data.
+
+        See `LazyResult`
+
+        Returns
+        -------
+        Index
+            Index with evaluated data.
+
+        """
+        if self.start == 0 and self.stop == 0:
+            evaluated_data = np.empty(0, dtype=np.int64)
+        else:
+            evaluated_data = super(Index, self).evaluate(verbose, decode, passes, num_threads, apply_experimental)
+
+        return Index(evaluated_data, self.dtype, self.name)
+
+
+def _check_input(start, stop, step):
+    if start is None and stop is None and step is None:
+        raise TypeError('Must be called with at least one integer')
+    elif start is not None and stop is None and step is None:
+        stop = start
+        start = None
+
+    check_type(start, int)
+    check_type(stop, (int, WeldObject))
+    check_type(step, int)
+
+    start = replace_if_none(start, 0)
+    stop = replace_if_none(stop, 0)
+    step = replace_if_none(step, 1)
+
+    return start, stop, step

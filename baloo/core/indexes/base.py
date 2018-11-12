@@ -1,21 +1,19 @@
 import numpy as np
 
-from ..generic import BinaryOps, IlocIndex
+from ..generic import BinaryOps, IndexCommon, BalooCommon
 from ...core.utils import check_type, infer_dtype, is_scalar, check_weld_bit_array, check_valid_int_slice
 from ...weld import LazyArrayResult, numpy_to_weld_type, weld_filter, weld_slice, \
     weld_compare, weld_tail, weld_array_op, weld_element_wise_op, WeldObject, weld_iloc_indices, \
     weld_iloc_indices_with_missing
 
 
-class Index(LazyArrayResult, BinaryOps, IlocIndex):
+class Index(LazyArrayResult, BinaryOps, IndexCommon, BalooCommon):
     """Weld-ed Pandas Index.
 
     Attributes
     ----------
-    dtype : np.dtype
-        Numpy dtype of the elements.
-    name : str
-        Name of the series.
+    dtype
+    name
 
     See Also
     --------
@@ -103,6 +101,40 @@ class Index(LazyArrayResult, BinaryOps, IlocIndex):
         else:
             raise TypeError('Can only apply operation with scalar or LazyArrayResult')
 
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        self._name = value
+
+    def _gather_names(self, name='index'):
+        return [name if self.name is None else self.name]
+
+    def _gather_data_for_weld(self):
+        return [self.weld_expr]
+
+    def _gather_weld_types(self):
+        return [self.weld_type]
+
+    def _gather_data(self, name='index'):
+        return {self._gather_names(name)[0]: self}
+
+    def _iloc_indices(self, indices):
+        return Index(weld_iloc_indices(self.weld_expr,
+                                       self.weld_type,
+                                       indices),
+                     self.dtype,
+                     self.name)
+
+    def _iloc_indices_with_missing(self, indices):
+        return Index(weld_iloc_indices_with_missing(self.weld_expr,
+                                                    self.weld_type,
+                                                    indices),
+                     self.dtype,
+                     self.name)
+
     def __getitem__(self, item):
         """Select from the Index. Currently used internally through DataFrame and Series.
 
@@ -127,12 +159,14 @@ class Index(LazyArrayResult, BinaryOps, IlocIndex):
                          self.name)
         elif isinstance(item, slice):
             check_valid_int_slice(item)
-
-            return Index(weld_slice(self.weld_expr,
-                                    self.weld_type,
-                                    item),
-                         self.dtype,
-                         self.name)
+            if self.empty:
+                return self
+            else:
+                return Index(weld_slice(self.weld_expr,
+                                        self.weld_type,
+                                        item),
+                             self.dtype,
+                             self.name)
         else:
             raise TypeError('Expected LazyArrayResult or slice')
 
@@ -193,26 +227,15 @@ class Index(LazyArrayResult, BinaryOps, IlocIndex):
         [1. 2.]
 
         """
-        if self._length is not None:
-            length = self._length
+        if self.empty:
+            return self
         else:
-            length = self._lazy_len().weld_expr
+            if self._length is not None:
+                length = self._length
+            else:
+                length = self._lazy_len().weld_expr
 
-        # not computing slice here to use with __getitem__ because we'd need to use len which is eager
-        return Index(weld_tail(self.weld_expr, length, n),
-                     self.dtype,
-                     self.name)
-
-    def _iloc_indices(self, indices):
-        return Index(weld_iloc_indices(self.weld_expr,
-                                       self.weld_type,
-                                       indices),
-                     self.dtype,
-                     self.name)
-
-    def _iloc_indices_with_missing(self, indices):
-        return Index(weld_iloc_indices_with_missing(self.weld_expr,
-                                                    self.weld_type,
-                                                    indices),
-                     self.dtype,
-                     self.name)
+            # not computing slice here to use with __getitem__ because we'd need to use len which is eager
+            return Index(weld_tail(self.weld_expr, length, n),
+                         self.dtype,
+                         self.name)

@@ -1,14 +1,11 @@
 from collections import OrderedDict
 
 from .frame import DataFrame
-from .series import Series
+from .series import Series, _series_iloc, _series_iloc_with_missing
 from .utils import check_type, check_weld_long_array
-from ..weld import LazyScalarResult, weld_iloc_int, LazyArrayResult, weld_iloc_indices, weld_iloc_indices_with_missing
+from ..weld import LazyScalarResult, weld_iloc_int, LazyArrayResult
 
 
-# TODO: perhaps instead make Series and DataFrame inherit an ILoc interface and each implement their own
-# TODO internal methods for iloc; then can just call directly on self.data
-# TODO ~ simplifying this class but making others longer
 class _ILocIndexer(object):
     """Implements iloc indexing.
 
@@ -39,36 +36,19 @@ class _ILocIndexer(object):
             item = item.weld_expr
 
             if isinstance(self.data, Series):
-                return self._iloc_series(item, self.data.index._iloc_indices(item))
+                return _series_iloc(self.data, item, self.data.index._iloc_indices(item))
             elif isinstance(self.data, DataFrame):
                 new_index = self.data.index._iloc_indices(item)
 
-                new_data = OrderedDict()
-                for column_name in self.data:
-                    new_data[column_name] = self.data[column_name].iloc._iloc_series(item, new_index)
+                new_data = OrderedDict((column.name, _series_iloc(column, item, new_index))
+                                       for column in self.data._iter())
 
                 return DataFrame(new_data, new_index)
         else:
             raise TypeError('Expected an int, slice, or indices array')
 
-    def _iloc_series(self, item, new_index):
-        return Series(weld_iloc_indices(self.data.weld_expr,
-                                        self.data.weld_type,
-                                        item),
-                      new_index,
-                      self.data.dtype,
-                      self.data.name)
-
-    def _iloc_series_with_missing(self, item, new_index):
-        return Series(weld_iloc_indices_with_missing(self.data.weld_expr,
-                                                     self.data.weld_type,
-                                                     item),
-                      new_index,
-                      self.data.dtype,
-                      self.data.name)
-
     def _iloc_with_missing(self, item):
         if isinstance(self.data, Series):
-            return self._iloc_series_with_missing(item, self.data.index._iloc_indices_with_missing(item))
+            return _series_iloc_with_missing(self.data, item, self.data.index._iloc_indices_with_missing(item))
         elif isinstance(self.data, DataFrame):
             raise NotImplementedError()
