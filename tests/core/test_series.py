@@ -6,21 +6,27 @@ from baloo.weld import create_placeholder_weld_object
 from .indexes.utils import assert_indexes_equal
 
 
-def assert_series_equal(actual, expected, almost=None):
+def assert_series_equal(actual, expected, almost=None, sort=False):
     actual = actual.evaluate()
     expected = expected.evaluate()
 
+    actual_values = actual.values
+    expected_values = expected.values
+    if sort:
+        actual_values = np.sort(actual_values)
+        expected_values = np.sort(expected_values)
+
     # for checking floats
     if almost is not None:
-        np.testing.assert_array_almost_equal(actual.values, expected.values, almost)
+        np.testing.assert_array_almost_equal(actual_values, expected_values, almost)
     else:
-        np.testing.assert_array_equal(actual.values, expected.values)
+        np.testing.assert_array_equal(actual_values, expected_values)
     assert actual.dtype.char == expected.dtype.char
     assert actual._length == expected._length
     # might seem redundant but testing the __len__ function
     assert len(actual) == len(expected)
     assert actual.name == expected.name
-    assert_indexes_equal(actual.index, expected.index)
+    assert_indexes_equal(actual.index, expected.index, sort=sort)
 
 
 class TestSeries(object):
