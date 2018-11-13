@@ -388,3 +388,27 @@ class TestDataFrame(object):
                              index_i64)
 
         assert_dataframe_equal(actual, expected)
+
+    def test_dropna(self, index_i64):
+        df = DataFrame(OrderedDict((('a', np.array([0, 1, -999, 2, -999], dtype=np.float32)),
+                                    ('b', [4, -999, -999, 6, 6]))),
+                       index_i64)
+
+        actual = df.dropna()
+        expected = DataFrame(OrderedDict((('a', np.array([0, 2], dtype=np.float32)),
+                                          ('b', [4, 6]))),
+                             Index([0, 3]))
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_dropna_subset(self, index_i64):
+        df = DataFrame(OrderedDict((('a', np.array([0, 1, -999, 2, -999], dtype=np.float32)),
+                                    ('b', [4, -999, -999, 6, 6]))),
+                       index_i64)
+
+        actual = df.dropna(subset=['a'])
+        expected = DataFrame(OrderedDict((('a', np.array([0, 1, 2], dtype=np.float32)),
+                                          ('b', [4, -999, 6]))),
+                             Index([0, 1, 3]))
+
+        assert_dataframe_equal(actual, expected)

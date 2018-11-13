@@ -48,3 +48,11 @@ class TestMultiIndex(object):
                                Index(np.array([1, 2], dtype=np.int64), np.dtype(np.int64))])
 
         assert_multiindex_equal(actual, expected)
+
+    def test_dropna(self):
+        mi = MultiIndex([[0, -999, 2, -999], Index([1., -999., -999., 3.], dtype=np.dtype(np.float64))])
+
+        actual = mi.dropna()
+        expected = MultiIndex([[0], [1.]])
+
+        assert_multiindex_equal(actual, expected)

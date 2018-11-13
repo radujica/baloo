@@ -314,6 +314,17 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
                                            self.weld_type),
                                self.weld_type)
 
+    def dropna(self):
+        """Returns Series without null values according to Baloo's convention.
+
+        Returns
+        -------
+        Series
+            Series with no null values.
+
+        """
+        return self[self.notna()]
+
 
 def _process_input_data(data):
     if data is None:

@@ -241,3 +241,11 @@ class TestSeries(object):
         expected = Series([True, True, False, True, False], index_i64, np.dtype(np.bool))
 
         assert_series_equal(actual, expected)
+
+    def test_dropna(self, index_i64):
+        sr = Series([3, 2, -999, 4, -999], index_i64)
+
+        actual = sr.dropna()
+        expected = Series([3, 2, 4], Index([0, 1, 3]), np.dtype(np.int64))
+
+        assert_series_equal(actual, expected)

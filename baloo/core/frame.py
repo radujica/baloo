@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from functools import reduce
 
 import numpy as np
 from tabulate import tabulate
@@ -96,6 +97,12 @@ class DataFrame(BinaryOps, BalooCommon):
     ---  ---------  ---  ---------
       0          1    6          0
       2          2    7          1
+    >>> df3 = bl.DataFrame({'a': [1., -999., 3.]}, bl.Index([-999, 1, 2]))
+    >>> print(df3.dropna().evaluate())
+            a
+    ----  ---
+    -999    1
+       2    3
 
     """
     _empty_text = 'Empty DataFrame'
@@ -964,6 +971,33 @@ class DataFrame(BinaryOps, BalooCommon):
                                for sr, obj in zip(self._iter(), weld_objects[len(index_data):]))
 
         return DataFrame(new_data, new_index)
+
+    def dropna(self, subset=None):
+        """Remove missing values according to Baloo's convention.
+
+        Parameters
+        ----------
+        subset : list of str, optional
+            Which columns to check for missing values in.
+
+        Returns
+        -------
+        DataFrame
+            DataFrame with no null values in columns.
+
+        """
+        check_inner_types(check_type(subset, list), str)
+        if subset is None:
+            subset = self._gather_column_names()
+        elif len(subset) < 1:
+            raise ValueError('Need at least one column in which to check for missing values')
+        elif not set(subset).issubset(set(self._gather_column_names())):
+            raise ValueError('Given subset is not all part of the columns')
+
+        not_nas = [v.notna() for v in self[subset]._iter()]
+        and_filter = reduce(lambda x, y: x & y, not_nas)
+
+        return self[and_filter]
 
 
 def _default_index(dataframe_data, length):

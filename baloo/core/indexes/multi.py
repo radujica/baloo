@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from functools import reduce
 
 import numpy as np
 from tabulate import tabulate
@@ -208,6 +209,20 @@ class MultiIndex(IndexCommon, BalooCommon):
         """
         # not computing slice here to use with __getitem__ because we'd need to use len which is eager
         return MultiIndex([v.tail(n) for v in self.values], self.names)
+
+    def dropna(self):
+        """Returns MultiIndex without any rows containing null values according to Baloo's convention.
+
+        Returns
+        -------
+        MultiIndex
+            MultiIndex with no null values.
+
+        """
+        not_nas = [v.notna() for v in self.values]
+        and_filter = reduce(lambda x, y: x & y, not_nas)
+
+        return self[and_filter]
 
 
 def _init_indexes(data, names):

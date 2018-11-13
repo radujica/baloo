@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..generic import BinaryOps, IndexCommon, BalooCommon
+from ..generic import BinaryOps, IndexCommon, BalooCommon, BitOps
 from ...core.utils import check_type, infer_dtype, is_scalar, check_weld_bit_array, check_valid_int_slice, \
     convert_to_numpy
 from ...weld import LazyArrayResult, numpy_to_weld_type, weld_filter, weld_slice, \
@@ -8,7 +8,7 @@ from ...weld import LazyArrayResult, numpy_to_weld_type, weld_filter, weld_slice
     weld_iloc_indices_with_missing, default_missing_data_literal
 
 
-class Index(LazyArrayResult, BinaryOps, IndexCommon, BalooCommon):
+class Index(LazyArrayResult, BinaryOps, BitOps, IndexCommon, BalooCommon):
     """Weld-ed Pandas Index.
 
     Attributes
@@ -239,6 +239,17 @@ class Index(LazyArrayResult, BinaryOps, IndexCommon, BalooCommon):
             return Index(weld_tail(self.weld_expr, length, n),
                          self.dtype,
                          self.name)
+
+    def dropna(self):
+        """Returns Index without null values according to Baloo's convention.
+
+        Returns
+        -------
+        Index
+            Index with no null values.
+
+        """
+        return self[self.notna()]
 
 
 def _process_input_data(data):
