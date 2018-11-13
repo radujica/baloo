@@ -1,9 +1,9 @@
-from weld.weldobject import WeldObject
-
 from .convertors import default_missing_data_literal
-from .lazy_result import WeldVec, WeldChar, WeldLong, LazyArrayResult
+from .lazy_result import WeldVec, WeldChar, WeldLong, LazyArrayResult, WeldInt16, LazyStructResult, \
+    WeldStruct, WeldObject, LazyStructOfVecResult
 from .weld_utils import get_weld_obj_id, create_weld_object, to_weld_literal, create_empty_weld_object, \
-    weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, Cache, weld_select_from_struct
+    weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, Cache, weld_select_from_struct, \
+    extract_placeholder_weld_objects_from_index, extract_placeholder_weld_objects
 
 
 def weld_range(start, stop, step):
@@ -564,3 +564,89 @@ def weld_unique(array, weld_type):
                                               type=weld_type)
 
     return weld_obj
+
+
+def weld_drop_duplicates(arrays, weld_types, subset_indices, keep):
+    """Return the unique elements of the array.
+
+    Parameters
+    ----------
+    arrays : list of (numpy.ndarray or WeldObject)
+        Input arrays.
+    weld_types : list of WeldType
+        Type of elements in the input arrays.
+    subset_indices : list of int
+        Indices of which arrays to consider from arrays when checking duplicates.
+    keep : {'+', '*', 'min', 'max'}
+        Which merger to apply.
+
+    Returns
+    -------
+    list of WeldObject
+        New columns with those not included in subset returned as is.
+
+    """
+    weld_obj_struct = weld_arrays_to_vec_of_struct(arrays, weld_types)
+
+    obj_id, weld_obj = create_weld_object(weld_obj_struct)
+
+    all_indices = list(range(len(arrays)))
+    value_indices = list(filter(lambda x: x not in subset_indices, all_indices))
+    key_weld_types = [weld_types[i] for i in subset_indices]
+    value_weld_types = [weld_types[i] for i in value_indices]
+
+    key_types = '{{{}}}'.format(', '.join(str(type_) for type_ in key_weld_types))
+    value_types = '{{{}}}'.format(', '.join(str(type_) for type_ in value_weld_types))
+    all_types = '{{{}}}'.format(', '.join(str(type_) for type_ in weld_types))
+    key_merges = '{{{}}}'.format(', '.join('e.${}'.format(str(i)) for i in subset_indices))
+    value_merges = '{{{}}}'.format(', '.join('e.${}'.format(str(i)) for i in value_indices))
+
+    # flattening the struct of struct
+    results = []
+    key_i = 0
+    value_i = 0
+    for i in all_indices:
+        if i in subset_indices:
+            results.append('e.${}.${}'.format(0, key_i))
+            key_i += 1
+        else:
+            results.append('e.${}.${}'.format(1, value_i))
+            value_i += 1
+    res = '{{{}}}'.format(', '.join(results))
+
+    weld_template = """map(
+    tovec(
+        result(
+            for(
+                map(
+                    {arrays},
+                    |e: {all_types}| 
+                        {{{key_merges}, {value_merges}}}
+                ),
+                dictmerger[{key_types}, {value_types}, {keep}],
+                |b: dictmerger[{key_types}, {value_types}, {keep}], i: i64, e: {{{key_types}, {value_types}}}| 
+                    merge(b, e)
+            )
+        )
+    ),
+    |e: {{{key_types}, {value_types}}}| 
+        {res}
+)"""
+
+    weld_obj.weld_code = weld_template.format(arrays=obj_id,
+                                              all_types=all_types,
+                                              key_types=key_types,
+                                              value_types=value_types,
+                                              key_merges=key_merges,
+                                              value_merges=value_merges,
+                                              keep=keep,
+                                              res=res)
+
+    weld_struct_of_vec = weld_vec_of_struct_to_struct_of_vec(weld_obj, weld_types)
+
+    intermediate_result = LazyStructOfVecResult(weld_struct_of_vec, weld_types)
+    dependency_name = Cache.cache_intermediate_result(intermediate_result, 'drop_dupl')
+
+    weld_objects = extract_placeholder_weld_objects(dependency_name, len(arrays), 'drop_dupl')
+
+    return weld_objects

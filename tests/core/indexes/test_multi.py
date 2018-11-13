@@ -4,7 +4,7 @@ from baloo import MultiIndex, Index
 from .test_base import assert_index_equal
 
 
-def assert_multiindex_equal(actual, expected):
+def assert_multiindex_equal(actual, expected, sort=False):
     actual = actual.evaluate()
     expected = expected.evaluate()
 
@@ -13,7 +13,7 @@ def assert_multiindex_equal(actual, expected):
     assert actual.names == expected.names
     assert actual.dtypes == expected.dtypes
     for i in range(len(actual.values)):
-        assert_index_equal(actual.values[i], expected.values[i])
+        assert_index_equal(actual.values[i], expected.values[i], sort=sort)
 
 
 class TestMultiIndex(object):
