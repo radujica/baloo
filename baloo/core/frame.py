@@ -103,6 +103,10 @@ class DataFrame(BinaryOps, BalooCommon):
     def __init__(self, data=None, index=None):
         """Initialize a DataFrame object.
 
+        Note that (unlike pandas) there's currently no index inference or alignment between the indexes of any Series
+        passed as data. That is, all data, be it raw or Series, inherits the index of the DataFrame. Alignment
+        is currently restricted to setitem
+
         Parameters
         ----------
         data : dict, optional
@@ -475,7 +479,9 @@ class DataFrame(BinaryOps, BalooCommon):
         new_data = OrderedDict()
         for column_name in self:
             if column_name in columns.keys():
-                new_data[columns[column_name]] = self._data[column_name]
+                column = self._data[column_name]
+                new_name = columns[column_name]
+                new_data[new_name] = Series(column.values, column.index, column.dtype, new_name)
             else:
                 new_data[column_name] = self._data[column_name]
 
@@ -612,7 +618,8 @@ class DataFrame(BinaryOps, BalooCommon):
                            for name, data in self.index._gather_data().items())
 
         # the data/columns
-        new_columns.update(self._data)
+        new_columns.update((sr.name, Series(sr.values, new_index, sr.dtype, sr.name))
+                           for sr in self._iter())
 
         return DataFrame(new_columns, new_index)
 
@@ -636,7 +643,8 @@ class DataFrame(BinaryOps, BalooCommon):
             column = self._data[keys]
             new_index = Index(column.values, column.dtype, column.name)
 
-            new_data = OrderedDict(self.values)
+            new_data = OrderedDict((sr.name, Series(sr.values, new_index, sr.dtype, sr.name))
+                                   for sr in self._iter())
             del new_data[keys]
 
             return DataFrame(new_data, new_index)
@@ -649,7 +657,8 @@ class DataFrame(BinaryOps, BalooCommon):
                 new_index_data.append(Index(column.values, column.dtype, column.name))
             new_index = MultiIndex(new_index_data, keys)
 
-            new_data = OrderedDict(self.values)
+            new_data = OrderedDict((sr.name, Series(sr.values, new_index, sr.dtype, sr.name))
+                                   for sr in self._iter())
             for column_name in keys:
                 del new_data[column_name]
 
@@ -968,6 +977,9 @@ def _default_index(dataframe_data, length):
             return default_index(dataframe_data[list(dataframe_data.keys())[0]])
 
 
+# TODO: if there's no index, pandas tries to get an index from the data
+# TODO if there are multiple indexes, there's an outer join on the index;
+# TODO: if an index is passed though, it overrides any index inferences ^
 def _process_index(index, data, length):
     if index is None:
         return _default_index(data, length)
@@ -987,8 +999,10 @@ def _check_input_data(data):
 
 def _process_data(data, index):
     for k, v in data.items():
+        # TODO: pandas does alignment here
         if isinstance(v, Series):
             v.name = k
+            v.index = index
         else:
             # must be ndarray or list
             data[k] = Series(v, index, name=k)

@@ -15,17 +15,12 @@ def assert_dataframe_equal(actual, expected, sort=False):
     assert actual._length == expected._length
     assert len(actual) == len(expected)
     assert_series_equal(actual.dtypes, expected.dtypes)
-    assert_indexes_equal(actual.index, expected.index, sort=True)
+    assert_indexes_equal(actual.index, expected.index, sort=sort)
     assert_indexes_equal(actual.columns, expected.columns)
     assert len(actual._data) == len(expected._data)
     assert actual._data.keys() == expected._data.keys()
     for column_name in actual:
-        actual_values = actual._data[column_name].values
-        expected_values = expected._data[column_name].values
-        if sort:
-            actual_values = np.sort(actual_values)
-            expected_values = np.sort(expected_values)
-        np.testing.assert_array_equal(actual_values, expected_values)
+        assert_series_equal(actual._data[column_name], expected._data[column_name], sort=sort)
 
 
 # TODO: fix |S11!!
