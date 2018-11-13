@@ -8,19 +8,24 @@ from .indexes.utils import assert_indexes_equal
 from .test_series import assert_series_equal
 
 
-def assert_dataframe_equal(actual, expected):
+def assert_dataframe_equal(actual, expected, sort=False):
     actual = actual.evaluate()
     expected = expected.evaluate()
 
     assert actual._length == expected._length
     assert len(actual) == len(expected)
     assert_series_equal(actual.dtypes, expected.dtypes)
-    assert_indexes_equal(actual.index, expected.index)
+    assert_indexes_equal(actual.index, expected.index, sort=True)
     assert_indexes_equal(actual.columns, expected.columns)
     assert len(actual._data) == len(expected._data)
     assert actual._data.keys() == expected._data.keys()
     for column_name in actual:
-        np.testing.assert_array_equal(actual._data[column_name].values, expected._data[column_name].values)
+        actual_values = actual._data[column_name].values
+        expected_values = expected._data[column_name].values
+        if sort:
+            actual_values = np.sort(actual_values)
+            expected_values = np.sort(expected_values)
+        np.testing.assert_array_equal(actual_values, expected_values)
 
 
 # TODO: fix |S11!!
@@ -352,3 +357,27 @@ class TestDataFrame(object):
                              expected_index)
 
         assert_dataframe_equal(actual, expected)
+
+    def test_drop_duplicates_all(self, index_i64):
+        df = DataFrame(OrderedDict((('a', np.array([0, 1, 1, 2, 3], dtype=np.float32)),
+                                    ('b', [4, 5, 5, 6, 6]))),
+                       index_i64)
+
+        actual = df.drop_duplicates()
+        expected = DataFrame(OrderedDict((('a', np.array([0, 1, 2, 3], dtype=np.float32)),
+                                          ('b', [4, 5, 6, 6]))),
+                             Index([0, 1, 3, 4]))
+
+        assert_dataframe_equal(actual, expected, sort=True)
+
+    def test_drop_duplicates_subset(self, index_i64):
+        df = DataFrame(OrderedDict((('a', np.array([0, 1, 1, 2, 3], dtype=np.float32)),
+                                    ('b', [4, 5, 5, 6, 6]))),
+                       index_i64)
+
+        actual = df.drop_duplicates(subset=['b'])
+        expected = DataFrame(OrderedDict((('a', np.array([0, 1, 2], dtype=np.float32)),
+                                          ('b', [4, 5, 6]))),
+                             Index([0, 1, 3]))
+
+        assert_dataframe_equal(actual, expected, sort=True)

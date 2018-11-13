@@ -1,14 +1,20 @@
 import numpy as np
 import pytest
 
-from baloo import Index, Series
+from baloo import Index
 
 
-def assert_index_equal(actual, expected):
+def assert_index_equal(actual, expected, sort=False):
     actual = actual.evaluate()
     expected = expected.evaluate()
 
-    np.testing.assert_array_equal(actual.values, expected.values)
+    actual_values = actual.values
+    expected_values = expected.values
+    if sort:
+        actual_values = np.sort(actual_values)
+        expected_values = np.sort(expected_values)
+    np.testing.assert_array_equal(actual_values, expected_values)
+
     assert actual.dtype.char == expected.dtype.char
     assert actual._length == expected._length
     # might seem redundant but testing the __len__ function

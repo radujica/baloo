@@ -11,7 +11,7 @@ from .utils import check_type, is_scalar, check_inner_types, infer_length, short
     check_weld_bit_array, check_valid_int_slice, as_list, default_index
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
     weld_cast_double, WeldDouble, weld_sort, LazyLongResult, weld_merge_join, weld_iloc_indices, \
-    weld_merge_outer_join, weld_align
+    weld_merge_outer_join, weld_align, weld_drop_duplicates
 
 
 # TODO: maybe add type hints
@@ -905,6 +905,56 @@ class DataFrame(BinaryOps, BalooCommon):
         # TODO i.e. df(ind + a, b) join df(ind2 + b, c) does work and the index is now called ind
 
         return self.merge(other, how, on, (lsuffix, rsuffix), algorithm, is_on_sorted, is_on_unique)
+
+    def drop_duplicates(self, subset=None, keep='min'):
+        """Return DataFrame with duplicate rows (excluding index) removed,
+        optionally only considering subset columns.
+
+        Note that the row order is NOT maintained due to hashing.
+
+        Parameters
+        ----------
+        subset : list of str, optional
+            Which columns to consider
+        keep : {'+', '*', 'min', 'max'}, optional
+            What to select from the duplicate rows. These correspond to the possible merge operations in Weld.
+            Note that '+' and '-' might produce unexpected results for strings.
+
+        Returns
+        -------
+        DataFrame
+            DataFrame without duplicate rows.
+
+        """
+        check_inner_types(check_type(subset, list), str)
+        if subset is None:
+            subset = self._gather_column_names()
+        elif len(subset) < 1:
+            raise ValueError('Need at least one column to check duplicates by')
+        elif not set(subset).issubset(set(self._gather_column_names())):
+            raise ValueError('Given subset is not all part of the columns')
+
+        df = self.reset_index()
+        df_names = df._gather_column_names()
+        subset_indices = [df_names.index(col_name) for col_name in subset]
+
+        weld_objects = weld_drop_duplicates(df._gather_data_for_weld(),
+                                            df._gather_weld_types(),
+                                            subset_indices,
+                                            keep)
+
+        index_data = self.index._gather_data(name=None)
+        new_index = [Index(weld_objects[i], v.dtype, k)
+                     for i, k, v in zip(list(range(len(index_data))), index_data.keys(), index_data.values())]
+        if len(new_index) > 1:
+            new_index = MultiIndex(new_index, self.index._gather_names())
+        else:
+            new_index = new_index[0]
+
+        new_data = OrderedDict((sr.name, Series(obj, new_index, sr.dtype, sr.name))
+                               for sr, obj in zip(self._iter(), weld_objects[len(index_data):]))
+
+        return DataFrame(new_data, new_index)
 
 
 def _default_index(dataframe_data, length):
