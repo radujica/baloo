@@ -103,6 +103,12 @@ class DataFrame(BinaryOps, BalooCommon):
     ----  ---
     -999    1
        2    3
+    >>> print(df3.fillna({'a': 15}).evaluate())
+            a
+    ----  ---
+    -999    1
+       1   15
+       2    3
 
     """
     _empty_text = 'Empty DataFrame'
@@ -998,6 +1004,35 @@ class DataFrame(BinaryOps, BalooCommon):
         and_filter = reduce(lambda x, y: x & y, not_nas)
 
         return self[and_filter]
+
+    def fillna(self, value):
+        """Returns DataFrame with missing values replaced with value.
+
+        Parameters
+        ----------
+        value : {int, float, bytes, bool} or dict
+            Scalar value to replace missing values with. If dict, replaces missing values
+            only in the key columns with the value scalar.
+
+        Returns
+        -------
+        DataFrame
+            With missing values replaced.
+
+        """
+        # TODO: extract this to function in utils and replace wherever used
+        if is_scalar(value):
+            new_data = OrderedDict((column.name, column.fillna(value))
+                                   for column in self._iter())
+
+            return DataFrame(new_data, self.index)
+        elif isinstance(value, dict):
+            new_data = OrderedDict((column.name, column.fillna(value[column.name]) if column.name in value else column)
+                                   for column in self._iter())
+
+            return DataFrame(new_data, self.index)
+        else:
+            raise TypeError('Can only fill na given a scalar or a dict mapping columns to their respective scalar')
 
 
 def _default_index(dataframe_data, length):
