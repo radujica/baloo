@@ -113,10 +113,18 @@ class TestBaseIndex(object):
 
         assert_index_equal(actual, expected)
 
-    def test_isna(self, index_i64):
+    def test_isna(self):
         ind = Index([3, 2, -999, 4, -999])
 
         actual = ind.isna()
         expected = Index([False, False, True, False, True], np.dtype(np.bool))
+
+        assert_index_equal(actual, expected)
+
+    def test_dropna(self):
+        ind = Index([3, 2, -999, 4, -999])
+
+        actual = ind.dropna()
+        expected = Index([3, 2, 4], np.dtype(np.int64))
 
         assert_index_equal(actual, expected)
