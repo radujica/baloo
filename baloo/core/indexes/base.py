@@ -5,7 +5,7 @@ from ...core.utils import check_type, infer_dtype, is_scalar, check_weld_bit_arr
     convert_to_numpy
 from ...weld import LazyArrayResult, numpy_to_weld_type, weld_filter, weld_slice, \
     weld_compare, weld_tail, weld_array_op, weld_element_wise_op, WeldObject, weld_iloc_indices, \
-    weld_iloc_indices_with_missing
+    weld_iloc_indices_with_missing, default_missing_data_literal
 
 
 class Index(LazyArrayResult, BinaryOps, IndexCommon, BalooCommon):
@@ -61,13 +61,12 @@ class Index(LazyArrayResult, BinaryOps, IndexCommon, BalooCommon):
                                               self.dtype)
 
     def _comparison(self, other, comparison):
-        if is_scalar(other):
-            return Index(weld_compare(self.weld_expr,
-                                      other,
-                                      comparison,
-                                      self.weld_type),
-                         np.dtype(np.bool),
-                         self.name)
+        if other is None:
+            other = default_missing_data_literal(self.weld_type)
+
+            return _index_compare(self, other, comparison)
+        elif is_scalar(other):
+            return _index_compare(self, other, comparison)
         else:
             raise TypeError('Can currently only compare with scalars')
 
@@ -249,3 +248,12 @@ def _process_input_data(data):
         data = convert_to_numpy(data)
 
     return data
+
+
+def _index_compare(index, other, comparison):
+    return Index(weld_compare(index.weld_expr,
+                              other,
+                              comparison,
+                              index.weld_type),
+                 np.dtype(np.bool),
+                 index.name)

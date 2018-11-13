@@ -69,7 +69,8 @@ def weld_compare(array, scalar, operation, weld_type):
     """
     obj_id, weld_obj = create_weld_object(array)
 
-    scalar = to_weld_literal(scalar, weld_type)
+    if not isinstance(scalar, str):
+        scalar = to_weld_literal(scalar, weld_type)
 
     cast = '{type}({scalar})'.format(type=weld_type, scalar=scalar)
     # actually checking WeldVec(WeldChar)

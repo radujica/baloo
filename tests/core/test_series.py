@@ -225,3 +225,19 @@ class TestSeries(object):
         expected = np.array([3, 2, 5, 6])
 
         np.testing.assert_array_equal(np.sort(actual), np.sort(expected))
+
+    def test_isna(self, index_i64):
+        sr = Series([3, 2, -999, 4, -999], index_i64)
+
+        actual = sr.isna()
+        expected = Series([False, False, True, False, True], index_i64, np.dtype(np.bool))
+
+        assert_series_equal(actual, expected)
+
+    def test_notna(self, index_i64):
+        sr = Series([3, 2, -999, 4, -999], index_i64)
+
+        actual = sr.notna()
+        expected = Series([True, True, False, True, False], index_i64, np.dtype(np.bool))
+
+        assert_series_equal(actual, expected)

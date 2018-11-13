@@ -376,3 +376,15 @@ class TestDataFrame(object):
                              Index([0, 1, 3]))
 
         assert_dataframe_equal(actual, expected, sort=True)
+
+    def test_isna(self, index_i64):
+        df = DataFrame(OrderedDict((('a', np.array([0, 1, -999, 2, -999], dtype=np.float32)),
+                                    ('b', [4, -999, -999, 6, 6]))),
+                       index_i64)
+
+        actual = df.isna()
+        expected = DataFrame(OrderedDict((('a', np.array([False, False, True, False, True])),
+                                          ('b', [False, True, True, False, False]))),
+                             index_i64)
+
+        assert_dataframe_equal(actual, expected)

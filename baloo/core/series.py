@@ -7,7 +7,7 @@ from .utils import infer_dtype, default_index, check_type, is_scalar, check_vali
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
     weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, LazyDoubleResult, LazyScalarResult, \
     weld_mean, weld_variance, weld_standard_deviation, WeldObject, weld_agg, weld_iloc_indices, \
-    weld_iloc_indices_with_missing, weld_unique
+    weld_iloc_indices_with_missing, weld_unique, default_missing_data_literal
 
 
 class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
@@ -120,14 +120,12 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
                                               self.dtype)
 
     def _comparison(self, other, comparison):
-        if is_scalar(other):
-            return Series(weld_compare(self.weld_expr,
-                                       other,
-                                       comparison,
-                                       self.weld_type),
-                          self.index,
-                          np.dtype(np.bool),
-                          self.name)
+        if other is None:
+            other = default_missing_data_literal(self.weld_type)
+
+            return _series_compare(self, other, comparison)
+        elif is_scalar(other):
+            return _series_compare(self, other, comparison)
         else:
             raise TypeError('Can currently only compare with scalars')
 
@@ -334,6 +332,16 @@ def _process_index(index, data):
         return default_index(data)
     else:
         return check_type(index, (Index, MultiIndex))
+
+
+def _series_compare(series, other, comparison):
+    return Series(weld_compare(series.weld_expr,
+                               other,
+                               comparison,
+                               series.weld_type),
+                  series.index,
+                  np.dtype(np.bool),
+                  series.name)
 
 
 # the following methods are shortcuts for DataFrame ops to avoid e.g. recomputing index
