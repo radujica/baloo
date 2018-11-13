@@ -112,3 +112,11 @@ class TestBaseIndex(object):
         expected = Index(expected_data, np.dtype(np.float32))
 
         assert_index_equal(actual, expected)
+
+    def test_isna(self, index_i64):
+        ind = Index([3, 2, -999, 4, -999])
+
+        actual = ind.isna()
+        expected = Index([False, False, True, False, True], np.dtype(np.bool))
+
+        assert_index_equal(actual, expected)

@@ -66,6 +66,12 @@ class BinaryOps(abc.ABC):
     def __gt__(self, other):
         return self._comparison(other, '>')
 
+    def isna(self):
+        return self._comparison(None, '==')
+
+    def notna(self):
+        return self._comparison(None, '!=')
+
     @abc.abstractmethod
     def _element_wise_operation(self, other, operation):
         raise NotImplementedError

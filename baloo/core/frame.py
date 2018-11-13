@@ -232,7 +232,7 @@ class DataFrame(BinaryOps, BalooCommon):
         return tabulate(str_data, headers='keys')
 
     def _comparison(self, other, comparison):
-        if is_scalar(other):
+        if other is None or is_scalar(other):
             df = _drop_str_columns(self)
             new_data = OrderedDict((column.name, column._comparison(other, comparison))
                                    for column in df._iter())
