@@ -128,3 +128,11 @@ class TestBaseIndex(object):
         expected = Index([3, 2, 4], np.dtype(np.int64))
 
         assert_index_equal(actual, expected)
+
+    def test_fillna(self):
+        ind = Index([3, 2, -999, 4, -999])
+
+        actual = ind.fillna(15)
+        expected = Index([3, 2, 15, 4, 15], np.dtype(np.int64))
+
+        assert_index_equal(actual, expected)

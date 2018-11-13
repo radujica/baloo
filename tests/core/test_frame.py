@@ -377,6 +377,7 @@ class TestDataFrame(object):
 
         assert_dataframe_equal(actual, expected, sort=True)
 
+    # TODO: update the following tests with fixture (also series and base)
     def test_isna(self, index_i64):
         df = DataFrame(OrderedDict((('a', np.array([0, 1, -999, 2, -999], dtype=np.float32)),
                                     ('b', [4, -999, -999, 6, 6]))),
@@ -410,5 +411,29 @@ class TestDataFrame(object):
         expected = DataFrame(OrderedDict((('a', np.array([0, 1, 2], dtype=np.float32)),
                                           ('b', [4, -999, 6]))),
                              Index([0, 1, 3]))
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_fillna_scalar(self, index_i64):
+        df = DataFrame(OrderedDict((('a', np.array([0, 1, -999, 2, -999], dtype=np.float32)),
+                                    ('b', [4, -999, -999, 6, 6]))),
+                       index_i64)
+
+        actual = df.fillna(15)
+        expected = DataFrame(OrderedDict((('a', np.array([0, 1, 15, 2, 15], dtype=np.float32)),
+                                          ('b', [4, 15, 15, 6, 6]))),
+                             index_i64)
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_fillna_dict(self, index_i64):
+        df = DataFrame(OrderedDict((('a', np.array([0, 1, -999, 2, -999], dtype=np.float32)),
+                                    ('b', [4, -999, -999, 6, 6]))),
+                       index_i64)
+
+        actual = df.fillna({'a': 15})
+        expected = DataFrame(OrderedDict((('a', np.array([0, 1, 15, 2, 15], dtype=np.float32)),
+                                          ('b', [4, -999, -999, 6, 6]))),
+                             index_i64)
 
         assert_dataframe_equal(actual, expected)

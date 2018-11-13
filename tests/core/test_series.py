@@ -227,7 +227,7 @@ class TestSeries(object):
         np.testing.assert_array_equal(np.sort(actual), np.sort(expected))
 
     def test_isna(self, index_i64):
-        sr = Series([3, 2, -999, 4, -999], index_i64)
+        sr = Series([3, 2, -999, 4, -999], index_i64, dtype=np.dtype(np.int64))
 
         actual = sr.isna()
         expected = Series([False, False, True, False, True], index_i64, np.dtype(np.bool))
@@ -235,7 +235,7 @@ class TestSeries(object):
         assert_series_equal(actual, expected)
 
     def test_notna(self, index_i64):
-        sr = Series([3, 2, -999, 4, -999], index_i64)
+        sr = Series([3, 2, -999, 4, -999], index_i64, dtype=np.dtype(np.int64))
 
         actual = sr.notna()
         expected = Series([True, True, False, True, False], index_i64, np.dtype(np.bool))
@@ -243,9 +243,17 @@ class TestSeries(object):
         assert_series_equal(actual, expected)
 
     def test_dropna(self, index_i64):
-        sr = Series([3, 2, -999, 4, -999], index_i64)
+        sr = Series([3, 2, -999, 4, -999], index_i64, dtype=np.dtype(np.int64))
 
         actual = sr.dropna()
         expected = Series([3, 2, 4], Index([0, 1, 3]), np.dtype(np.int64))
+
+        assert_series_equal(actual, expected)
+
+    def test_fillna(self, index_i64):
+        sr = Series([3, 2, -999, 4, -999], index_i64, dtype=np.dtype(np.int64))
+
+        actual = sr.fillna(15)
+        expected = Series([3, 2, 15, 4, 15], index_i64, np.dtype(np.int64))
 
         assert_series_equal(actual, expected)

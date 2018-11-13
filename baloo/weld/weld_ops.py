@@ -1,9 +1,8 @@
 from .convertors import default_missing_data_literal
-from .lazy_result import WeldVec, WeldChar, WeldLong, LazyArrayResult, WeldInt16, LazyStructResult, \
-    WeldStruct, WeldObject, LazyStructOfVecResult
+from .lazy_result import WeldVec, WeldChar, WeldLong, LazyArrayResult, WeldObject, LazyStructOfVecResult
 from .weld_utils import get_weld_obj_id, create_weld_object, to_weld_literal, create_empty_weld_object, \
     weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, Cache, weld_select_from_struct, \
-    extract_placeholder_weld_objects_from_index, extract_placeholder_weld_objects
+    extract_placeholder_weld_objects
 
 
 def weld_range(start, stop, step):
@@ -651,3 +650,45 @@ def weld_drop_duplicates(arrays, weld_types, subset_indices, keep):
     weld_objects = extract_placeholder_weld_objects(dependency_name, len(arrays), 'drop_dupl')
 
     return weld_objects
+
+
+def weld_replace(array, weld_type, this, to):
+    """Replaces 'this' values to 'to' value.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input array.
+    weld_type : WeldType
+        Type of the data in the array.
+    this : {int, float, str, bool, bytes}
+        Scalar to replace.
+    to : {int, float, str, bool, bytes}
+        Scalar to replace with.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    if not isinstance(this, str):
+        this = to_weld_literal(this, weld_type)
+    to = to_weld_literal(to, weld_type)
+
+    obj_id, weld_obj = create_weld_object(array)
+
+    weld_template = """map({array},
+    |e: {type}|
+        if(e == {this},
+            {to},
+            e
+        )    
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=obj_id,
+                                              type=weld_type,
+                                              this=this,
+                                              to=to)
+
+    return weld_obj

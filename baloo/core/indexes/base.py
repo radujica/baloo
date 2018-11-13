@@ -5,7 +5,7 @@ from ...core.utils import check_type, infer_dtype, is_scalar, check_weld_bit_arr
     convert_to_numpy
 from ...weld import LazyArrayResult, numpy_to_weld_type, weld_filter, weld_slice, \
     weld_compare, weld_tail, weld_array_op, weld_element_wise_op, WeldObject, weld_iloc_indices, \
-    weld_iloc_indices_with_missing, default_missing_data_literal
+    weld_iloc_indices_with_missing, default_missing_data_literal, weld_replace
 
 
 class Index(LazyArrayResult, BinaryOps, BitOps, IndexCommon, BalooCommon):
@@ -250,6 +250,30 @@ class Index(LazyArrayResult, BinaryOps, BitOps, IndexCommon, BalooCommon):
 
         """
         return self[self.notna()]
+
+    def fillna(self, value):
+        """Returns Index with missing values replaced with value.
+
+        Parameters
+        ----------
+        value : {int, float, bytes, bool}
+            Scalar value to replace missing values with.
+
+        Returns
+        -------
+        Index
+            With missing values replaced.
+
+        """
+        if not is_scalar(value):
+            raise TypeError('Value to replace with is not a valid scalar')
+
+        return Index(weld_replace(self.weld_expr,
+                                  self.weld_type,
+                                  default_missing_data_literal(self.weld_type),
+                                  value),
+                     self.dtype,
+                     self.name)
 
 
 def _process_input_data(data):
