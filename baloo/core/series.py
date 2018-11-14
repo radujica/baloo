@@ -7,7 +7,7 @@ from .utils import infer_dtype, default_index, check_type, is_scalar, check_vali
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
     weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, LazyDoubleResult, LazyScalarResult, \
     weld_mean, weld_variance, weld_standard_deviation, WeldObject, weld_agg, weld_iloc_indices, \
-    weld_iloc_indices_with_missing, weld_unique, default_missing_data_literal, weld_replace
+    weld_iloc_indices_with_missing, weld_unique, default_missing_data_literal, weld_replace, weld_udf
 
 
 class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
@@ -348,6 +348,57 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
                                    value),
                       self.index,
                       self.dtype,
+                      self.name)
+
+    def apply(self, weld_template, mapping=None, new_dtype=None):
+        """Apply an element-wise UDF to the Series.
+
+        Parameters
+        ----------
+        weld_template : str
+            Weld code to execute.
+        mapping : dict, optional
+            Additional mappings in the weld_template to replace on execution.
+            self is added by default to reference to this Series.
+        new_dtype : numpy.dtype, optional
+            Specify the new dtype of the result Series.
+            If None, it assumes it's the same dtype as before the apply.
+
+        Returns
+        -------
+        Series
+            With UDF result.
+
+        Examples
+        --------
+        >>> import baloo as bl
+        >>> sr = bl.Series([1, 2, 3])
+        >>> weld_template = 'map({self}, |e| e + {scalar})'
+        >>> mapping = {'scalar': '2L'}
+        >>> print(sr.apply(weld_template, mapping).evaluate())
+        [3 4 5]
+        >>> weld_template2 = 'map({self}, |e| e + 3L)'
+        >>> print(sr.apply(weld_template2).evaluate())
+        [4 5 6]
+
+        """
+        check_type(weld_template, str)
+        check_type(mapping, dict)
+        check_type(new_dtype, np.dtype)
+
+        default_mapping = {'self': self.values}
+        if mapping is None:
+            mapping = default_mapping
+        else:
+            mapping.update(default_mapping)
+
+        if new_dtype is None:
+            new_dtype = self.dtype
+
+        return Series(weld_udf(weld_template,
+                               mapping),
+                      self.index,
+                      new_dtype,
                       self.name)
 
 

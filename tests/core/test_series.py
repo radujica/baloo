@@ -257,3 +257,12 @@ class TestSeries(object):
         expected = Series([3, 2, 15, 4, 15], index_i64, np.dtype(np.int64))
 
         assert_series_equal(actual, expected)
+
+    def test_udf(self, series_i64, index_i64):
+        weld_template = "map({self}, |e| e + {scalar})"
+        mapping = {'scalar': '2L'}
+
+        actual = series_i64.apply(weld_template, mapping)
+        expected = Series([3, 4, 5, 6, 7], index_i64)
+
+        assert_series_equal(actual, expected)
