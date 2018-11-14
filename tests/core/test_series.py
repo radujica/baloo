@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from baloo import Series, RangeIndex, Index, load_cudf
+from baloo import Series, RangeIndex, Index, load_cudf, log
 from baloo.weld import create_placeholder_weld_object
 from .indexes.utils import assert_indexes_equal
 
@@ -280,3 +280,11 @@ class TestSeries(object):
         expected = Series([3, 4, 5, 6, 7], index_i64)
 
         assert_series_equal(actual, expected)
+
+    def test_udf_func(self, data_f32, index_i64):
+        sr = Series(data_f32, index_i64, np.dtype(np.float32))
+
+        actual = sr.apply(log)
+        expected = Series(np.array([0., 0.693147, 1.098612, 1.386294, 1.609438], dtype=np.float32), index_i64)
+
+        assert_series_equal(actual, expected, 5)

@@ -362,6 +362,7 @@ class DataFrame(BinaryOps, BalooCommon):
         key = check_type(key, str)
         value = check_type(value, (np.ndarray, Series))
 
+        # TODO: no need to align if it's the same index! implement checker
         if isinstance(value, Series):
             value = Series(weld_align(self.index._gather_data_for_weld(),
                                       self.index._gather_weld_types(),

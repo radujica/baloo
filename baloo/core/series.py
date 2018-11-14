@@ -56,6 +56,8 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
     1.0
     >>> print(sr.agg(['min', 'std']).evaluate())
     [0. 1.]
+    >>> print(bl.Series([1., 4., 100.]).apply(bl.sqrt).evaluate())
+    [ 1.  2. 10.]
 
     """
     # TODO: when passed a dtype, pandas converts to it; do the same?
@@ -350,18 +352,20 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
                       self.dtype,
                       self.name)
 
-    def apply(self, weld_template, mapping=None, new_dtype=None):
+    def apply(self, func, mapping=None, new_dtype=None, **kwargs):
         """Apply an element-wise UDF to the Series.
 
-        There are currently 2 options for using a UDF:
+        There are currently 4 options for using a UDF:
 
+        - One of the predefined functions in baloo.functions.
+        - Implementing a function which encodes the result. kwargs are automatically passed to it.
         - Pure Weld code and mapping.
         - Weld code and mapping along with a dynamically linked C++ lib containing the UDF.
 
         Parameters
         ----------
-        weld_template : str
-            Weld code to execute.
+        func : function or str
+            Weld code as a str to encode or function from baloo.functions.
         mapping : dict, optional
             Additional mappings in the weld_template to replace on execution.
             self is added by default to reference to this Series.
@@ -389,24 +393,33 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         # check tests/core/cudf/* and tests/core/test_series.test_cudf for C UDF example
 
         """
-        check_type(weld_template, str)
-        check_type(mapping, dict)
-        check_type(new_dtype, np.dtype)
+        if callable(func):
+            return Series(func(self.values,
+                               self.weld_type,
+                               **kwargs),
+                          self.index,
+                          self.dtype,
+                          self.name)
+        elif isinstance(func, str):
+            check_type(mapping, dict)
+            check_type(new_dtype, np.dtype)
 
-        default_mapping = {'self': self.values}
-        if mapping is None:
-            mapping = default_mapping
+            default_mapping = {'self': self.values}
+            if mapping is None:
+                mapping = default_mapping
+            else:
+                mapping.update(default_mapping)
+
+            if new_dtype is None:
+                new_dtype = self.dtype
+
+            return Series(weld_udf(func,
+                                   mapping),
+                          self.index,
+                          new_dtype,
+                          self.name)
         else:
-            mapping.update(default_mapping)
-
-        if new_dtype is None:
-            new_dtype = self.dtype
-
-        return Series(weld_udf(weld_template,
-                               mapping),
-                      self.index,
-                      new_dtype,
-                      self.name)
+            raise TypeError('Expected function or str defining a weld_template')
 
 
 def _process_input_data(data):
