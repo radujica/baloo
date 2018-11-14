@@ -9,7 +9,7 @@ from .indexes import Index, MultiIndex
 from .series import Series, _series_slice, _series_filter, _series_element_wise_op, _series_agg, _series_tail, \
     _series_iloc, _series_iloc_with_missing
 from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
-    check_weld_bit_array, check_valid_int_slice, as_list, default_index
+    check_weld_bit_array, check_valid_int_slice, as_list, default_index, same_index
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
     weld_cast_double, WeldDouble, weld_sort, LazyLongResult, weld_merge_join, weld_iloc_indices, \
     weld_merge_outer_join, weld_align, weld_drop_duplicates
@@ -363,15 +363,17 @@ class DataFrame(BinaryOps, BalooCommon):
         value = check_type(value, (np.ndarray, Series))
 
         if isinstance(value, Series):
-            value = Series(weld_align(self.index._gather_data_for_weld(),
-                                      self.index._gather_weld_types(),
-                                      value.index._gather_data_for_weld(),
-                                      value.index._gather_weld_types(),
-                                      value.values,
-                                      value.weld_type),
-                           self.index,
-                           value.dtype,
-                           key)
+            if not same_index(self.index, value.index):
+                value = Series(weld_align(self.index._gather_data_for_weld(),
+                                          self.index._gather_weld_types(),
+                                          value.index._gather_data_for_weld(),
+                                          value.index._gather_weld_types(),
+                                          value.values,
+                                          value.weld_type),
+                               self.index,
+                               value.dtype,
+                               key)
+                # else keep as is
         else:
             value = Series(value, self.index, value.dtype, key)
 

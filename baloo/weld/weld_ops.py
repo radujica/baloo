@@ -1,3 +1,5 @@
+import numpy as np
+
 from .convertors import default_missing_data_literal
 from .lazy_result import WeldVec, WeldChar, WeldLong, LazyArrayResult, WeldObject, LazyStructOfVecResult
 from .weld_utils import get_weld_obj_id, create_weld_object, to_weld_literal, create_empty_weld_object, \
@@ -690,5 +692,33 @@ def weld_replace(array, weld_type, this, to):
                                               type=weld_type,
                                               this=this,
                                               to=to)
+
+    return weld_obj
+
+
+def weld_udf(weld_template, mapping):
+    """Create WeldObject to encode weld_template code given mapping.
+
+    Parameters
+    ----------
+    weld_template : str
+        Weld code to encode.
+    mapping : dict
+        Which substitutions to make in the weld_template.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    weld_obj = create_empty_weld_object()
+
+    for k, v in mapping.items():
+        if isinstance(v, (np.ndarray, WeldObject)):
+            obj_id = get_weld_obj_id(weld_obj, v)
+            mapping.update({k: obj_id})
+
+    weld_obj.weld_code = weld_template.format(**mapping)
 
     return weld_obj

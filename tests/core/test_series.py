@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from baloo import Series, RangeIndex, Index
+from baloo import Series, RangeIndex, Index, load_cudf, log
 from baloo.weld import create_placeholder_weld_object
 from .indexes.utils import assert_indexes_equal
 
@@ -257,3 +257,34 @@ class TestSeries(object):
         expected = Series([3, 2, 15, 4, 15], index_i64, np.dtype(np.int64))
 
         assert_series_equal(actual, expected)
+
+    def test_udf(self, series_i64, index_i64):
+        weld_template = "map({self}, |e| e + {scalar})"
+        mapping = {'scalar': '2L'}
+
+        actual = series_i64.apply(weld_template, mapping)
+        expected = Series([3, 4, 5, 6, 7], index_i64)
+
+        assert_series_equal(actual, expected)
+
+    # More details at https://github.com/weld-project/weld/blob/master/docs/language.md#user-defined-functions
+    def test_cudf(self, series_i64, index_i64):
+        from os import path
+        load_cudf(path.dirname(__file__) + '/cudf/udf_c.so')
+
+        # cudf[name, return_type](args)
+        weld_template = "cudf[udf_add, vec[i64]]({self}, {scalar})"
+        mapping = {'scalar': '2L'}
+
+        actual = series_i64.apply(weld_template, mapping)
+        expected = Series([3, 4, 5, 6, 7], index_i64)
+
+        assert_series_equal(actual, expected)
+
+    def test_udf_func(self, data_f32, index_i64):
+        sr = Series(data_f32, index_i64, np.dtype(np.float32))
+
+        actual = sr.apply(log)
+        expected = Series(np.array([0., 0.693147, 1.098612, 1.386294, 1.609438], dtype=np.float32), index_i64)
+
+        assert_series_equal(actual, expected, 5)

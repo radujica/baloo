@@ -121,3 +121,26 @@ def convert_to_numpy(data):
         raise TypeError('dtype {} is not supported'.format(data.dtype))
 
     return data
+
+
+def same_index(index1, index2):
+    if not isinstance(index1, type(index2)):
+        return False
+    elif index1._gather_names() != index2._gather_names():
+        return False
+    elif index1._gather_weld_types() != index2._gather_weld_types():
+        return False
+    else:
+        # should be Indexes
+        data1 = index1._gather_data().values()
+        data2 = index2._gather_data().values()
+
+        for d1, d2 in zip(data1, data2):
+            if not isinstance(d1.values, type(d2.values)):
+                return False
+            elif isinstance(d1.values, np.ndarray):
+                if not np.array_equal(d1.values, d2.values):
+                    return False
+            # else they're WeldObjects so can only assume they're the same
+
+    return True
