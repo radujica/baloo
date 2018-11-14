@@ -131,7 +131,7 @@ class TestDataFrame(object):
 
         assert_dataframe_equal(actual, expected)
 
-    def test_setitem_alignment(self, data_f32, index_i64):
+    def test_setitem_alignment_needed(self, data_f32, index_i64):
         df = DataFrame({'a': data_f32}, index_i64)
 
         df['b'] = Series(np.array([4, 7, 5, 6, 8]), Index(np.array([0, 3, 1, 2, 5])))
@@ -140,7 +140,18 @@ class TestDataFrame(object):
                               'b': np.array([4, 5, 6, 7, -999])},
                              index_i64)
 
+        # so is WeldObject which was aligned
+        assert not isinstance(df['b'].values, np.ndarray)
+
         assert_dataframe_equal(actual, expected)
+
+    def test_setitem_alignment_not_needed(self, data_f32, data_i64, index_i64):
+        df = DataFrame({'a': data_f32}, index_i64)
+
+        df['b'] = Series(data_i64, index_i64)
+
+        # so was directly added, no alignment
+        assert isinstance(df['b'].values, np.ndarray)
 
     def test_head(self, df_small):
         actual = df_small.head(2)
