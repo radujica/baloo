@@ -353,6 +353,11 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
     def apply(self, weld_template, mapping=None, new_dtype=None):
         """Apply an element-wise UDF to the Series.
 
+        There are currently 2 options for using a UDF:
+
+        - Pure Weld code and mapping.
+        - Weld code and mapping along with a dynamically linked C++ lib containing the UDF.
+
         Parameters
         ----------
         weld_template : str
@@ -380,6 +385,8 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         >>> weld_template2 = 'map({self}, |e| e + 3L)'
         >>> print(sr.apply(weld_template2).evaluate())
         [4 5 6]
+
+        # check tests/core/cudf/* and tests/core/test_series.test_cudf for C UDF example
 
         """
         check_type(weld_template, str)
