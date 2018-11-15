@@ -18,6 +18,14 @@ def check_inner_types(data, expected_types):
     return data
 
 
+def check_str_or_list_str(data):
+    check_type(data, (list, str))
+    if data is not None:
+        check_inner_types(as_list(data), str)
+
+    return data
+
+
 def check_weld_bit_array(data):
     return check_type(data.weld_type, WeldBit)
 
