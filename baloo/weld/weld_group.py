@@ -1,4 +1,4 @@
-from .weld_utils import weld_arrays_to_vec_of_struct, create_weld_object, WeldDouble
+from .weld_utils import weld_arrays_to_vec_of_struct, create_weld_object
 
 
 def weld_groupby(arrays: list, weld_types: list, by_indices):
@@ -73,7 +73,33 @@ def _deduce_operation(aggregation):
         return '+'
 
 
-def weld_groupby_aggregate(grouped_df, weld_types: list, by_indices, aggregation, f64_result=False):
+# TODO: make it work without replace
+def _assemble_computation(aggregation, column_weld_types, new_column_weld_types, operation):
+    if aggregation in _merger_ops:
+        template = """let group_res = for(
+                        e.$1,
+                        {mergers},
+                        |c: {mergers}, j: i64, f: {column_types}|
+                            {merger_ops}
+                    );
+                    merge(b, {{e.$0, {merger_res}}})"""
+        mergers = '{{{}}}'.format(', '.join('merger[{}, {}]'.format(type_, operation) for type_ in new_column_weld_types))
+        merger_ops = '{{{}}}'.format(', '.join(_merger_ops[aggregation].format(i, i) for i in range(len(column_weld_types))))
+        merger_res = '{{{}}}'.format(', '.join('result(group_res.${})'.format(i) for i in range(len(column_weld_types))))
+
+        return template.replace('mergers', mergers, 2)\
+            .replace('merger_ops', merger_ops, 1)\
+            .replace('merger_res', merger_res, 1)
+    elif aggregation == 'size':
+        template = 'merge(b, {{e.$0, {lengths}}})'
+        lengths = '{{{}}}'.format(', '.join('len(e.$1)' for _ in range(len(column_weld_types))))
+
+        return template.replace('lengths', lengths, 1)
+    else:
+        raise NotImplementedError('Oops')
+
+
+def weld_groupby_aggregate(grouped_df, weld_types: list, by_indices, aggregation, result_type=None):
     """Perform aggregation on grouped data.
 
     Parameters
@@ -86,8 +112,8 @@ def weld_groupby_aggregate(grouped_df, weld_types: list, by_indices, aggregation
         Indices of which arrays to group by.
     aggregation : {'+', '*', 'min', 'max', 'mean'}
         What operation to apply to grouped rows.
-    f64_result : bool, optional
-        Whether the result shall be (casted to) f64.
+    result_type : WeldType, optional
+        Whether the result shall be (casted to) some specific type.
 
     Returns
     -------
@@ -103,16 +129,13 @@ def weld_groupby_aggregate(grouped_df, weld_types: list, by_indices, aggregation
     column_indices = list(filter(lambda x: x not in by_indices, all_indices))
     by_weld_types = [weld_types[i] for i in by_indices]
     column_weld_types = [weld_types[i] for i in column_indices]
-    new_column_weld_types = column_weld_types if not f64_result else [WeldDouble() for _ in column_weld_types]
+    new_column_weld_types = column_weld_types if result_type is None else [result_type for _ in column_weld_types]
 
     # TODO: generalize this ', '.join stuff
     by_types = '{{{}}}'.format(', '.join(str(type_) for type_ in by_weld_types))
     column_types = '{{{}}}'.format(', '.join(str(type_) for type_ in column_weld_types))
     new_column_types = '{{{}}}'.format(', '.join(str(type_) for type_ in new_column_weld_types))
     grouped_df_types = '{{{}, {}}}'.format(by_types, column_types)
-    mergers = '{{{}}}'.format(', '.join('merger[{}, {}]'.format(type_, operation) for type_ in new_column_weld_types))
-    merger_ops = '{{{}}}'.format(', '.join(_merger_ops[aggregation].format(i, i) for i in range(len(column_weld_types))))
-    merger_res = '{{{}}}'.format(', '.join('result(group_res.${})'.format(i) for i in range(len(column_weld_types))))
     res = '{{{}}}'.format(', '.join(['e.$0.${}'.format(i) for i in range(len(by_weld_types))] +
                                     ['e.$1.${}'.format(i) for i in range(len(column_weld_types))]))
 
@@ -123,14 +146,7 @@ def weld_groupby_aggregate(grouped_df, weld_types: list, by_indices, aggregation
                 {grouped_df},
                 dictmerger[{by_types}, {new_column_types}, {operation}],
                 |b: dictmerger[{by_types}, {new_column_types}, {operation}], i: i64, e: {{{by_types}, vec[{column_types}]}}|
-                    let group_res = for(
-                        e.$1,
-                        {mergers},
-                        |c: {mergers}, j: i64, f: {column_types}|
-                            {merger_ops}
-                    );
-                    
-                    merge(b, {{e.$0, {merger_res}}})
+                    {computation}
             )
         )
     ),
@@ -138,15 +154,19 @@ def weld_groupby_aggregate(grouped_df, weld_types: list, by_indices, aggregation
         {res}
 )"""
 
+    weld_template = weld_template.replace('{computation}',
+                                          _assemble_computation(aggregation,
+                                                                column_weld_types,
+                                                                new_column_weld_types,
+                                                                operation),
+                                          1)
+
     weld_obj.weld_code = weld_template.format(grouped_df=obj_id,
                                               by_types=by_types,
                                               column_types=column_types,
                                               new_column_types=new_column_types,
                                               operation=operation,
                                               grouped_df_types=grouped_df_types,
-                                              mergers=mergers,
-                                              merger_ops=merger_ops,
-                                              merger_res=merger_res,
                                               res=res)
 
     return by_weld_types + new_column_weld_types, weld_obj
