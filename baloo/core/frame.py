@@ -109,6 +109,12 @@ class DataFrame(BinaryOps, BalooCommon):
     -999    1
        1   15
        2    3
+    >>> print(bl.DataFrame({'a': [0, 1, 1, 2], 'b': [1, 2, 3, 4]}).groupby('a').sum().evaluate())
+      a    b
+    ---  ---
+      0    1
+      2    4
+      1    5
 
     """
     _empty_text = 'Empty DataFrame'
@@ -1021,6 +1027,31 @@ class DataFrame(BinaryOps, BalooCommon):
             return DataFrame(new_data, self.index)
         else:
             raise TypeError('Can only fill na given a scalar or a dict mapping columns to their respective scalar')
+
+    def groupby(self, by):
+        """Group by certain columns, excluding index.
+
+        Simply reset_index if desiring to group by some index column too.
+
+        Parameters
+        ----------
+        by  : str or list of str
+            Column(s) to groupby.
+
+        Returns
+        -------
+        DataFrameGroupBy
+            Object encoding the groupby operation.
+
+        """
+        check_str_or_list_str(by)
+        by = as_list(by)
+        if len(set(by)) == len(self._data):
+            raise ValueError('Cannot groupby all columns')
+
+        from .groupby import DataFrameGroupBy
+
+        return DataFrameGroupBy(self, by)
 
 
 def _default_index(dataframe_data, length):
