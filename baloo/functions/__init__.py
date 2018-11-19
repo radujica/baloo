@@ -1,2 +1,2 @@
-from .utils import *
 from .unary import *
+from .utils import *

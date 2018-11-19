@@ -15,7 +15,6 @@ from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, w
     weld_merge_outer_join, weld_align, weld_drop_duplicates
 
 
-# TODO: maybe add type hints
 class DataFrame(BinaryOps, BalooCommon):
     """ Weld-ed pandas DataFrame.
 

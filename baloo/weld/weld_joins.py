@@ -2,7 +2,7 @@ from .cache import Cache
 from .convertors import default_missing_data_literal
 from .lazy_result import LazyStructOfVecResult, WeldLong, WeldStruct, LazyStructResult, WeldVec, WeldChar
 from .weld_utils import weld_arrays_to_vec_of_struct, create_empty_weld_object, get_weld_obj_id, \
-    extract_placeholder_weld_objects, extract_placeholder_weld_objects_from_index, weld_data_to_dict
+    extract_placeholder_weld_objects, extract_placeholder_weld_objects_from_index, weld_data_to_dict, struct_of
 
 
 # e.g. n is the number of if statements;
@@ -58,12 +58,12 @@ _remaining_missing = {
 
 def _generate_checks(how, separator_index):
     checks = """if(val1.${n} == val2.${n},
-    {t}{recur},
-    {t}if(val1.${n} < val2.${n},  
-        {t}{{p.$0 + 1L, p.$1, merge_less}},
-        {t}{{p.$0, p.$1 + 1L, merge_greater}}
-    {t})
-{t})"""
+                {t}{recur},
+                {t}if(val1.${n} < val2.${n},  
+                    {t}{{p.$0 + 1L, p.$1, merge_less}},
+                    {t}{{p.$0, p.$1 + 1L, merge_greater}}
+                {t})
+            {t})"""
     checks = checks.replace('merge_less', _merges_less[how], 1).replace('merge_greater', _merges_greater[how], 1)
 
     end = '{p.$0 + 1L, p.$1 + 1L, merge(p.$2, p.$0), merge(p.$3, p.$1)}'
@@ -106,7 +106,7 @@ let res = iterate({{0L, 0L, appender[i64], appender[i64]}},
     return weld_obj
 
 
-def weld_merge_join(arrays_self, weld_types_self, arrays_other, weld_types_other,
+def weld_merge_join(arrays_self: list, weld_types_self: list, arrays_other: list, weld_types_other: list,
                     how, is_on_sorted, is_on_unique, readable_text):
     """Applies merge-join on the arrays returning indices from each to keep in the resulting
 
@@ -161,22 +161,22 @@ def _weld_merge_outer_join(vec_of_struct_self, vec_of_struct_other, weld_types,
     weld_obj_id_self = get_weld_obj_id(weld_obj, vec_of_struct_self)
     weld_obj_id_other = get_weld_obj_id(weld_obj, vec_of_struct_other)
 
-    new_index_appenders = '{{{}}}'.format(', '.join(('appender[{}]'.format(weld_type) for weld_type in weld_types)))
-    new_index_results = '{{{}}}'.format(', '.join('result(res.$4.${})'.format(i) for i in range(len(weld_types))))
+    new_index_appenders = struct_of('appender[{e}]', weld_types)
+    new_index_results = struct_of('result(res.$4.${i})', weld_types)
 
-    to_merge = '{{{}}}'.format(', '.join(('merge(p.$4.${i}, val.${i})'.format(i=i) for i in range(len(weld_types)))))
+    to_merge = struct_of('merge(p.$4.${i}, val.${i})', weld_types)
     to_merge_less = '{}, {}'.format(_merges_less['left'], to_merge.replace('val', 'val1', 1))
     to_merge_greater = '{}, {}'.format(_merges_greater['right'], to_merge.replace('val', 'val2', 1))
 
     checks_to_merge_less = '{}, {{{}}}'.format(_merges_less['left'], to_merge.replace('val', 'val1', 1))
     checks_to_merge_greater = '{}, {{{}}}'.format(_merges_greater['right'], to_merge.replace('val', 'val2', 1))
     checks = """if(val1.${n} == val2.${n},
-    {t}{recur},
-    {t}if(val1.${n} < val2.${n},  
-        {t}{{p.$0 + 1L, p.$1, to_merge_less}},
-        {t}{{p.$0, p.$1 + 1L, to_merge_greater}}
-    {t})
-{t})"""
+                {t}{recur},
+                {t}if(val1.${n} < val2.${n},  
+                    {t}{{p.$0 + 1L, p.$1, to_merge_less}},
+                    {t}{{p.$0, p.$1 + 1L, to_merge_greater}}
+                {t})
+            {t})"""
     checks = checks.replace('to_merge_less', checks_to_merge_less, 1)\
         .replace('to_merge_greater', checks_to_merge_greater, 1)
     end = '{{p.$0 + 1L, p.$1 + 1L, merge(p.$2, p.$0), merge(p.$3, p.$1), {}}}'\
@@ -228,7 +228,7 @@ let res = if (res.$1 < len2, iterate(res,
     return weld_obj
 
 
-def weld_merge_outer_join(arrays_self, weld_types_self, arrays_other, weld_types_other,
+def weld_merge_outer_join(arrays_self: list, weld_types_self: list, arrays_other: list, weld_types_other: list,
                           how, is_on_sorted, is_on_unique, readable_text):
     """Applies merge-join on the arrays returning indices from each to keep in the resulting
 
@@ -285,7 +285,8 @@ def weld_merge_outer_join(arrays_self, weld_types_self, arrays_other, weld_types
     return weld_objects_indexes + [weld_objects_new_index]
 
 
-def weld_align(df_index_arrays, df_index_weld_types, series_index_arrays, series_index_weld_types,
+def weld_align(df_index_arrays: list, df_index_weld_types: list,
+               series_index_arrays: list, series_index_weld_types: list,
                series_data, series_weld_type):
     """Returns the data from the Series aligned to the DataFrame index.
 
@@ -317,7 +318,7 @@ def weld_align(df_index_arrays, df_index_weld_types, series_index_arrays, series
     df_index_obj_id = get_weld_obj_id(weld_obj, weld_obj_index_df)
     series_dict_obj_id = get_weld_obj_id(weld_obj, weld_obj_series_dict)
 
-    index_type = '{{{}}}'.format(', '.join(str(type_) for type_ in df_index_weld_types))
+    index_type = struct_of('{e}', df_index_weld_types)
     missing_literal = default_missing_data_literal(series_weld_type)
     if series_weld_type == WeldVec(WeldChar()):
         missing_literal = get_weld_obj_id(weld_obj, missing_literal)

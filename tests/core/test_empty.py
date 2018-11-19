@@ -3,8 +3,8 @@ import pytest
 
 from baloo import Index, Series, RangeIndex, DataFrame
 from .indexes.utils import assert_indexes_equal
-from .test_series import assert_series_equal
 from .test_frame import assert_dataframe_equal
+from .test_series import assert_series_equal
 
 
 class TestEmptyDataFrame(object):

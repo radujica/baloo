@@ -7,7 +7,7 @@ from .utils import to_shared_lib, to_weld_vec
 # Python3: str _is_ unicode -> 'Bürgermeister'.encode() => b'B\xc3\xbcrgermeister'
 # Python2: str is ascii -> 'Bürgermeister' does not exist; u'Bürgermeister'.encode() => 'B\xc3\xbcrgermeister'
 
-supported_dtype_chars = ['h', 'i', 'l', 'f', 'd', '?', 'S']
+supported_dtype_chars = {'h', 'i', 'l', 'f', 'd', '?', 'S'}
 
 # TODO: datetime support
 _numpy_to_weld_type_mapping = {
@@ -56,7 +56,6 @@ def numpy_to_weld_type(np_dtype):
     return _numpy_to_weld_type_mapping[np_dtype.char]
 
 
-# TODO: feels like this could be implemented more efficiently
 _weld_to_numpy_type_mapping = {
     WeldVec(WeldChar()): 'S',
     WeldInt16(): 'h',
