@@ -9,7 +9,7 @@ from .indexes import Index, MultiIndex
 from .series import Series, _series_slice, _series_filter, _series_element_wise_op, _series_agg, _series_tail, \
     _series_iloc, _series_iloc_with_missing
 from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
-    check_weld_bit_array, check_valid_int_slice, as_list, default_index, same_index
+    check_weld_bit_array, check_valid_int_slice, as_list, default_index, same_index, check_str_or_list_str
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
     weld_cast_double, WeldDouble, weld_sort, LazyLongResult, weld_merge_join, weld_iloc_indices, \
     weld_merge_outer_join, weld_align, weld_drop_duplicates
@@ -109,6 +109,12 @@ class DataFrame(BinaryOps, BalooCommon):
     -999    1
        1   15
        2    3
+    >>> print(bl.DataFrame({'a': [0, 1, 1, 2], 'b': [1, 2, 3, 4]}).groupby('a').sum().evaluate())
+      a    b
+    ---  ---
+      0    1
+      2    4
+      1    5
 
     """
     _empty_text = 'Empty DataFrame'
@@ -724,7 +730,7 @@ class DataFrame(BinaryOps, BalooCommon):
 
         """
         check_type(ascending, bool)
-        check_inner_types(by, str) if isinstance(by, list) else check_type(by, str)
+        check_str_or_list_str(by)
         by = as_list(by)
 
         if len(by) > 1:
@@ -802,7 +808,7 @@ class DataFrame(BinaryOps, BalooCommon):
         check_type(other, DataFrame)
         check_type(how, str)
         check_type(algorithm, str)
-        check_inner_types(on, str) if isinstance(on, list) else check_type(on, str)
+        check_str_or_list_str(on)
         check_inner_types(check_type(suffixes, tuple), str)
         check_type(is_on_sorted, bool)
         check_type(is_on_unique, bool)
@@ -950,13 +956,7 @@ class DataFrame(BinaryOps, BalooCommon):
             DataFrame without duplicate rows.
 
         """
-        check_inner_types(check_type(subset, list), str)
-        if subset is None:
-            subset = self._gather_column_names()
-        elif len(subset) < 1:
-            raise ValueError('Need at least one column to check duplicates by')
-        elif not set(subset).issubset(set(self._gather_column_names())):
-            raise ValueError('Given subset is not all part of the columns')
+        subset = check_and_obtain_subset_columns(subset, self)
 
         df = self.reset_index()
         df_names = df._gather_column_names()
@@ -994,14 +994,7 @@ class DataFrame(BinaryOps, BalooCommon):
             DataFrame with no null values in columns.
 
         """
-        check_inner_types(check_type(subset, list), str)
-        if subset is None:
-            subset = self._gather_column_names()
-        elif len(subset) < 1:
-            raise ValueError('Need at least one column in which to check for missing values')
-        elif not set(subset).issubset(set(self._gather_column_names())):
-            raise ValueError('Given subset is not all part of the columns')
-
+        subset = check_and_obtain_subset_columns(subset, self)
         not_nas = [v.notna() for v in self[subset]._iter()]
         and_filter = reduce(lambda x, y: x & y, not_nas)
 
@@ -1022,7 +1015,6 @@ class DataFrame(BinaryOps, BalooCommon):
             With missing values replaced.
 
         """
-        # TODO: extract this to function in utils and replace wherever used
         if is_scalar(value):
             new_data = OrderedDict((column.name, column.fillna(value))
                                    for column in self._iter())
@@ -1035,6 +1027,31 @@ class DataFrame(BinaryOps, BalooCommon):
             return DataFrame(new_data, self.index)
         else:
             raise TypeError('Can only fill na given a scalar or a dict mapping columns to their respective scalar')
+
+    def groupby(self, by):
+        """Group by certain columns, excluding index.
+
+        Simply reset_index if desiring to group by some index column too.
+
+        Parameters
+        ----------
+        by  : str or list of str
+            Column(s) to groupby.
+
+        Returns
+        -------
+        DataFrameGroupBy
+            Object encoding the groupby operation.
+
+        """
+        check_str_or_list_str(by)
+        by = as_list(by)
+        if len(set(by)) == len(self._data):
+            raise ValueError('Cannot groupby all columns')
+
+        from .groupby import DataFrameGroupBy
+
+        return DataFrameGroupBy(self, by)
 
 
 def _default_index(dataframe_data, length):
@@ -1191,3 +1208,17 @@ def _drop_str_columns(df):
     str_column_names = list(map(lambda pair: pair[0], str_columns))
 
     return df.drop(str_column_names)
+
+
+def check_and_obtain_subset_columns(columns, df):
+    check_type(columns, list)
+    check_inner_types(columns, str)
+
+    if columns is None:
+        return df._gather_column_names()
+    elif len(columns) < 1:
+        raise ValueError('Need at least one column')
+    elif not set(columns).issubset(set(df._gather_column_names())):
+        raise ValueError('Subset={} is not all part of the columns={}'.format(columns, df._gather_column_names()))
+    else:
+        return columns

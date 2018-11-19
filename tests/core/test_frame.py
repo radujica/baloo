@@ -8,19 +8,19 @@ from .indexes.utils import assert_indexes_equal
 from .test_series import assert_series_equal
 
 
-def assert_dataframe_equal(actual, expected, sort=False):
+def assert_dataframe_equal(actual, expected, almost=None, sort=False):
     actual = actual.evaluate()
     expected = expected.evaluate()
 
     assert actual._length == expected._length
     assert len(actual) == len(expected)
-    assert_series_equal(actual.dtypes, expected.dtypes)
+    assert_series_equal(actual.dtypes, expected.dtypes, sort=sort)
     assert_indexes_equal(actual.index, expected.index, sort=sort)
     assert_indexes_equal(actual.columns, expected.columns)
     assert len(actual._data) == len(expected._data)
     assert actual._data.keys() == expected._data.keys()
     for column_name in actual:
-        assert_series_equal(actual._data[column_name], expected._data[column_name], sort=sort)
+        assert_series_equal(actual._data[column_name], expected._data[column_name], almost=almost, sort=sort)
 
 
 # TODO: fix |S11!!
