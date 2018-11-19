@@ -58,12 +58,12 @@ _remaining_missing = {
 
 def _generate_checks(how, separator_index):
     checks = """if(val1.${n} == val2.${n},
-    {t}{recur},
-    {t}if(val1.${n} < val2.${n},  
-        {t}{{p.$0 + 1L, p.$1, merge_less}},
-        {t}{{p.$0, p.$1 + 1L, merge_greater}}
-    {t})
-{t})"""
+                {t}{recur},
+                {t}if(val1.${n} < val2.${n},  
+                    {t}{{p.$0 + 1L, p.$1, merge_less}},
+                    {t}{{p.$0, p.$1 + 1L, merge_greater}}
+                {t})
+            {t})"""
     checks = checks.replace('merge_less', _merges_less[how], 1).replace('merge_greater', _merges_greater[how], 1)
 
     end = '{p.$0 + 1L, p.$1 + 1L, merge(p.$2, p.$0), merge(p.$3, p.$1)}'
@@ -171,12 +171,12 @@ def _weld_merge_outer_join(vec_of_struct_self, vec_of_struct_other, weld_types,
     checks_to_merge_less = '{}, {{{}}}'.format(_merges_less['left'], to_merge.replace('val', 'val1', 1))
     checks_to_merge_greater = '{}, {{{}}}'.format(_merges_greater['right'], to_merge.replace('val', 'val2', 1))
     checks = """if(val1.${n} == val2.${n},
-    {t}{recur},
-    {t}if(val1.${n} < val2.${n},  
-        {t}{{p.$0 + 1L, p.$1, to_merge_less}},
-        {t}{{p.$0, p.$1 + 1L, to_merge_greater}}
-    {t})
-{t})"""
+                {t}{recur},
+                {t}if(val1.${n} < val2.${n},  
+                    {t}{{p.$0 + 1L, p.$1, to_merge_less}},
+                    {t}{{p.$0, p.$1 + 1L, to_merge_greater}}
+                {t})
+            {t})"""
     checks = checks.replace('to_merge_less', checks_to_merge_less, 1)\
         .replace('to_merge_greater', checks_to_merge_greater, 1)
     end = '{{p.$0 + 1L, p.$1 + 1L, merge(p.$2, p.$0), merge(p.$3, p.$1), {}}}'\

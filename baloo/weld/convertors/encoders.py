@@ -56,7 +56,6 @@ def numpy_to_weld_type(np_dtype):
     return _numpy_to_weld_type_mapping[np_dtype.char]
 
 
-# TODO: feels like this could be implemented more efficiently
 _weld_to_numpy_type_mapping = {
     WeldVec(WeldChar()): 'S',
     WeldInt16(): 'h',
