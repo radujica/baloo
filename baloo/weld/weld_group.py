@@ -134,8 +134,7 @@ def _deduce_operation(aggregation):
         return '+'
 
 
-# TODO: make it work without replace
-def _assemble_computation(aggregation, column_weld_types, new_column_weld_types, operation):
+def _assemble_aggregation(aggregation, column_weld_types, new_column_weld_types, operation):
     if aggregation in _dictmerger_ops:
         template = """let loop = for(
                         e.$1,
@@ -143,25 +142,19 @@ def _assemble_computation(aggregation, column_weld_types, new_column_weld_types,
                         |c: {mergers}, j: i64, f: {column_types}|
                             {merger_ops}
                     );
-                    let group = {merger_res};
-                    merge(b, {{e.$0, {group_res}}})"""
+                    let group = {merger_res};"""
         mergers = '{{{}}}'.format(', '.join('merger[{}, {}]'.format(type_, operation) for type_ in new_column_weld_types))
         merger_ops = '{{{}}}'.format(', '.join(_dictmerger_ops[aggregation].format(i=i) for i in range(len(column_weld_types))))
         merger_res = '{{{}}}'.format(', '.join('result(group_res.${})'.format(i) for i in range(len(column_weld_types))))
-        group_res = '{{{}}}'.format(', '.join('group.${}'.format(i) for i in range(len(column_weld_types))))
 
-        return template.replace('mergers', mergers, 2)\
-            .replace('merger_ops', merger_ops, 1)\
-            .replace('merger_res', merger_res, 1)\
-            .replace('group_res', group_res, 1)
+        return template.replace('mergers', mergers, 2) \
+            .replace('merger_ops', merger_ops, 1) \
+            .replace('merger_res', merger_res, 1)
     elif aggregation == 'size':
-        template = """let group = {lengths};
-                        merge(b, {{e.$0, {group_res}}})"""
+        template = """let group = {lengths};"""
         lengths = '{{{}}}'.format(', '.join('len(e.$1)' for _ in range(len(column_weld_types))))
-        group_res = '{{{}}}'.format(', '.join('group.${}'.format(i) for i in range(len(column_weld_types))))
 
-        return template.replace('lengths', lengths, 1)\
-            .replace('group_res', group_res, 1)
+        return template.replace('lengths', lengths, 1)
     elif aggregation == 'mean':
         template = """let sums = for(
                         e.$1,
@@ -169,17 +162,14 @@ def _assemble_computation(aggregation, column_weld_types, new_column_weld_types,
                         |c: {mergers}, j: i64, f: {column_types}|
                             {merger_sums}
                     );
-                    let group = {means_res};
-                    merge(b, {{e.$0, {group_res}}})"""
+                    let group = {means_res};"""
         mergers = '{{{}}}'.format(', '.join('merger[{}, {}]'.format(type_, operation) for type_ in column_weld_types))
         merger_sums = '{{{}}}'.format(', '.join(_dictmerger_ops['+'].format(i=i) for i in range(len(column_weld_types))))
         means_res = '{{{}}}'.format(', '.join('f64(result(sums.${})) / f64(len(e.$1))'.format(i) for i in range(len(column_weld_types))))
-        group_res = '{{{}}}'.format(', '.join('group.${}'.format(i) for i in range(len(column_weld_types))))
 
         return template.replace('mergers', mergers, 2) \
             .replace('merger_sums', merger_sums, 1) \
-            .replace('means_res', means_res, 1)\
-            .replace('group_res', group_res, 1)
+            .replace('means_res', means_res, 1)
     elif aggregation == 'var':
         template = """let sums = for(
                         e.$1,
@@ -194,8 +184,7 @@ def _assemble_computation(aggregation, column_weld_types, new_column_weld_types,
                         |c: {new_mergers}, j: i64, f: {column_types}|
                             {merger_ops2}
                     );
-                    let group = {sqdevs_res};
-                    merge(b, {{e.$0, {group_res}}})"""
+                    let group = {sqdevs_res};"""
 
         mergers = '{{{}}}'.format(', '.join('merger[{}, {}]'.format(type_, operation) for type_ in column_weld_types))
         new_mergers = '{{{}}}'.format(', '.join('merger[{}, {}]'.format(type_, operation) for type_ in new_column_weld_types))
@@ -203,17 +192,27 @@ def _assemble_computation(aggregation, column_weld_types, new_column_weld_types,
         means_res = '{{{}}}'.format(', '.join('f64(result(sums.${})) / f64(len(e.$1))'.format(i) for i in range(len(column_weld_types))))
         merger_ops2 = '{{{}}}'.format(', '.join('merge(c.${i}, pow(f64(f.${i}) - means.${i}, 2.0))'.format(i=i) for i in range(len(column_weld_types))))
         sqdevs_res = '{{{}}}'.format(', '.join('result(sqdevs.${})'.format(i) for i in range(len(column_weld_types))))
-        group_res = '{{{}}}'.format(', '.join('group.${}'.format(i) for i in range(len(column_weld_types))))
 
-        return template.replace('mergers', mergers, 2)\
-            .replace('new_mergers', new_mergers, 2)\
-            .replace('merger_sums', merger_sums, 1)\
-            .replace('means_res', means_res, 1)\
-            .replace('merger_ops2', merger_ops2, 1)\
-            .replace('sqdevs_res', sqdevs_res, 1)\
-            .replace('group_res', group_res, 1)
+        return template.replace('mergers', mergers, 2) \
+            .replace('new_mergers', new_mergers, 2) \
+            .replace('merger_sums', merger_sums, 1) \
+            .replace('means_res', means_res, 1) \
+            .replace('merger_ops2', merger_ops2, 1) \
+            .replace('sqdevs_res', sqdevs_res, 1)
     else:
         raise NotImplementedError('Oops')
+
+
+# TODO: make it work without replace
+def _assemble_computation(aggregation, column_weld_types, new_column_weld_types, operation):
+    template = """aggregation
+                merge(b, {{e.$0, {group_res}}})"""
+
+    aggregation_template = _assemble_aggregation(aggregation, column_weld_types, new_column_weld_types, operation)
+    group_res = '{{{}}}'.format(', '.join('group.${}'.format(i) for i in range(len(column_weld_types))))
+
+    return template.replace('aggregation', aggregation_template, 1)\
+        .replace('group_res', group_res, 1)
 
 
 def weld_groupby_aggregate(grouped_df, weld_types: list, by_indices, aggregation, result_type=None):
