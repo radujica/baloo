@@ -119,30 +119,25 @@ def weld_groupby(arrays: list, weld_types: list, by_indices):
     return weld_obj
 
 
-_merger_ops = {
+_dictmerger_ops = {
     '+': 'merge(c.${i}, f.${i})',
     '*': 'merge(c.${i}, f.${i})',
     'min': 'merge(c.${i}, f.${i})',
-    'max': 'merge(c.${i}, f.${i})',
-    'mean': 'merge(c.${i}, f64(f.${i}) / f64(len(e.$1)))',
-    'var': 'merge(c.${i}, pow(f64(f.${i}) - means.${i}, 2.0))'
+    'max': 'merge(c.${i}, f.${i})'
 }
-
-_dictmerger_operations = {'+', '*', 'min', 'max'}
 
 
 def _deduce_operation(aggregation):
-    if aggregation in _dictmerger_operations:
+    if aggregation in _dictmerger_ops:
         return aggregation
     else:
         return '+'
 
 
 # TODO: make it work without replace
-# TODO: mean is currently broken!!
 # TODO: need some generalization
 def _assemble_computation(aggregation, column_weld_types, new_column_weld_types, operation):
-    if aggregation in _dictmerger_operations:
+    if aggregation in _dictmerger_ops:
         template = """let group_res = for(
                         e.$1,
                         {mergers},
@@ -151,7 +146,7 @@ def _assemble_computation(aggregation, column_weld_types, new_column_weld_types,
                     );
                     merge(b, {{e.$0, {merger_res}}})"""
         mergers = '{{{}}}'.format(', '.join('merger[{}, {}]'.format(type_, operation) for type_ in new_column_weld_types))
-        merger_ops = '{{{}}}'.format(', '.join(_merger_ops[aggregation].format(i=i) for i in range(len(column_weld_types))))
+        merger_ops = '{{{}}}'.format(', '.join(_dictmerger_ops[aggregation].format(i=i) for i in range(len(column_weld_types))))
         merger_res = '{{{}}}'.format(', '.join('result(group_res.${})'.format(i) for i in range(len(column_weld_types))))
 
         return template.replace('mergers', mergers, 2)\
@@ -162,6 +157,22 @@ def _assemble_computation(aggregation, column_weld_types, new_column_weld_types,
         lengths = '{{{}}}'.format(', '.join('len(e.$1)' for _ in range(len(column_weld_types))))
 
         return template.replace('lengths', lengths, 1)
+    elif aggregation == 'mean':
+        template = """let sums = for(
+                        e.$1,
+                        {mergers},
+                        |c: {mergers}, j: i64, f: {column_types}|
+                            {merger_sums}
+                    );
+                    let group_res = {means_res};
+                    merge(b, {{e.$0, group_res}})"""
+        mergers = '{{{}}}'.format(', '.join('merger[{}, {}]'.format(type_, operation) for type_ in column_weld_types))
+        merger_sums = '{{{}}}'.format(', '.join(_dictmerger_ops['+'].format(i=i) for i in range(len(column_weld_types))))
+        means_res = '{{{}}}'.format(', '.join('f64(result(sums.${})) / f64(len(e.$1))'.format(i) for i in range(len(column_weld_types))))
+
+        return template.replace('mergers', mergers, 2) \
+            .replace('merger_sums', merger_sums, 1) \
+            .replace('means_res', means_res, 1)
     elif aggregation == 'var':
         template = """let sums = for(
                         e.$1,
@@ -180,9 +191,9 @@ def _assemble_computation(aggregation, column_weld_types, new_column_weld_types,
 
         mergers = '{{{}}}'.format(', '.join('merger[{}, {}]'.format(type_, operation) for type_ in column_weld_types))
         new_mergers = '{{{}}}'.format(', '.join('merger[{}, {}]'.format(type_, operation) for type_ in new_column_weld_types))
-        merger_sums = '{{{}}}'.format(', '.join(_merger_ops['+'].format(i=i) for i in range(len(column_weld_types))))
+        merger_sums = '{{{}}}'.format(', '.join(_dictmerger_ops['+'].format(i=i) for i in range(len(column_weld_types))))
         means_res = '{{{}}}'.format(', '.join('f64(result(sums.${})) / f64(len(e.$1))'.format(i) for i in range(len(column_weld_types))))
-        merger_ops2 = '{{{}}}'.format(', '.join(_merger_ops[aggregation].format(i=i) for i in range(len(column_weld_types))))
+        merger_ops2 = '{{{}}}'.format(', '.join('merge(c.${i}, pow(f64(f.${i}) - means.${i}, 2.0))'.format(i=i) for i in range(len(column_weld_types))))
         merger_res = '{{{}}}'.format(', '.join('result(group_res.${})'.format(i) for i in range(len(column_weld_types))))
 
         return template.replace('mergers', mergers, 2)\
