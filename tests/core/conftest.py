@@ -90,3 +90,16 @@ def df2():
                      MultiIndex([np.array([1, 3, 5]),
                                  Index(np.array(['abc', 'def', 'efgh'], dtype=np.bytes_))],
                                 ['a', 'd']))
+
+
+@pytest.fixture(scope='module')
+def df_dupl(series_i64, index_i64):
+    return DataFrame(OrderedDict((('a', np.array([0, 1, 1, 2, 3], dtype=np.float32)),
+                                  ('b', [4, 5, 5, 6, 6]),
+                                  ('c', series_i64))),
+                     index_i64)
+
+
+@pytest.fixture(scope='module')
+def df_dupl_exp_ind():
+    return Index(np.array([4, 5, 6]), np.dtype(np.int64), 'b')
