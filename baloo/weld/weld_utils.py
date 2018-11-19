@@ -117,6 +117,10 @@ def extract_placeholder_weld_objects_from_index(dependency_name, length, readabl
     return _extract_placeholder_weld_objects_at_index(dependency_name, length, readable_text, '({}, i)'.format(index))
 
 
+def struct_of(text, array):
+    return '{{{}}}'.format(', '.join(text.format(i=i, e=elem) for i, elem in enumerate(array)))
+
+
 # an attempt to avoid expensive casting
 def to_weld_literal(scalar, weld_type):
     """Return scalar formatted for Weld.
@@ -262,9 +266,8 @@ def weld_arrays_to_vec_of_struct(arrays: list, weld_types: list):
     obj_ids = [get_weld_obj_id(weld_obj, array) for array in arrays]
 
     arrays = 'zip({})'.format(', '.join(obj_ids)) if len(obj_ids) > 1 else '{}'.format(obj_ids[0])
-    input_types = '{{{}}}'.format(', '.join((str(weld_type) for weld_type in weld_types))) \
-        if len(obj_ids) > 1 else '{}'.format(weld_types[0])
-    res_types = '{{{}}}'.format(', '.join((str(weld_type) for weld_type in weld_types)))
+    input_types = struct_of('{e}', weld_types) if len(obj_ids) > 1 else '{}'.format(weld_types[0])
+    res_types = struct_of('{e}', weld_types)
     to_merge = 'e' if len(obj_ids) > 1 else '{e}'
 
     weld_template = """result(
@@ -302,10 +305,10 @@ def weld_vec_of_struct_to_struct_of_vec(vec_of_structs, weld_types: list):
     """
     obj_id, weld_obj = create_weld_object(vec_of_structs)
 
-    appenders = '{{{}}}'.format(', '.join(('appender[{}]'.format(str(weld_type)) for weld_type in weld_types)))
-    types = '{{{}}}'.format(', '.join((str(weld_type) for weld_type in weld_types)))
-    merges = '{{{}}}'.format(', '.join(('merge(b.${i}, e.${i})'.format(i=i) for i in range(len(weld_types)))))
-    result = '{{{}}}'.format(', '.join(('result(vecs.${})'.format(i) for i in range(len(weld_types)))))
+    appenders = struct_of('appender[{e}]', weld_types)
+    types = struct_of('{e}', weld_types)
+    merges = struct_of('merge(b.${i}, e.${i})', weld_types)
+    result = struct_of('result(vecs.${i})', weld_types)
 
     weld_template = """let vecs = for({vec_of_struct},
     {appenders},
@@ -375,7 +378,7 @@ def weld_data_to_dict(keys: list, keys_weld_types: list, values, values_weld_typ
     keys_obj_id = get_weld_obj_id(weld_obj, weld_obj_keys)
     values_obj_id = get_weld_obj_id(weld_obj, values)
 
-    keys_types = '{{{}}}'.format(', '.join(str(type_) for type_ in keys_weld_types))
+    keys_types = struct_of('{e}', keys_weld_types)
     values_types = values_weld_types
 
     weld_template = """result(

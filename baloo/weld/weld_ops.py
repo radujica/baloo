@@ -4,7 +4,7 @@ from .convertors import default_missing_data_literal
 from .lazy_result import WeldVec, WeldChar, WeldLong, LazyArrayResult, WeldObject, LazyStructOfVecResult
 from .weld_utils import get_weld_obj_id, create_weld_object, to_weld_literal, create_empty_weld_object, \
     weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, Cache, weld_select_from_struct, \
-    extract_placeholder_weld_objects
+    extract_placeholder_weld_objects, struct_of
 
 
 def weld_range(start, stop, step):
@@ -473,7 +473,7 @@ def _weld_sort(arrays, weld_types, ascending=True):
     weld_obj = create_empty_weld_object()
     weld_obj_vec_of_struct_id = get_weld_obj_id(weld_obj, weld_obj_vec_of_struct)
 
-    types = '{{{}}}'.format(', '.join((str(weld_type) for weld_type in weld_types)))
+    types = struct_of('{e}', weld_types)
     # TODO: update here when sorting on structs is possible
     ascending_sort_func = '{}'.format(', '.join(('e.${}'.format(i) for i in range(1, len(arrays)))))
     zero_literals = dict(enumerate([to_weld_literal(0, weld_type) for weld_type in weld_types]))
@@ -597,11 +597,11 @@ def weld_drop_duplicates(arrays: list, weld_types: list, subset_indices: list, k
     key_weld_types = [weld_types[i] for i in subset_indices]
     value_weld_types = [weld_types[i] for i in value_indices]
 
-    key_types = '{{{}}}'.format(', '.join(str(type_) for type_ in key_weld_types))
-    value_types = '{{{}}}'.format(', '.join(str(type_) for type_ in value_weld_types))
-    all_types = '{{{}}}'.format(', '.join(str(type_) for type_ in weld_types))
-    key_merges = '{{{}}}'.format(', '.join('e.${}'.format(str(i)) for i in subset_indices))
-    value_merges = '{{{}}}'.format(', '.join('e.${}'.format(str(i)) for i in value_indices))
+    key_types = struct_of('{e}', key_weld_types)
+    value_types = struct_of('{e}', value_weld_types)
+    all_types = struct_of('{e}', weld_types)
+    key_merges = struct_of('e.${e}', subset_indices)
+    value_merges = struct_of('e.${e}', value_indices)
 
     # flattening the struct of struct
     results = []
