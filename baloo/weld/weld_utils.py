@@ -242,7 +242,7 @@ def weld_cast_double(scalar):
 
 
 # essentially switching from columns to rows ~ axis 0 to 1
-def weld_arrays_to_vec_of_struct(arrays, weld_types):
+def weld_arrays_to_vec_of_struct(arrays: list, weld_types: list):
     """Create a vector of structs from multiple vectors.
 
     Parameters
@@ -284,7 +284,7 @@ def weld_arrays_to_vec_of_struct(arrays, weld_types):
 
 
 # essentially switching from rows to columns ~ axis 1 to 0
-def weld_vec_of_struct_to_struct_of_vec(vec_of_structs, weld_types):
+def weld_vec_of_struct_to_struct_of_vec(vec_of_structs, weld_types: list):
     """Create a struct of vectors.
 
     Parameters
@@ -351,7 +351,7 @@ def weld_select_from_struct(struct_of_vec, index_to_select):
 
 
 # TODO: support multiple values
-def weld_data_to_dict(keys, keys_weld_types, values, values_weld_types):
+def weld_data_to_dict(keys: list, keys_weld_types: list, values, values_weld_types):
     """Adds the key-value pairs in a dictionary. Overlapping keys are max-ed.
 
     Note this cannot be evaluated!

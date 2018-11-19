@@ -491,7 +491,7 @@ def _weld_sort(arrays, weld_types, ascending=True):
 
 
 # TODO: further optimization is to skip creating struct of vec when it's a single column
-def weld_sort(arrays, weld_types, readable_text, ascending=True):
+def weld_sort(arrays: list, weld_types: list, readable_text, ascending=True):
     """Sort the arrays.
 
     Parameters
@@ -568,7 +568,7 @@ def weld_unique(array, weld_type):
     return weld_obj
 
 
-def weld_drop_duplicates(arrays, weld_types, subset_indices, keep):
+def weld_drop_duplicates(arrays: list, weld_types: list, subset_indices: list, keep):
     """Return the unique elements of the array.
 
     Parameters

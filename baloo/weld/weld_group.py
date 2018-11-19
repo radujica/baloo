@@ -1,7 +1,7 @@
 from .weld_utils import weld_arrays_to_vec_of_struct, create_weld_object
 
 
-def weld_groupby_aggregate_dictmerger(arrays: list, weld_types: list, by_indices, operation):
+def weld_groupby_aggregate_dictmerger(arrays: list, weld_types: list, by_indices: list, operation):
     """Groups by the columns in by.
 
     Parameters
@@ -65,7 +65,7 @@ def weld_groupby_aggregate_dictmerger(arrays: list, weld_types: list, by_indices
     return by_weld_types + column_weld_types, weld_obj
 
 
-def weld_groupby(arrays: list, weld_types: list, by_indices):
+def weld_groupby(arrays: list, weld_types: list, by_indices: list):
     """Groups by the columns in by.
 
     Parameters
@@ -128,6 +128,7 @@ def _deduce_operation(aggregation):
     else:
         return '+'
 
+
 # all _assemble_aggregation_* end with let group = {<scalars>};
 def _assemble_aggregation_simple(column_weld_types, aggregation):
     template = """let sums = for(
@@ -187,10 +188,10 @@ def _assemble_aggregation_var(column_weld_types, new_column_weld_types):
 def _assemble_aggregation_std(column_weld_types, new_column_weld_types):
     template = """vars
                     let group = {vars_res};"""
-    vars = _assemble_aggregation('var', column_weld_types, new_column_weld_types)
+    vars_ = _assemble_aggregation('var', column_weld_types, new_column_weld_types)
     vars_res = '{{{}}}'.format(', '.join('sqrt(group.${})'.format(i) for i in range(len(column_weld_types))))
 
-    return template.replace('vars', vars, 1)\
+    return template.replace('vars', vars_, 1)\
         .replace('vars_res', vars_res, 1)
 
 
@@ -222,7 +223,7 @@ def _assemble_computation(aggregation, column_weld_types, new_column_weld_types)
         .replace('group_res', group_res, 1)
 
 
-def weld_groupby_aggregate(grouped_df, weld_types: list, by_indices, aggregation, result_type=None):
+def weld_groupby_aggregate(grouped_df, weld_types: list, by_indices: list, aggregation, result_type=None):
     """Perform aggregation on grouped data.
 
     Parameters
