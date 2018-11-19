@@ -34,6 +34,19 @@ class TestGroupBy(object):
 
         assert_dataframe_equal(actual, expected, sort=True)
 
+    def test_groupby_single_var(self, index_i64, series_i64):
+        df = DataFrame(OrderedDict((('a', np.array([0, 1, 1, 2, 3], dtype=np.float32)),
+                                    ('b', [4, 5, 5, 6, 6]),
+                                    ('c', series_i64))),
+                       index_i64)
+
+        actual = df.groupby('b').var()
+        expected = DataFrame(OrderedDict((('a', [0., 0., 0.5]),
+                                          ('c', [0., 0.5, 0.5]))),
+                             Index(np.array([4, 5, 6]), np.dtype(np.int64), 'b'))
+
+        assert_dataframe_equal(actual, expected, sort=True)
+
     def test_groupby_single_size(self, index_i64, series_i64):
         df = DataFrame(OrderedDict((('a', np.array([0, 1, 1, 2, 3], dtype=np.float32)),
                                     ('b', [4, 5, 5, 6, 6]),

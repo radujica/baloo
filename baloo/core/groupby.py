@@ -55,9 +55,7 @@ class DataFrameGroupBy(object):
 
     def _aggregate(self, aggregation, result_type=None):
         weld_types, vec_of_struct = self._group_aggregate(aggregation, result_type)
-
         struct_of_vec = weld_vec_of_struct_to_struct_of_vec(vec_of_struct, weld_types)
-
         intermediate_result = LazyStructOfVecResult(struct_of_vec, weld_types)
         dependency_name = Cache.cache_intermediate_result(intermediate_result, 'group_aggr')
 
@@ -95,6 +93,12 @@ class DataFrameGroupBy(object):
 
     def mean(self):
         return self._aggregate('mean', result_type=WeldDouble())
+
+    def var(self):
+        return self._aggregate('var', result_type=WeldDouble())
+
+    def std(self):
+        return self._aggregate('std', result_type=WeldDouble())
 
     def size(self):
         return self._aggregate('size', result_type=WeldLong())

@@ -120,11 +120,12 @@ def weld_groupby(arrays: list, weld_types: list, by_indices):
 
 
 _merger_ops = {
-    '+': 'merge(c.${}, f.${})',
-    '*': 'merge(c.${}, f.${})',
-    'min': 'merge(c.${}, f.${})',
-    'max': 'merge(c.${}, f.${})',
-    'mean': 'merge(c.${}, f64(f.${}) / f64(len(e.$1)))'
+    '+': 'merge(c.${i}, f.${i})',
+    '*': 'merge(c.${i}, f.${i})',
+    'min': 'merge(c.${i}, f.${i})',
+    'max': 'merge(c.${i}, f.${i})',
+    'mean': 'merge(c.${i}, f64(f.${i}) / f64(len(e.$1)))',
+    'var': 'merge(c.${i}, pow(f64(f.${i}) - means.${i}, 2.0))'
 }
 
 _dictmerger_operations = {'+', '*', 'min', 'max'}
@@ -138,8 +139,10 @@ def _deduce_operation(aggregation):
 
 
 # TODO: make it work without replace
+# TODO: mean is currently broken!!
+# TODO: need some generalization
 def _assemble_computation(aggregation, column_weld_types, new_column_weld_types, operation):
-    if aggregation in _merger_ops:
+    if aggregation in _dictmerger_operations:
         template = """let group_res = for(
                         e.$1,
                         {mergers},
@@ -148,7 +151,7 @@ def _assemble_computation(aggregation, column_weld_types, new_column_weld_types,
                     );
                     merge(b, {{e.$0, {merger_res}}})"""
         mergers = '{{{}}}'.format(', '.join('merger[{}, {}]'.format(type_, operation) for type_ in new_column_weld_types))
-        merger_ops = '{{{}}}'.format(', '.join(_merger_ops[aggregation].format(i, i) for i in range(len(column_weld_types))))
+        merger_ops = '{{{}}}'.format(', '.join(_merger_ops[aggregation].format(i=i) for i in range(len(column_weld_types))))
         merger_res = '{{{}}}'.format(', '.join('result(group_res.${})'.format(i) for i in range(len(column_weld_types))))
 
         return template.replace('mergers', mergers, 2)\
@@ -159,6 +162,35 @@ def _assemble_computation(aggregation, column_weld_types, new_column_weld_types,
         lengths = '{{{}}}'.format(', '.join('len(e.$1)' for _ in range(len(column_weld_types))))
 
         return template.replace('lengths', lengths, 1)
+    elif aggregation == 'var':
+        template = """let sums = for(
+                        e.$1,
+                        {mergers},
+                        |c: {mergers}, j: i64, f: {column_types}|
+                            {merger_sums}
+                    );
+                    let means = {means_res};
+                    let group_res = for(
+                        e.$1,
+                        {new_mergers},
+                        |c: {new_mergers}, j: i64, f: {column_types}|
+                            {merger_ops2}
+                    );
+                    merge(b, {{e.$0, {merger_res}}})"""
+
+        mergers = '{{{}}}'.format(', '.join('merger[{}, {}]'.format(type_, operation) for type_ in column_weld_types))
+        new_mergers = '{{{}}}'.format(', '.join('merger[{}, {}]'.format(type_, operation) for type_ in new_column_weld_types))
+        merger_sums = '{{{}}}'.format(', '.join(_merger_ops['+'].format(i=i) for i in range(len(column_weld_types))))
+        means_res = '{{{}}}'.format(', '.join('f64(result(sums.${})) / f64(len(e.$1))'.format(i) for i in range(len(column_weld_types))))
+        merger_ops2 = '{{{}}}'.format(', '.join(_merger_ops[aggregation].format(i=i) for i in range(len(column_weld_types))))
+        merger_res = '{{{}}}'.format(', '.join('result(group_res.${})'.format(i) for i in range(len(column_weld_types))))
+
+        return template.replace('mergers', mergers, 2)\
+            .replace('new_mergers', new_mergers, 2)\
+            .replace('merger_sums', merger_sums, 1)\
+            .replace('means_res', means_res, 1)\
+            .replace('merger_ops2', merger_ops2, 1)\
+            .replace('merger_res', merger_res, 1)
     else:
         raise NotImplementedError('Oops')
 
@@ -174,7 +206,7 @@ def weld_groupby_aggregate(grouped_df, weld_types: list, by_indices, aggregation
         Corresponding to data.
     by_indices : list of int
         Indices of which arrays to group by.
-    aggregation : {'+', '*', 'min', 'max', 'mean'}
+    aggregation : {'+', '*', 'min', 'max', 'mean', 'var', 'std'}
         What operation to apply to grouped rows.
     result_type : WeldType, optional
         Whether the result shall be (casted to) some specific type.
