@@ -184,6 +184,17 @@ def _assemble_aggregation_var(column_weld_types, new_column_weld_types):
         .replace('sqdevs_res', sqdevs_res, 1)
 
 
+def _assemble_aggregation_std(column_weld_types, new_column_weld_types):
+    template = """vars
+                    let group = {vars_res};"""
+    vars = _assemble_aggregation('var', column_weld_types, new_column_weld_types)
+    vars_res = '{{{}}}'.format(', '.join('sqrt(group.${})'.format(i) for i in range(len(column_weld_types))))
+
+    return template.replace('vars', vars, 1)\
+        .replace('vars_res', vars_res, 1)
+
+
+# TODO: this could be a dict if all functions accepted the same params
 def _assemble_aggregation(aggregation, column_weld_types, new_column_weld_types):
     if aggregation in _dictmerger_ops:
         return _assemble_aggregation_simple(column_weld_types, aggregation)
@@ -193,6 +204,8 @@ def _assemble_aggregation(aggregation, column_weld_types, new_column_weld_types)
         return _assemble_aggregation_mean(column_weld_types, new_column_weld_types)
     elif aggregation == 'var':
         return _assemble_aggregation_var(column_weld_types, new_column_weld_types)
+    elif aggregation == 'std':
+        return _assemble_aggregation_std(column_weld_types, new_column_weld_types)
     else:
         raise NotImplementedError('Oops')
 
