@@ -4,11 +4,14 @@ from .frame import DataFrame
 from .indexes import Index, MultiIndex
 from .series import Series
 from ..weld import weld_groupby, weld_groupby_aggregate, weld_vec_of_struct_to_struct_of_vec, LazyStructOfVecResult, \
-    Cache, extract_placeholder_weld_objects, weld_to_numpy_dtype, WeldDouble, WeldLong
+    Cache, extract_placeholder_weld_objects, weld_to_numpy_dtype, WeldDouble, WeldLong, \
+    weld_groupby_aggregate_dictmerger
 
 
 class DataFrameGroupBy(object):
     """Object encoding a groupby operation."""
+    _dictmerger_aggregations = {'+', '*', 'min', 'max'}
+
     def __init__(self, df, by: list):
         """Create a groupby object.
 
@@ -27,19 +30,32 @@ class DataFrameGroupBy(object):
         self._by = by
         self._by_indices = _compute_by_indices(self._by, df)
 
-    # TODO: this shall decide if we can use dictmerger directly OR need groupmerger
-    def _group(self, aggregations):
-        return weld_groupby(self._data_for_weld,
-                            self._weld_types,
-                            self._by_indices)
+    def _group_dictmerger(self, aggregation):
+        return weld_groupby_aggregate_dictmerger(self._data_for_weld,
+                                                 self._weld_types,
+                                                 self._by_indices,
+                                                 aggregation)
+
+    def _group_groupmerger(self, aggregation, result_type=None):
+        grouped = weld_groupby(self._data_for_weld,
+                               self._weld_types,
+                               self._by_indices)
+
+        return weld_groupby_aggregate(grouped,
+                                      self._weld_types,
+                                      self._by_indices,
+                                      aggregation,
+                                      result_type)
+
+    def _group_aggregate(self, aggregation, result_type=None):
+        if aggregation in self._dictmerger_aggregations:
+            return self._group_dictmerger(aggregation)
+        else:
+            return self._group_groupmerger(aggregation, result_type)
 
     def _aggregate(self, aggregation, result_type=None):
-        grouped = self._group(aggregation)
-        weld_types, vec_of_struct = weld_groupby_aggregate(grouped,
-                                                           self._weld_types,
-                                                           self._by_indices,
-                                                           aggregation,
-                                                           result_type)
+        weld_types, vec_of_struct = self._group_aggregate(aggregation, result_type)
+
         struct_of_vec = weld_vec_of_struct_to_struct_of_vec(vec_of_struct, weld_types)
 
         intermediate_result = LazyStructOfVecResult(struct_of_vec, weld_types)

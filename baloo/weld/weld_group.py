@@ -1,6 +1,70 @@
 from .weld_utils import weld_arrays_to_vec_of_struct, create_weld_object
 
 
+def weld_groupby_aggregate_dictmerger(arrays: list, weld_types: list, by_indices, operation):
+    """Groups by the columns in by.
+
+    Parameters
+    ----------
+    arrays : list of (numpy.ndarray or WeldObject)
+        Entire DataFrame data.
+    weld_types : list of WeldType
+        Corresponding to data.
+    by_indices : list of int
+        Indices of which arrays to group by.
+    operation : {'+', '*', 'min', 'max'}
+        Aggregation.
+
+    Returns
+    -------
+    WeldObject
+        Representation of the computation.
+
+    """
+    weld_struct = weld_arrays_to_vec_of_struct(arrays, weld_types)
+
+    obj_id, weld_obj = create_weld_object(weld_struct)
+
+    all_indices = list(range(len(arrays)))
+    column_indices = list(filter(lambda x: x not in by_indices, all_indices))
+    by_weld_types = [weld_types[i] for i in by_indices]
+    column_weld_types = [weld_types[i] for i in column_indices]
+
+    by_types = '{{{}}}'.format(', '.join(str(type_) for type_ in by_weld_types))
+    column_types = '{{{}}}'.format(', '.join(str(type_) for type_ in column_weld_types))
+    all_types = '{{{}}}'.format(', '.join(str(type_) for type_ in weld_types))
+    by_select = '{{{}}}'.format(', '.join('e.${}'.format(str(i)) for i in by_indices))
+    column_select = '{{{}}}'.format(', '.join('e.${}'.format(str(i)) for i in column_indices))
+    res = '{{{}}}'.format(', '.join(['e.$0.${}'.format(i) for i in range(len(by_weld_types))] +
+                                    ['e.$1.${}'.format(i) for i in range(len(column_weld_types))]))
+
+    weld_template = """map(
+    tovec(
+        result(
+            for(
+                {arrays},
+                dictmerger[{by_types}, {column_types}, {operation}],
+                |b: dictmerger[{by_types}, {column_types}, {operation}], i: i64, e: {all_types}|
+                    merge(b, {{{by_select}, {column_select}}})
+            )
+        )
+    ),
+    |e: {{{by_types}, {column_types}}}|
+        {res}
+)"""
+
+    weld_obj.weld_code = weld_template.format(arrays=obj_id,
+                                              by_types=by_types,
+                                              column_types=column_types,
+                                              all_types=all_types,
+                                              by_select=by_select,
+                                              column_select=column_select,
+                                              operation=operation,
+                                              res=res)
+
+    return by_weld_types + column_weld_types, weld_obj
+
+
 def weld_groupby(arrays: list, weld_types: list, by_indices):
     """Groups by the columns in by.
 
