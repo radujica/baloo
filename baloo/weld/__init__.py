@@ -9,3 +9,4 @@ from .weld_utils import *
 
 # Weld types can be inferred in many places however were included for performance reasons.
 # TODO: perhaps revisit this choice
+# TODO: perhaps find a faster string (Weld code) building/formatting method?

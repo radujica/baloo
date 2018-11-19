@@ -122,13 +122,6 @@ def weld_groupby(arrays: list, weld_types: list, by_indices: list):
 _dictmerger_ops = {'+', '*', 'min', 'max'}
 
 
-def _deduce_operation(aggregation):
-    if aggregation in _dictmerger_ops:
-        return aggregation
-    else:
-        return '+'
-
-
 # all _assemble_aggregation_* end with let group = {<scalars>};
 def _assemble_aggregation_simple(column_weld_types, aggregation):
     template = """let sums = for(
@@ -212,7 +205,6 @@ def _assemble_aggregation(aggregation, column_weld_types, new_column_weld_types)
         raise NotImplementedError('Oops')
 
 
-# TODO: make it work without replace
 def _assemble_computation(aggregation, column_weld_types, new_column_weld_types):
     template = """aggregation
                     merge(b, {{e.$0, {group_res}}})"""
