@@ -212,14 +212,40 @@ result(res)
     return weld_obj
 
 
-def weld_cast_scalar(scalar, weld_type):
+_numeric_types = {WeldInt16(), WeldInt(), WeldLong(), WeldFloat(), WeldDouble(), WeldBit()}
+
+
+def is_numeric(weld_type):
+    """Checks whether the WeldType is a numeric type.
+
+    Parameters
+    ----------
+    weld_type : WeldType
+        To check.
+
+    Returns
+    -------
+    bool
+        Whether the Weld type is numeric or not.
+
+    """
+    return weld_type in _numeric_types
+
+
+def _not_possible_to_cast(scalar, to_weld_type):
+    return not isinstance(scalar, (int, float, WeldObject)) or \
+           isinstance(scalar, bool) or \
+           not is_numeric(to_weld_type)
+
+
+def weld_cast_scalar(scalar, to_weld_type):
     """Returns the scalar casted to the request Weld type.
 
     Parameters
     ----------
-    scalar : {int, float, str, bool, bytes, WeldObject}
+    scalar : {int, float, WeldObject}
         Input array.
-    weld_type : WeldType
+    to_weld_type : WeldType
         Type of each element in the input array.
 
     Returns
@@ -228,6 +254,9 @@ def weld_cast_scalar(scalar, weld_type):
         Representation of this computation.
 
     """
+    if _not_possible_to_cast(scalar, to_weld_type):
+        raise TypeError('Cannot cast scalar of type={} to type={}'.format(type(scalar), to_weld_type))
+
     weld_obj = create_empty_weld_object()
     if isinstance(scalar, WeldObject):
         scalar = get_weld_obj_id(weld_obj, scalar)
@@ -235,7 +264,7 @@ def weld_cast_scalar(scalar, weld_type):
     weld_template = '{type}({scalar})'
 
     weld_obj.weld_code = weld_template.format(scalar=scalar,
-                                              type=weld_type)
+                                              type=to_weld_type)
 
     return weld_obj
 
@@ -243,6 +272,42 @@ def weld_cast_scalar(scalar, weld_type):
 # this is fairly common so make separate method
 def weld_cast_double(scalar):
     return weld_cast_scalar(scalar, WeldDouble())
+
+
+def weld_cast_array(array, weld_type, to_weld_type):
+    """Cast array to a different type.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input data.
+    weld_type : WeldType
+        Type of each element in the input array.
+    to_weld_type : WeldType
+        Desired type.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    if not is_numeric(weld_type) or not is_numeric(to_weld_type):
+        raise TypeError('Cannot cast array of type={} to type={}'.format(weld_type, to_weld_type))
+
+    obj_id, weld_obj = create_weld_object(array)
+
+    weld_template = """map(
+    {array},
+    |e: {type}|
+        {to}(e)
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=obj_id,
+                                              type=weld_type,
+                                              to=to_weld_type)
+
+    return weld_obj
 
 
 # essentially switching from columns to rows ~ axis 0 to 1
