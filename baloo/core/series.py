@@ -393,12 +393,12 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         [4 5 6]
         >>> print(bl.Series([1., 4., 100.]).apply(bl.sqrt).evaluate())  # lazy predefined function
         [ 1.  2. 10.]
-        >>> sr = bl.Series([4, 2, 3, 1]
+        >>> sr = bl.Series([4, 2, 3, 1])
         >>> print(sr.apply(bl.sort, kind='q').evaluate())  # eager wrapper over np.sort (which uses raw decorator)
         [1 2 3 4]
         >>> print(sr.apply(bl.raw(np.sort, kind='q')).evaluate())  # np.sort directly
         [1 2 3 4]
-        >>> print(sr.apply(bl.raw(lambda x: np.sort(x, kind='q'))).evaluate())  # lambda also works
+        >>> print(sr.apply(bl.raw(lambda x: np.sort(x, kind='q'))).evaluate())  # lambda also works, with x = np.array
         [1 2 3 4]
 
         # check tests/core/cudf/* and tests/core/test_series.test_cudf for C UDF example
