@@ -288,3 +288,9 @@ class TestSeries(object):
         expected = Series(np.array([0., 0.693147, 1.098612, 1.386294, 1.609438], dtype=np.float32), index_i64)
 
         assert_series_equal(actual, expected, 5)
+
+    def test_astype(self, series_f32, data_i64, index_i64):
+        actual = series_f32.astype(np.dtype(np.int64))
+        expected = Series(data_i64, index_i64, np.dtype(np.int64))
+
+        assert_series_equal(actual, expected)

@@ -144,6 +144,14 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         else:
             raise TypeError('Can only apply operation with scalar or Series')
 
+    def astype(self, dtype):
+        check_type(dtype, np.dtype)
+
+        return Series(self._astype(dtype),
+                      self.index,
+                      dtype,
+                      self.name)
+
     def __getitem__(self, item):
         """Select from the Series.
 

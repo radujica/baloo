@@ -546,7 +546,7 @@ class DataFrame(BinaryOps, BalooCommon):
             raise TypeError('Expected columns as a str or a list of str')
 
     # TODO: currently if the data has multiple types, the results are casted to f64; perhaps be more flexible about it
-    # TODO: cast data to relevant 64-bit format pre-aggregation ~ i16, i32 -> i64, f32 -> f64
+    # TODO: cast data to relevant 64-bit format pre-aggregation? ~ i16, i32 -> i64, f32 -> f64
     def _aggregate_columns(self, func_name):
         df = _drop_str_columns(self)
         if len(df._data) == 0:

@@ -135,6 +135,13 @@ class Index(LazyArrayResult, BinaryOps, BitOps, IndexCommon, BalooCommon):
                      self.dtype,
                      self.name)
 
+    def astype(self, dtype):
+        check_type(dtype, np.dtype)
+
+        return Index(self._astype(dtype),
+                     dtype,
+                     self.name)
+
     def __getitem__(self, item):
         """Select from the Index. Currently used internally through DataFrame and Series.
 
