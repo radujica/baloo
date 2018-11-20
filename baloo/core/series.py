@@ -361,8 +361,8 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         - Pure Weld code and mapping.
         - Weld code and mapping along with a dynamically linked C++ lib containing the UDF.
         - Using a NumPy function, which however is EAGER and hence requires self.values to be raw. Additionally, NumPy
-        does not support kwargs in (all) functions so must use raw decorator to strip away weld_type.
-        - Implementing an eager function, with the same precondition as above. Use the raw decorator to check this.
+            does not support kwargs in (all) functions so must use raw decorator to strip away weld_type.
+        - Implementing an eager function with the same precondition as above. Use the raw decorator to check this.
 
         Parameters
         ----------
@@ -393,9 +393,12 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         [4 5 6]
         >>> print(bl.Series([1., 4., 100.]).apply(bl.sqrt).evaluate())  # lazy predefined function
         [ 1.  2. 10.]
-        >>> print(bl.Series([4, 2, 3, 1]).apply(bl.sort).evaluate())  # eager wrapper over np.sort with raw decorator
+        >>> sr = bl.Series([4, 2, 3, 1]
+        >>> print(sr.apply(bl.sort, kind='q').evaluate())  # eager wrapper over np.sort (which uses raw decorator)
         [1 2 3 4]
-        >>> print(bl.Series([4, 2, 3, 1]).apply(bl.raw(np.sort)).evaluate())  # np.sort directly with raw check
+        >>> print(sr.apply(bl.raw(np.sort, kind='q')).evaluate())  # np.sort directly
+        [1 2 3 4]
+        >>> print(sr.apply(bl.raw(lambda x: np.sort(x, kind='q'))).evaluate())  # lambda also works
         [1 2 3 4]
 
         # check tests/core/cudf/* and tests/core/test_series.test_cudf for C UDF example
