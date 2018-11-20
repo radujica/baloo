@@ -103,3 +103,8 @@ def df_dupl(series_i64, index_i64):
 @pytest.fixture(scope='module')
 def df_dupl_exp_ind():
     return Index(np.array([4, 5, 6]), np.dtype(np.int64), 'b')
+
+
+@pytest.fixture(scope='module')
+def series_unsorted(index_i64):
+    return Series(np.array([5, 2, 3, 1, 4], dtype=np.float32), index_i64, np.dtype(np.float32))
