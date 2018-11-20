@@ -61,10 +61,11 @@ All Baloo objects follow the following contract:
 Type Casting
 ------------
 
-Unlike Pandas, there are currently no automatic type casts for array types, e.g. `[1, 2] + [2.35, 3.54]` is likely to
-fail. Similarly, when creating a Series using data of some dtype but specifying a different dtype in the constructor,
-it will *not* convert to that dtype. These are usability details that shall be tackled later.
+Unlike Pandas, there are currently no automatic type casts for array types, e.g. `Series([1, 2]) + Series([2.35, 3.54])`
+is likely to fail. Casting is lazily available through the `astype` operator. Note that on Series creation, data can be
+automatically casted to given dtype only if the data is raw. If lazy, encode it through astype.
 
-Note, however, that literal/scalar values are an exception and do get casted to the `dtype` of the array, e.g.
-`[1, 2] < 2.0` is interpreted as `[1, 2] < 2`. Lastly, aggregation results get converted to `float64` if possible, like
-in Pandas.
+Note that literal/scalar values are an exception and do get casted to the `dtype` of the array, e.g.
+`Series([1, 2]) < 2.0` is interpreted as `Series([1, 2]) < 2`. Lastly, aggregation results get converted to `float64`
+however currently *post-*aggregation, not before, e.g. `Series([1, 2]).sum()` first computes the integer sum
+then casts the result to float.
