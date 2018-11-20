@@ -31,15 +31,15 @@ Missing Data
 ------------
 
 Unlike Pandas, there are currently no special NaN/NA/NaT values for missing data. If NumPy accepts it, then it's valid.
-In practice, this means that:
+For Baloo, the following were chosen as defaults:
 
-* floats have the special `np.nan` value,
+* floats : -999.
 
-* integers must use some arbitrary value, e.g. `-999`
+* integers : -999
 
-* same for strings, e.g. `b'None'`
+* S/bytes_ : b'None'
 
-* booleans can use `False`
+* bool : false
 
 
 Lazy Evaluation
