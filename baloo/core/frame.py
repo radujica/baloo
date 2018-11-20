@@ -280,6 +280,38 @@ class DataFrame(BinaryOps, BalooCommon):
         else:
             raise TypeError('Can only apply operation with scalar or LazyArrayResult')
 
+    def astype(self, dtype):
+        """Cast DataFrame columns to given dtype.
+
+        Parameters
+        ----------
+        dtype : numpy.dtype or dict
+            Dtype or column_name -> dtype mapping to cast columns to. Note index is excluded.
+
+        Returns
+        -------
+        DataFrame
+            With casted columns.
+
+        """
+        if isinstance(dtype, np.dtype):
+            new_data = OrderedDict((column.name, column.astype(dtype))
+                                   for column in self._iter())
+
+            return DataFrame(new_data, self.index)
+        elif isinstance(dtype, dict):
+            check_inner_types(dtype.values(), np.dtype)
+
+            new_data = OrderedDict(self._data)
+            for column in self._iter():
+                column_name = column.name
+                if column_name in dtype:
+                    new_data[column_name] = column.astype(dtype[column_name])
+
+            return DataFrame(new_data, self.index)
+        else:
+            raise TypeError('Expected numpy.dtype or dict mapping column names to dtypes')
+
     def __getitem__(self, item):
         """Select from the DataFrame.
 
