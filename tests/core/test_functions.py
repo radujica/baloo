@@ -5,6 +5,14 @@ import baloo as bl
 from .test_series import assert_series_equal
 
 
+class TestUnary(object):
+    def test_sqrt(self, series_f32, index_i64):
+        actual = series_f32.apply(bl.sqrt)
+        expected = bl.Series(np.array([1., 1.414214, 1.732051, 2., 2.236068], dtype=np.float32), index_i64)
+
+        assert_series_equal(actual, expected, almost=5)
+
+
 class TestRaw(object):
     def test_deco_no_args(self, series_unsorted, series_f32):
         actual = series_unsorted.apply(bl.sort)
