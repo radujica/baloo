@@ -56,8 +56,6 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
     1.0
     >>> print(sr.agg(['min', 'std']).evaluate())
     [0. 1.]
-    >>> print(bl.Series([1., 4., 100.]).apply(bl.sqrt).evaluate())
-    [ 1.  2. 10.]
 
     """
     # TODO: when passed a dtype, pandas converts to it; do the same?
@@ -355,12 +353,16 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
     def apply(self, func, mapping=None, new_dtype=None, **kwargs):
         """Apply an element-wise UDF to the Series.
 
-        There are currently 4 options for using a UDF:
+        There are currently 6 options for using a UDF. First 4 are lazy,
+        other 2 are eager and require the use of the raw decorator:
 
         - One of the predefined functions in baloo.functions.
         - Implementing a function which encodes the result. kwargs are automatically passed to it.
         - Pure Weld code and mapping.
         - Weld code and mapping along with a dynamically linked C++ lib containing the UDF.
+        - Using a NumPy function, which however is EAGER and hence requires self.values to be raw. Additionally, NumPy
+            does not support kwargs in (all) functions so must use raw decorator to strip away weld_type.
+        - Implementing an eager function with the same precondition as above. Use the raw decorator to check this.
 
         Parameters
         ----------
@@ -389,13 +391,22 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         >>> weld_template2 = 'map({self}, |e| e + 3L)'
         >>> print(sr.apply(weld_template2).evaluate())
         [4 5 6]
+        >>> print(bl.Series([1., 4., 100.]).apply(bl.sqrt).evaluate())  # lazy predefined function
+        [ 1.  2. 10.]
+        >>> sr = bl.Series([4, 2, 3, 1])
+        >>> print(sr.apply(bl.sort, kind='q').evaluate())  # eager wrapper over np.sort (which uses raw decorator)
+        [1 2 3 4]
+        >>> print(sr.apply(bl.raw(np.sort, kind='q')).evaluate())  # np.sort directly
+        [1 2 3 4]
+        >>> print(sr.apply(bl.raw(lambda x: np.sort(x, kind='q'))).evaluate())  # lambda also works, with x = np.array
+        [1 2 3 4]
 
         # check tests/core/cudf/* and tests/core/test_series.test_cudf for C UDF example
 
         """
         if callable(func):
             return Series(func(self.values,
-                               self.weld_type,
+                               weld_type=self.weld_type,
                                **kwargs),
                           self.index,
                           self.dtype,
