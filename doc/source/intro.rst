@@ -20,11 +20,12 @@ Baloo currently accepts the following NumPy dtypes:
 
 * float32, float64
 
-* bool
+* bool/bool\_ *
 
 * S/bytes\_
 
 Note that strings require their byte versions, therefore unicode is not currently supported (at the Weld level(?)).
+* Bool is internally converted to np.bool\_ s.t. its module points to NumPy and not builtins.
 
 
 Missing Data

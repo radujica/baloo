@@ -3,7 +3,7 @@ import numpy as np
 from .generic import BinaryOps, BitOps, BalooCommon
 from .indexes import Index, MultiIndex
 from .utils import infer_dtype, default_index, check_type, is_scalar, check_valid_int_slice, check_weld_bit_array, \
-    convert_to_numpy
+    convert_to_numpy, check_dtype
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
     weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, LazyDoubleResult, LazyScalarResult, \
     weld_mean, weld_variance, weld_standard_deviation, WeldObject, weld_agg, weld_iloc_indices, \
@@ -69,8 +69,9 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         index : Index or RangeIndex or MultiIndex, optional
             Index linked to the data; it is assumed to be of the same length.
             RangeIndex by default.
-        dtype : numpy.dtype, optional
-            Desired Numpy dtype for the elements. If data is np.ndarray with a dtype different to dtype argument,
+        dtype : numpy.dtype or type, optional
+            Desired Numpy dtype for the elements. If type, it must be a NumPy type, e.g. np.float32.
+            If data is np.ndarray with a dtype different to dtype argument,
             it is astype'd to the argument dtype. Note that if data is WeldObject, one must explicitly astype
             to convert type. Inferred from `data` by default.
         name : str, optional
@@ -146,7 +147,7 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
             raise TypeError('Can only apply operation with scalar or Series')
 
     def astype(self, dtype):
-        check_type(dtype, np.dtype)
+        check_dtype(dtype)
 
         return Series(self._astype(dtype),
                       self.index,
@@ -422,7 +423,7 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
                           self.name)
         elif isinstance(func, str):
             check_type(mapping, dict)
-            check_type(new_dtype, np.dtype)
+            check_dtype(new_dtype)
 
             default_mapping = {'self': self.values}
             if mapping is None:
@@ -447,7 +448,7 @@ def _process_input(data, dtype):
         return np.empty(0), np.dtype(np.float64)
     else:
         check_type(data, (np.ndarray, WeldObject, list))
-        check_type(dtype, np.dtype)
+        check_dtype(dtype)
 
         if isinstance(data, list):
             data = convert_to_numpy(data)
