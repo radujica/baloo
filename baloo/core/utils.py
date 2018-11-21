@@ -10,6 +10,17 @@ def check_type(data, expected_types):
     return data
 
 
+def check_dtype(data):
+    # silently allow and convert bool
+    if data == bool:
+        return np.bool_
+
+    if data is not None and not (isinstance(data, np.dtype) or data.__module__ == np.__name__):
+        raise TypeError('Expected a valid NumPy dtype, received: {}'.format(str(data)))
+
+    return data
+
+
 def check_inner_types(data, expected_types):
     if data is not None:
         for value in data:
@@ -36,6 +47,9 @@ def check_weld_long_array(data):
 
 def infer_dtype(data, arg_dtype):
     if arg_dtype is not None:
+        if not isinstance(arg_dtype, np.dtype):
+            arg_dtype = np.dtype(arg_dtype)
+
         return arg_dtype
     else:
         if isinstance(data, np.ndarray):

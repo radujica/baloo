@@ -36,6 +36,12 @@ class TestSeries(object):
 
         assert_series_equal(actual, expected)
 
+    def test_init_raw_cast_type(self, data_i64, index_i64, data_f32):
+        actual = Series(data_i64, index_i64, np.dtype(np.float32))
+        expected = Series(data_f32, index_i64, np.dtype(np.float32))
+
+        assert_series_equal(actual, expected)
+
     def test_len_raw(self, series_i64):
         actual = len(series_i64)
         expected = 5
@@ -288,3 +294,9 @@ class TestSeries(object):
         expected = Series(np.array([0., 0.693147, 1.098612, 1.386294, 1.609438], dtype=np.float32), index_i64)
 
         assert_series_equal(actual, expected, 5)
+
+    def test_astype(self, series_f32, data_i64, index_i64):
+        actual = series_f32.astype(np.dtype(np.int64))
+        expected = Series(data_i64, index_i64, np.dtype(np.int64))
+
+        assert_series_equal(actual, expected)

@@ -20,26 +20,27 @@ Baloo currently accepts the following NumPy dtypes:
 
 * float32, float64
 
-* bool
+* bool/bool\_ *
 
 * S/bytes\_
 
 Note that strings require their byte versions, therefore unicode is not currently supported (at the Weld level(?)).
+* Bool is internally converted to np.bool\_ s.t. its module points to NumPy and not builtins.
 
 
 Missing Data
 ------------
 
 Unlike Pandas, there are currently no special NaN/NA/NaT values for missing data. If NumPy accepts it, then it's valid.
-In practice, this means that:
+For Baloo, the following were chosen as defaults:
 
-* floats have the special `np.nan` value,
+* floats : -999.
 
-* integers must use some arbitrary value, e.g. `-999`
+* integers : -999
 
-* same for strings, e.g. `b'None'`
+* S/bytes_ : b'None'
 
-* booleans can use `False`
+* bool : false
 
 
 Lazy Evaluation
@@ -61,10 +62,11 @@ All Baloo objects follow the following contract:
 Type Casting
 ------------
 
-Unlike Pandas, there are currently no automatic type casts for array types, e.g. `[1, 2] + [2.35, 3.54]` is likely to
-fail. Similarly, when creating a Series using data of some dtype but specifying a different dtype in the constructor,
-it will *not* convert to that dtype. These are usability details that shall be tackled later.
+Unlike Pandas, there are currently no automatic type casts for array types, e.g. `Series([1, 2]) + Series([2.35, 3.54])`
+is likely to fail. Casting is lazily available through the `astype` operator. Note that on Series creation, data can be
+automatically casted to given dtype only if the data is raw. If lazy, encode it through astype.
 
-Note, however, that literal/scalar values are an exception and do get casted to the `dtype` of the array, e.g.
-`[1, 2] < 2.0` is interpreted as `[1, 2] < 2`. Lastly, aggregation results get converted to `float64` if possible, like
-in Pandas.
+Note that literal/scalar values are an exception and do get casted to the `dtype` of the array, e.g.
+`Series([1, 2]) < 2.0` is interpreted as `Series([1, 2]) < 2`. Lastly, aggregation results get converted to `float64`
+however currently *post-*aggregation, not before, e.g. `Series([1, 2]).sum()` first computes the integer sum
+then casts the result to float.

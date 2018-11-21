@@ -448,3 +448,19 @@ class TestDataFrame(object):
                              index_i64)
 
         assert_dataframe_equal(actual, expected)
+
+    def test_astype_dtype(self, df1, data_i64, index_i64_2):
+        actual = df1.astype(np.dtype(np.int64))
+        expected = DataFrame(OrderedDict((('a', np.arange(5)),
+                                          ('b', data_i64))),
+                             index_i64_2)
+
+        assert_dataframe_equal(actual, expected)
+
+    def test_astype_dict(self, df1, data_f32, index_i64_2):
+        actual = df1.astype({'a': np.dtype(np.float32)})
+        expected = DataFrame(OrderedDict((('a', np.arange(5, dtype=np.float32)),
+                                          ('b', data_f32))),
+                             index_i64_2)
+
+        assert_dataframe_equal(actual, expected)

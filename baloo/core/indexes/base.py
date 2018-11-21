@@ -2,7 +2,7 @@ import numpy as np
 
 from ..generic import BinaryOps, IndexCommon, BalooCommon, BitOps
 from ...core.utils import check_type, infer_dtype, is_scalar, check_weld_bit_array, check_valid_int_slice, \
-    convert_to_numpy
+    convert_to_numpy, check_dtype
 from ...weld import LazyArrayResult, numpy_to_weld_type, weld_filter, weld_slice, \
     weld_compare, weld_tail, weld_array_op, weld_element_wise_op, WeldObject, weld_iloc_indices, \
     weld_iloc_indices_with_missing, default_missing_data_literal, weld_replace
@@ -48,8 +48,8 @@ class Index(LazyArrayResult, BinaryOps, BitOps, IndexCommon, BalooCommon):
             Name of the Index.
 
         """
-        data = _process_input_data(data)
-        self.dtype = infer_dtype(data, check_type(dtype, np.dtype))
+        data, dtype = _process_input_data(data, dtype)
+        self.dtype = dtype
         self.name = check_type(name, str)
         self._length = len(data) if isinstance(data, np.ndarray) else None
 
@@ -133,6 +133,13 @@ class Index(LazyArrayResult, BinaryOps, BitOps, IndexCommon, BalooCommon):
                                                     self.weld_type,
                                                     indices),
                      self.dtype,
+                     self.name)
+
+    def astype(self, dtype):
+        check_dtype(dtype)
+
+        return Index(self._astype(dtype),
+                     dtype,
                      self.name)
 
     def __getitem__(self, item):
@@ -276,13 +283,17 @@ class Index(LazyArrayResult, BinaryOps, BitOps, IndexCommon, BalooCommon):
                      self.name)
 
 
-def _process_input_data(data):
+def _process_input_data(data, dtype):
     check_type(data, (np.ndarray, WeldObject, list))
 
     if isinstance(data, list):
         data = convert_to_numpy(data)
 
-    return data
+    inferred_dtype = infer_dtype(data, dtype)
+    if isinstance(data, np.ndarray) and data.dtype.char != inferred_dtype.char:
+        data = data.astype(inferred_dtype)
+
+    return data, inferred_dtype
 
 
 def _index_compare(index, other, comparison):

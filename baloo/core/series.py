@@ -3,7 +3,7 @@ import numpy as np
 from .generic import BinaryOps, BitOps, BalooCommon
 from .indexes import Index, MultiIndex
 from .utils import infer_dtype, default_index, check_type, is_scalar, check_valid_int_slice, check_weld_bit_array, \
-    convert_to_numpy
+    convert_to_numpy, check_dtype
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
     weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, LazyDoubleResult, LazyScalarResult, \
     weld_mean, weld_variance, weld_standard_deviation, WeldObject, weld_agg, weld_iloc_indices, \
@@ -58,7 +58,6 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
     [0. 1.]
 
     """
-    # TODO: when passed a dtype, pandas converts to it; do the same?
     # TODO: Fix en/decoding string's dtype; e.g. filter returns max length dtype (|S11) even if actual result is |S7
     def __init__(self, data=None, index=None, dtype=None, name=None):
         """Initialize a Series object.
@@ -70,15 +69,18 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         index : Index or RangeIndex or MultiIndex, optional
             Index linked to the data; it is assumed to be of the same length.
             RangeIndex by default.
-        dtype : numpy.dtype, optional
-            Numpy dtype of the elements. Inferred from `data` by default.
+        dtype : numpy.dtype or type, optional
+            Desired Numpy dtype for the elements. If type, it must be a NumPy type, e.g. np.float32.
+            If data is np.ndarray with a dtype different to dtype argument,
+            it is astype'd to the argument dtype. Note that if data is WeldObject, one must explicitly astype
+            to convert type. Inferred from `data` by default.
         name : str, optional
             Name of the Series.
 
         """
-        data = _process_input_data(data)
+        data, dtype = _process_input(data, dtype)
         self.index = _process_index(index, data)
-        self.dtype = infer_dtype(data, check_type(dtype, np.dtype))
+        self.dtype = dtype
         self.name = check_type(name, str)
         # TODO: this should be used to annotate Weld code for speedups
         self._length = len(data) if isinstance(data, np.ndarray) else None
@@ -143,6 +145,14 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
             return _series_element_wise_op(self, other, operation)
         else:
             raise TypeError('Can only apply operation with scalar or Series')
+
+    def astype(self, dtype):
+        check_dtype(dtype)
+
+        return Series(self._astype(dtype),
+                      self.index,
+                      dtype,
+                      self.name)
 
     def __getitem__(self, item):
         """Select from the Series.
@@ -413,7 +423,7 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
                           self.name)
         elif isinstance(func, str):
             check_type(mapping, dict)
-            check_type(new_dtype, np.dtype)
+            check_dtype(new_dtype)
 
             default_mapping = {'self': self.values}
             if mapping is None:
@@ -433,16 +443,21 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
             raise TypeError('Expected function or str defining a weld_template')
 
 
-def _process_input_data(data):
+def _process_input(data, dtype):
     if data is None:
-        return np.empty(0)
+        return np.empty(0), np.dtype(np.float64)
     else:
         check_type(data, (np.ndarray, WeldObject, list))
+        check_dtype(dtype)
 
         if isinstance(data, list):
             data = convert_to_numpy(data)
 
-        return data
+        inferred_dtype = infer_dtype(data, dtype)
+        if isinstance(data, np.ndarray) and data.dtype.char != inferred_dtype.char:
+            data = data.astype(inferred_dtype)
+
+        return data, inferred_dtype
 
 
 def _process_index(index, data):

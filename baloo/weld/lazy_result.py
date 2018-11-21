@@ -1,8 +1,10 @@
 from weld.weldobject import *
 
 from .cache import Cache
+from .convertors import numpy_to_weld_type
 from .convertors.utils import to_weld_vec
 from .weld_aggs import weld_aggregate, weld_count
+from .weld_utils import weld_cast_array
 
 
 class LazyResult(object):
@@ -93,6 +95,7 @@ class LazyResult(object):
             return self.weld_expr
 
 
+# TODO: not really happy having functionality here; maybe have e.g. LazyArray(LazyArrayResult) adding the functionality?
 class LazyArrayResult(LazyResult):
     def __init__(self, weld_expr, weld_type):
         super(LazyArrayResult, self).__init__(weld_expr, weld_type, 1)
@@ -151,6 +154,11 @@ class LazyArrayResult(LazyResult):
             self._length = self._lazy_len().evaluate()
 
         return self._length
+
+    def _astype(self, dtype):
+        return weld_cast_array(self.values,
+                               self.weld_type,
+                               numpy_to_weld_type(dtype))
 
 
 # could make all subclasses but seems rather unnecessary atm
