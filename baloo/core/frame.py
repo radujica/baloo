@@ -1113,6 +1113,24 @@ class DataFrame(BinaryOps, BalooCommon):
 
         return DataFrame(baloo_data, baloo_index)
 
+    def to_pandas(self):
+        """Convert to pandas DataFrame.
+
+        Note the data is expected to be evaluated.
+
+        Returns
+        -------
+        pandas.frame.DataFrame
+
+        """
+        from pandas import DataFrame as PandasDataFrame
+
+        pandas_index = self.index.to_pandas()
+        pandas_data = OrderedDict((column.name, column.to_pandas())
+                                  for column in self._iter())
+
+        return PandasDataFrame(pandas_data, pandas_index)
+
 
 def _default_index(dataframe_data, length):
     if length is not None:

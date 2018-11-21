@@ -302,6 +302,23 @@ class Index(LazyArrayResult, BinaryOps, BitOps, IndexCommon, BalooCommon):
                      index.dtype,
                      index.name)
 
+    def to_pandas(self):
+        """Convert to pandas Index.
+
+        Returns
+        -------
+        pandas.base.Index
+
+        """
+        if not self.is_raw():
+            raise ValueError('Cannot convert to pandas Index if not evaluated.')
+
+        from pandas import Index as PandasIndex
+
+        return PandasIndex(self.values,
+                           self.dtype,
+                           name=self.name)
+
 
 def _process_input_data(data, dtype):
     check_type(data, (np.ndarray, WeldObject, list))

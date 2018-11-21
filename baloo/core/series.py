@@ -1,4 +1,5 @@
 import numpy as np
+from pandas import Series as PandasSeries
 
 from .generic import BinaryOps, BitOps, BalooCommon
 from .indexes import Index, MultiIndex
@@ -466,6 +467,18 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
 
         return _series_from_pandas(series, baloo_index)
 
+    def to_pandas(self):
+        """Convert to pandas Series
+
+        Returns
+        -------
+        pandas.series.Series
+
+        """
+        pandas_index = self.index.to_pandas()
+
+        return _series_to_pandas(self, pandas_index)
+
 
 def _process_input(data, dtype):
     if data is None:
@@ -578,3 +591,10 @@ def _series_from_pandas(series, baloo_index):
                   baloo_index,
                   series.dtype,
                   series.name)
+
+
+def _series_to_pandas(series, pandas_index):
+    return PandasSeries(series.values,
+                        pandas_index,
+                        series.dtype,
+                        series.name)

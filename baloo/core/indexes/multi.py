@@ -245,6 +245,23 @@ class MultiIndex(IndexCommon, BalooCommon):
 
         return MultiIndex(baloo_level_values, list(index.names))
 
+    def to_pandas(self):
+        """Convert to pandas MultiIndex.
+
+        Returns
+        -------
+        pandas.base.MultiIndex
+
+        """
+        if not all(ind.is_raw() for ind in self.values):
+            raise ValueError('Cannot convert to pandas MultiIndex if not evaluated.')
+
+        from pandas import MultiIndex as PandasMultiIndex
+
+        arrays = [ind.values for ind in self.values]
+
+        return PandasMultiIndex.from_arrays(arrays, names=self.names)
+
 
 def _init_names(number_columns, names):
     check_inner_types(check_type(names, list), str)
