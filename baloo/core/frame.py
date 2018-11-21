@@ -7,7 +7,7 @@ from tabulate import tabulate
 from .generic import BinaryOps, BalooCommon
 from .indexes import Index, MultiIndex
 from .series import Series, _series_slice, _series_filter, _series_element_wise_op, _series_agg, _series_tail, \
-    _series_iloc, _series_iloc_with_missing
+    _series_iloc, _series_iloc_with_missing, _series_from_pandas
 from .utils import check_type, is_scalar, check_inner_types, infer_length, shorten_data, \
     check_weld_bit_array, check_valid_int_slice, as_list, default_index, same_index, check_str_or_list_str
 from ..weld import LazyArrayResult, weld_to_numpy_dtype, weld_combine_scalars, weld_count, \
@@ -1083,6 +1083,35 @@ class DataFrame(BinaryOps, BalooCommon):
         from .groupby import DataFrameGroupBy
 
         return DataFrameGroupBy(self, by)
+
+    @classmethod
+    def from_pandas(cls, df):
+        """Create baloo DataFrame from pandas DataFrame.
+
+        Parameters
+        ----------
+        df : pandas.frame.DataFrame
+
+        Returns
+        -------
+        DataFrame
+
+        """
+        from pandas import DataFrame as PandasDataFrame, Index as PandasIndex, MultiIndex as PandasMultiIndex
+
+        check_type(df, PandasDataFrame)
+
+        if isinstance(df.index, PandasIndex):
+            baloo_index = Index.from_pandas(df.index)
+        elif isinstance(df.index, PandasMultiIndex):
+            baloo_index = MultiIndex.from_pandas(df.index)
+        else:
+            raise TypeError('Cannot convert pandas index of type={} to baloo'.format(type(df.index)))
+
+        baloo_data = OrderedDict((column_name, _series_from_pandas(df[column_name], baloo_index))
+                                 for column_name in df)
+
+        return DataFrame(baloo_data, baloo_index)
 
 
 def _default_index(dataframe_data, length):

@@ -442,6 +442,30 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         else:
             raise TypeError('Expected function or str defining a weld_template')
 
+    @classmethod
+    def from_pandas(cls, series):
+        """Create baloo Series from pandas Series.
+
+        Parameters
+        ----------
+        series : pandas.series.Series
+
+        Returns
+        -------
+        Series
+
+        """
+        from pandas import Index as PandasIndex, MultiIndex as PandasMultiIndex
+
+        if isinstance(series.index, PandasIndex):
+            baloo_index = Index.from_pandas(series.index)
+        elif isinstance(series.index, PandasMultiIndex):
+            baloo_index = MultiIndex.from_pandas(series.index)
+        else:
+            raise TypeError('Cannot convert pandas index of type={} to baloo'.format(type(series.index)))
+
+        return _series_from_pandas(series, baloo_index)
+
 
 def _process_input(data, dtype):
     if data is None:
@@ -545,5 +569,12 @@ def _series_iloc_with_missing(series, item, new_index):
                                                  series.weld_type,
                                                  item),
                   new_index,
+                  series.dtype,
+                  series.name)
+
+
+def _series_from_pandas(series, baloo_index):
+    return Series(series.values,
+                  baloo_index,
                   series.dtype,
                   series.name)

@@ -282,6 +282,26 @@ class Index(LazyArrayResult, BinaryOps, BitOps, IndexCommon, BalooCommon):
                      self.dtype,
                      self.name)
 
+    @classmethod
+    def from_pandas(cls, index):
+        """Create baloo Index from pandas Index.
+
+        Parameters
+        ----------
+        index : pandas.base.Index
+
+        Returns
+        -------
+        Index
+
+        """
+        from pandas import Index as PandasIndex
+        check_type(index, PandasIndex)
+
+        return Index(index.values,
+                     index.dtype,
+                     index.name)
+
 
 def _process_input_data(data, dtype):
     check_type(data, (np.ndarray, WeldObject, list))
