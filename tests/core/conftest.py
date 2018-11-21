@@ -9,6 +9,7 @@ from baloo.weld import create_placeholder_weld_object
 
 # TODO: perhaps figure out autouse
 # TODO: add nulls to the data and make sure all ops still work
+# TODO: could maybe test with names also?
 @pytest.fixture(scope='module')
 def data_f32():
     return np.arange(1, 6, dtype=np.float32)

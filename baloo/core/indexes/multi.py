@@ -55,8 +55,8 @@ class MultiIndex(IndexCommon, BalooCommon):
         check_inner_types(check_type(data, list), (np.ndarray, Index, list))
         self._length = infer_length(data)
         self.name = None
-        self.names = check_inner_types(check_type(names, list), str)
-        self._data = _init_indexes(data, names)
+        self.names = _init_names(len(data), names)
+        self._data = _init_indexes(data, self.names)
 
     @property
     def values(self):
@@ -224,14 +224,57 @@ class MultiIndex(IndexCommon, BalooCommon):
 
         return self[and_filter]
 
+    @classmethod
+    def from_pandas(cls, index):
+        """Create baloo MultiIndex from pandas MultiIndex.
+
+        Parameters
+        ----------
+        index : pandas.multi.MultiIndex
+
+        Returns
+        -------
+        MultiIndex
+
+        """
+        from pandas import MultiIndex as PandasMultiIndex
+        check_type(index, PandasMultiIndex)
+
+        baloo_level_values = [Index.from_pandas(index.get_level_values(level))
+                              for level in range(len(index.levels))]
+
+        return MultiIndex(baloo_level_values, list(index.names))
+
+    def to_pandas(self):
+        """Convert to pandas MultiIndex.
+
+        Returns
+        -------
+        pandas.base.MultiIndex
+
+        """
+        if not all(ind.is_raw() for ind in self.values):
+            raise ValueError('Cannot convert to pandas MultiIndex if not evaluated.')
+
+        from pandas import MultiIndex as PandasMultiIndex
+
+        arrays = [ind.values for ind in self.values]
+
+        return PandasMultiIndex.from_arrays(arrays, names=self.names)
+
+
+def _init_names(number_columns, names):
+    check_inner_types(check_type(names, list), str)
+
+    if names is None:
+        names = [None] * number_columns
+    elif number_columns != len(names):
+        raise ValueError('Expected all or none of the columns to be named')
+
+    return names
+
 
 def _init_indexes(data, names):
-    if names is not None:
-        if len(data) != len(names):
-            raise ValueError('Expected all or none of the data columns to be named')
-    else:
-        names = [None] * len(data)
-
     data_as_indexes = []
     for n, v in zip(names, data):
         if isinstance(v, np.ndarray):
