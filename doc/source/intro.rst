@@ -11,6 +11,16 @@ despite it being converted to other structures internally by Weld. For efficienc
 are expected (please check `baloo/weld/convertors/numpy.cpp` for malloc reasons why).
 
 
+Usability
+---------
+
+Pandas is an immense library with a lot of implemented functionality. Baloo cannot replace it but only speed up
+common operations through Weld. To facilitate the interaction between the libraries, the pandas API has been mimicked
+as much as possible. Thus, it might be possible to simply replace the import statements from pandas to baloo. However,
+there are also `from_pandas` and `to_pandas` methods available to freely move from one to the other. Nevertheless,
+for baloo to be useful, most operations should go through it.
+
+
 Data Types
 ----------
 
