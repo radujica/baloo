@@ -1,10 +1,13 @@
+from collections import OrderedDict
+
 import numpy as np
 from pandas import Series as PandasSeries
+from tabulate import tabulate
 
 from .generic import BinaryOps, BitOps, BalooCommon
 from .indexes import Index, MultiIndex
 from .utils import infer_dtype, default_index, check_type, is_scalar, check_valid_int_slice, check_weld_bit_array, \
-    convert_to_numpy, check_dtype
+    convert_to_numpy, check_dtype, shorten_data
 from ..weld import LazyArrayResult, weld_compare, numpy_to_weld_type, weld_filter, \
     weld_slice, weld_array_op, weld_invert, weld_tail, weld_element_wise_op, LazyDoubleResult, LazyScalarResult, \
     weld_mean, weld_variance, weld_standard_deviation, WeldObject, weld_agg, weld_iloc_indices, \
@@ -38,7 +41,11 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
     >>> sr  # repr
     Series(name=None, dtype=int64)
     >>> print(sr)  # str
-    [0 1 2]
+    <BLANKLINE>
+    ---  --
+      0   0
+      1   1
+      2   2
     >>> sr.index
     Index(name=None, dtype=int64)
     >>> print(sr.index)
@@ -56,9 +63,14 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
     >>> print(sr.var().evaluate())
     1.0
     >>> print(sr.agg(['min', 'std']).evaluate())
-    [0. 1.]
+    <BLANKLINE>
+    ---  --
+    min   0
+    std   1
 
     """
+    _empty_text = 'Empty Series'
+
     # TODO: Fix en/decoding string's dtype; e.g. filter returns max length dtype (|S11) even if actual result is |S7
     def __init__(self, data=None, index=None, dtype=None, name=None):
         """Initialize a Series object.
@@ -108,9 +120,15 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         >>> print(sr.iloc[2].evaluate())
         2
         >>> print(sr.iloc[0:2].evaluate())
-        [0 1]
+        <BLANKLINE>
+        ---  --
+          0   0
+          1   1
         >>> print(sr.iloc[bl.Series(np.array([0, 2]))].evaluate())
-        [0 2]
+        <BLANKLINE>
+        ---  --
+          0   0
+          2   2
 
         """
         from .indexing import _ILocIndexer
@@ -121,6 +139,20 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         return "{}(name={}, dtype={})".format(self.__class__.__name__,
                                               self.name,
                                               self.dtype)
+
+    def __str__(self):
+        if self.empty:
+            return self._empty_text
+
+        # index
+        str_data = OrderedDict()
+        str_data.update((name, shorten_data(data.values)) for name, data in self.index._gather_data(' ').items())
+
+        # self data
+        name = '' if self.name is None else self.name
+        str_data[name] = shorten_data(self.values)
+
+        return tabulate(str_data, headers='keys')
 
     def _comparison(self, other, comparison):
         if other is None:
@@ -167,12 +199,22 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         >>> sr
         Series(name=Test, dtype=float32)
         >>> print(sr.evaluate())
-        [1. 2. 3. 4.]
+               Test
+        ---  ------
+          1       1
+          2       2
+          3       3
+          4       4
         >>> sr = sr[(sr != 1) & ~(sr > 3)]
         >>> print(sr.evaluate())
-        [2. 3.]
+               Test
+        ---  ------
+          2       2
+          3       3
         >>> print(sr[:1].evaluate())
-        [2.]
+               Test
+        ---  ------
+          2       2
 
         """
         if isinstance(item, LazyArrayResult):
@@ -238,7 +280,10 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         --------
         >>> sr = bl.Series(np.arange(3))
         >>> print(sr.head(2).evaluate())
-        [0 1]
+        <BLANKLINE>
+        ---  --
+          0   0
+          1   1
 
         """
         return self[:n]
@@ -260,7 +305,10 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         --------
         >>> sr = bl.Series(np.arange(3))
         >>> print(sr.tail(2).evaluate())
-        [1 2]
+        <BLANKLINE>
+        ---  --
+          1   1
+          2   2
 
         """
         if self._length is not None:
@@ -398,19 +446,46 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         >>> weld_template = 'map({self}, |e| e + {scalar})'
         >>> mapping = {'scalar': '2L'}
         >>> print(sr.apply(weld_template, mapping).evaluate())
-        [3 4 5]
+        <BLANKLINE>
+        ---  --
+          0   3
+          1   4
+          2   5
         >>> weld_template2 = 'map({self}, |e| e + 3L)'
         >>> print(sr.apply(weld_template2).evaluate())
-        [4 5 6]
+        <BLANKLINE>
+        ---  --
+          0   4
+          1   5
+          2   6
         >>> print(bl.Series([1., 4., 100.]).apply(bl.sqrt).evaluate())  # lazy predefined function
-        [ 1.  2. 10.]
+        <BLANKLINE>
+        ---  --
+          0   1
+          1   2
+          2  10
         >>> sr = bl.Series([4, 2, 3, 1])
         >>> print(sr.apply(bl.sort, kind='q').evaluate())  # eager wrapper over np.sort (which uses raw decorator)
-        [1 2 3 4]
+        <BLANKLINE>
+        ---  --
+          0   1
+          1   2
+          2   3
+          3   4
         >>> print(sr.apply(bl.raw(np.sort, kind='q')).evaluate())  # np.sort directly
-        [1 2 3 4]
+        <BLANKLINE>
+        ---  --
+          0   1
+          1   2
+          2   3
+          3   4
         >>> print(sr.apply(bl.raw(lambda x: np.sort(x, kind='q'))).evaluate())  # lambda also works, with x = np.array
-        [1 2 3 4]
+        <BLANKLINE>
+        ---  --
+          0   1
+          1   2
+          2   3
+          3   4
 
         # check tests/core/cudf/* and tests/core/test_series.test_cudf for C UDF example
 
