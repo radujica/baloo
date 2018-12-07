@@ -25,14 +25,14 @@ def raw(func, **func_args):
     and stripping away the weld_type.
 
     Stripping the weld_type is required to keep the same code in Series.apply and because
-    Numpy functions don't (all) have **kwargs. Passing weld_type to NumPy functions is unexpected
+    Numpy functions don't (all) have kwargs. Passing weld_type to NumPy functions is unexpected
     and raises ValueError.
 
     Parameters
     ----------
     func : function
         Function to execute eagerly over raw data.
-    func_args : **kwargs
+    func_args : kwargs
         Arguments to pass to func, if any.
 
     Returns

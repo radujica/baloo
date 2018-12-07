@@ -1131,6 +1131,29 @@ class DataFrame(BinaryOps, BalooCommon):
 
         return PandasDataFrame(pandas_data, pandas_index)
 
+    # TODO: once more are implemented, perhaps move to a mixin-like class for io
+    def to_csv(self, filepath, sep=',', header=True, index=True):
+        """Save DataFrame as csv.
+
+        Parameters
+        ----------
+        filepath : str
+        sep : str, optional
+            Separator used between values.
+        header : bool, optional
+            Whether to save the header.
+        index : bool, optional
+            Whether to save the index columns.
+
+        Returns
+        -------
+        None
+
+        """
+        from ..io import to_csv
+
+        return to_csv(self, filepath, sep=sep, header=header, index=index)
+
 
 def _default_index(dataframe_data, length):
     if length is not None:

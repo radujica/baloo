@@ -48,7 +48,7 @@ For Baloo, the following were chosen as defaults:
 
 * integers : -999
 
-* S/bytes_ : b'None'
+* S/bytes\_ : b'None'
 
 * bool : false
 
@@ -78,5 +78,5 @@ automatically casted to given dtype only if the data is raw. If lazy, encode it 
 
 Note that literal/scalar values are an exception and do get casted to the `dtype` of the array, e.g.
 `Series([1, 2]) < 2.0` is interpreted as `Series([1, 2]) < 2`. Lastly, aggregation results get converted to `float64`
-however currently *post-*aggregation, not before, e.g. `Series([1, 2]).sum()` first computes the integer sum
+however currently post-aggregation, not before, e.g. `Series([1, 2]).sum()` first computes the integer sum
 then casts the result to float.

@@ -18,6 +18,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # doctest runs in the source directories, not at install location, so the .so is missing
 # (unless changing the path above to point to the install location)
+# TODO: maybe not rebuild every time; should not even have to, but should use installed code; not a problem when
+# TODO installed with -e, i.e. IN this download folder
 os.system('make -C ../../baloo/weld/convertors')
 
 
