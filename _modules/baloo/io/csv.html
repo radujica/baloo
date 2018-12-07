@@ -1,0 +1,193 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>baloo.io.csv &#8212; Baloo 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for baloo.io.csv</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">pandas</span> <span class="k">import</span> <span class="n">read_csv</span> <span class="k">as</span> <span class="n">pd_read_csv</span>
+
+<span class="kn">from</span> <span class="nn">..core</span> <span class="k">import</span> <span class="n">DataFrame</span>
+
+
+<div class="viewcode-block" id="read_csv"><a class="viewcode-back" href="../../../baloo.io.html#baloo.io.csv.read_csv">[docs]</a><span class="k">def</span> <span class="nf">read_csv</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="s1">&#39;infer&#39;</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">converters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">skiprows</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nrows</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read CSV into DataFrame.</span>
+
+<span class="sd">    Eager implementation using pandas, i.e. entire file is read at this point. Only common/relevant parameters</span>
+<span class="sd">    available at the moment; for full list, could use pandas directly and then convert to baloo.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filepath : str</span>
+<span class="sd">    sep : str, optional</span>
+<span class="sd">        Separator used between values.</span>
+<span class="sd">    header : &#39;infer&#39; or None, optional</span>
+<span class="sd">        Whether to infer the column names from the first row or not.</span>
+<span class="sd">    names : list of str, optional</span>
+<span class="sd">        List of column names to use. Overrides inferred header.</span>
+<span class="sd">    usecols : list of (int or str), optional</span>
+<span class="sd">        Which columns to parse.</span>
+<span class="sd">    dtype : dict, optional</span>
+<span class="sd">        Dict of column -&gt; type to parse as.</span>
+<span class="sd">    converters : dict, optional</span>
+<span class="sd">        Dict of functions for converting values in certain columns.</span>
+<span class="sd">    skiprows : int, optional</span>
+<span class="sd">        Number of lines to skip at start of file.</span>
+<span class="sd">    nrows : int, optional</span>
+<span class="sd">        Number of rows to read.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    DataFrame</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    pandas.read_csv : https://pandas.pydata.org/pandas-docs/stable/generated/pandas.read_csv.html</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pd_df</span> <span class="o">=</span> <span class="n">pd_read_csv</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span>
+                        <span class="n">sep</span><span class="o">=</span><span class="n">sep</span><span class="p">,</span>
+                        <span class="n">header</span><span class="o">=</span><span class="n">header</span><span class="p">,</span>
+                        <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">,</span>
+                        <span class="n">usecols</span><span class="o">=</span><span class="n">usecols</span><span class="p">,</span>
+                        <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+                        <span class="n">converters</span><span class="o">=</span><span class="n">converters</span><span class="p">,</span>
+                        <span class="n">skiprows</span><span class="o">=</span><span class="n">skiprows</span><span class="p">,</span>
+                        <span class="n">nrows</span><span class="o">=</span><span class="n">nrows</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">DataFrame</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">pd_df</span><span class="p">)</span></div>
+
+
+<span class="c1"># TODO: should avoid going to Pandas</span>
+<span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Save DataFrame as csv.</span>
+
+<span class="sd">    Note data is expected to be evaluated.</span>
+
+<span class="sd">    Currently delegates to Pandas.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : DataFrame</span>
+<span class="sd">    filepath : str</span>
+<span class="sd">    sep : str, optional</span>
+<span class="sd">        Separator used between values.</span>
+<span class="sd">    header : bool, optional</span>
+<span class="sd">        Whether to save the header.</span>
+<span class="sd">    index : bool, optional</span>
+<span class="sd">        Whether to save the index columns.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    pandas.DataFrame.to_csv : https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.to_csv.html</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span>
+                          <span class="n">sep</span><span class="o">=</span><span class="n">sep</span><span class="p">,</span>
+                          <span class="n">header</span><span class="o">=</span><span class="n">header</span><span class="p">,</span>
+                          <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Baloo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Intro to Baloo</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../baloo.html">Baloo Library</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Radu Jica.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -36,8 +36,10 @@
 <span></span><span class="kn">from</span> <span class="nn">weld.weldobject</span> <span class="k">import</span> <span class="o">*</span>
 
 <span class="kn">from</span> <span class="nn">.cache</span> <span class="k">import</span> <span class="n">Cache</span>
+<span class="kn">from</span> <span class="nn">.convertors</span> <span class="k">import</span> <span class="n">numpy_to_weld_type</span>
 <span class="kn">from</span> <span class="nn">.convertors.utils</span> <span class="k">import</span> <span class="n">to_weld_vec</span>
 <span class="kn">from</span> <span class="nn">.weld_aggs</span> <span class="k">import</span> <span class="n">weld_aggregate</span><span class="p">,</span> <span class="n">weld_count</span>
+<span class="kn">from</span> <span class="nn">.weld_utils</span> <span class="k">import</span> <span class="n">weld_cast_array</span>
 
 
 <div class="viewcode-block" id="LazyResult"><a class="viewcode-back" href="../../../baloo.weld.html#baloo.weld.lazy_result.LazyResult">[docs]</a><span class="k">class</span> <span class="nc">LazyResult</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -128,6 +130,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span></div></div>
 
 
+<span class="c1"># TODO: not really happy having functionality here; maybe have e.g. LazyArray(LazyArrayResult) adding the functionality?</span>
 <div class="viewcode-block" id="LazyArrayResult"><a class="viewcode-back" href="../../../baloo.weld.html#baloo.weld.lazy_result.LazyArrayResult">[docs]</a><span class="k">class</span> <span class="nc">LazyArrayResult</span><span class="p">(</span><span class="n">LazyResult</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weld_expr</span><span class="p">,</span> <span class="n">weld_type</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">LazyArrayResult</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">weld_expr</span><span class="p">,</span> <span class="n">weld_type</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -185,7 +188,12 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lazy_len</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span>
+
+    <span class="k">def</span> <span class="nf">_astype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dtype</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">weld_cast_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
+                               <span class="n">numpy_to_weld_type</span><span class="p">(</span><span class="n">dtype</span><span class="p">))</span></div>
 
 
 <span class="c1"># could make all subclasses but seems rather unnecessary atm</span>

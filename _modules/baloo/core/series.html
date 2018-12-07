@@ -33,15 +33,20 @@
           <div class="body" role="main">
             
   <h1>Source code for baloo.core.series</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">pandas</span> <span class="k">import</span> <span class="n">Series</span> <span class="k">as</span> <span class="n">PandasSeries</span>
+<span class="kn">from</span> <span class="nn">tabulate</span> <span class="k">import</span> <span class="n">tabulate</span>
 
 <span class="kn">from</span> <span class="nn">.generic</span> <span class="k">import</span> <span class="n">BinaryOps</span><span class="p">,</span> <span class="n">BitOps</span><span class="p">,</span> <span class="n">BalooCommon</span>
 <span class="kn">from</span> <span class="nn">.indexes</span> <span class="k">import</span> <span class="n">Index</span><span class="p">,</span> <span class="n">MultiIndex</span>
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">infer_dtype</span><span class="p">,</span> <span class="n">default_index</span><span class="p">,</span> <span class="n">check_type</span><span class="p">,</span> <span class="n">is_scalar</span><span class="p">,</span> <span class="n">check_valid_int_slice</span><span class="p">,</span> <span class="n">check_weld_bit_array</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">infer_dtype</span><span class="p">,</span> <span class="n">default_index</span><span class="p">,</span> <span class="n">check_type</span><span class="p">,</span> <span class="n">is_scalar</span><span class="p">,</span> <span class="n">check_valid_int_slice</span><span class="p">,</span> <span class="n">check_weld_bit_array</span><span class="p">,</span> \
+    <span class="n">convert_to_numpy</span><span class="p">,</span> <span class="n">check_dtype</span><span class="p">,</span> <span class="n">shorten_data</span>
 <span class="kn">from</span> <span class="nn">..weld</span> <span class="k">import</span> <span class="n">LazyArrayResult</span><span class="p">,</span> <span class="n">weld_compare</span><span class="p">,</span> <span class="n">numpy_to_weld_type</span><span class="p">,</span> <span class="n">weld_filter</span><span class="p">,</span> \
     <span class="n">weld_slice</span><span class="p">,</span> <span class="n">weld_array_op</span><span class="p">,</span> <span class="n">weld_invert</span><span class="p">,</span> <span class="n">weld_tail</span><span class="p">,</span> <span class="n">weld_element_wise_op</span><span class="p">,</span> <span class="n">LazyDoubleResult</span><span class="p">,</span> <span class="n">LazyScalarResult</span><span class="p">,</span> \
     <span class="n">weld_mean</span><span class="p">,</span> <span class="n">weld_variance</span><span class="p">,</span> <span class="n">weld_standard_deviation</span><span class="p">,</span> <span class="n">WeldObject</span><span class="p">,</span> <span class="n">weld_agg</span><span class="p">,</span> <span class="n">weld_iloc_indices</span><span class="p">,</span> \
-    <span class="n">weld_iloc_indices_with_missing</span>
+    <span class="n">weld_iloc_indices_with_missing</span><span class="p">,</span> <span class="n">weld_unique</span><span class="p">,</span> <span class="n">default_missing_data_literal</span><span class="p">,</span> <span class="n">weld_replace</span><span class="p">,</span> <span class="n">weld_udf</span>
 
 
 <div class="viewcode-block" id="Series"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.series.Series">[docs]</a><span class="k">class</span> <span class="nc">Series</span><span class="p">(</span><span class="n">LazyArrayResult</span><span class="p">,</span> <span class="n">BinaryOps</span><span class="p">,</span> <span class="n">BitOps</span><span class="p">,</span> <span class="n">BalooCommon</span><span class="p">):</span>
@@ -62,7 +67,7 @@
 <span class="sd">    --------</span>
 <span class="sd">    &gt;&gt;&gt; import baloo as bl</span>
 <span class="sd">    &gt;&gt;&gt; import numpy as np</span>
-<span class="sd">    &gt;&gt;&gt; sr = bl.Series(np.arange(3))</span>
+<span class="sd">    &gt;&gt;&gt; sr = bl.Series([0, 1, 2])</span>
 <span class="sd">    &gt;&gt;&gt; sr</span>
 <span class="sd">    Series(name=None, dtype=int64)</span>
 <span class="sd">    &gt;&gt;&gt; sr.index</span>
@@ -71,7 +76,11 @@
 <span class="sd">    &gt;&gt;&gt; sr  # repr</span>
 <span class="sd">    Series(name=None, dtype=int64)</span>
 <span class="sd">    &gt;&gt;&gt; print(sr)  # str</span>
-<span class="sd">    [0 1 2]</span>
+<span class="sd">    &lt;BLANKLINE&gt;</span>
+<span class="sd">    ---  --</span>
+<span class="sd">      0   0</span>
+<span class="sd">      1   1</span>
+<span class="sd">      2   2</span>
 <span class="sd">    &gt;&gt;&gt; sr.index</span>
 <span class="sd">    Index(name=None, dtype=int64)</span>
 <span class="sd">    &gt;&gt;&gt; print(sr.index)</span>
@@ -89,30 +98,37 @@
 <span class="sd">    &gt;&gt;&gt; print(sr.var().evaluate())</span>
 <span class="sd">    1.0</span>
 <span class="sd">    &gt;&gt;&gt; print(sr.agg([&#39;min&#39;, &#39;std&#39;]).evaluate())</span>
-<span class="sd">    [0. 1.]</span>
+<span class="sd">    &lt;BLANKLINE&gt;</span>
+<span class="sd">    ---  --</span>
+<span class="sd">    min   0</span>
+<span class="sd">    std   1</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># TODO: when passed a dtype, pandas converts to it; do the same?</span>
+    <span class="n">_empty_text</span> <span class="o">=</span> <span class="s1">&#39;Empty Series&#39;</span>
+
     <span class="c1"># TODO: Fix en/decoding string&#39;s dtype; e.g. filter returns max length dtype (|S11) even if actual result is |S7</span>
 <div class="viewcode-block" id="Series.__init__"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.series.Series.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Initialize a Series object.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        data : numpy.ndarray or WeldObject, optional</span>
+<span class="sd">        data : numpy.ndarray or WeldObject or list, optional</span>
 <span class="sd">            Raw data or Weld expression.</span>
 <span class="sd">        index : Index or RangeIndex or MultiIndex, optional</span>
 <span class="sd">            Index linked to the data; it is assumed to be of the same length.</span>
 <span class="sd">            RangeIndex by default.</span>
-<span class="sd">        dtype : numpy.dtype, optional</span>
-<span class="sd">            Numpy dtype of the elements. Inferred from `data` by default.</span>
+<span class="sd">        dtype : numpy.dtype or type, optional</span>
+<span class="sd">            Desired Numpy dtype for the elements. If type, it must be a NumPy type, e.g. np.float32.</span>
+<span class="sd">            If data is np.ndarray with a dtype different to dtype argument,</span>
+<span class="sd">            it is astype&#39;d to the argument dtype. Note that if data is WeldObject, one must explicitly astype</span>
+<span class="sd">            to convert type. Inferred from `data` by default.</span>
 <span class="sd">        name : str, optional</span>
 <span class="sd">            Name of the Series.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">_process_input_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="n">_process_input</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">_process_index</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">infer_dtype</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">check_type</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">check_type</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
         <span class="c1"># TODO: this should be used to annotate Weld code for speedups</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
@@ -139,9 +155,15 @@
 <span class="sd">        &gt;&gt;&gt; print(sr.iloc[2].evaluate())</span>
 <span class="sd">        2</span>
 <span class="sd">        &gt;&gt;&gt; print(sr.iloc[0:2].evaluate())</span>
-<span class="sd">        [0 1]</span>
+<span class="sd">        &lt;BLANKLINE&gt;</span>
+<span class="sd">        ---  --</span>
+<span class="sd">          0   0</span>
+<span class="sd">          1   1</span>
 <span class="sd">        &gt;&gt;&gt; print(sr.iloc[bl.Series(np.array([0, 2]))].evaluate())</span>
-<span class="sd">        [0 2]</span>
+<span class="sd">        &lt;BLANKLINE&gt;</span>
+<span class="sd">        ---  --</span>
+<span class="sd">          0   0</span>
+<span class="sd">          2   2</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span> <span class="nn">.indexing</span> <span class="k">import</span> <span class="n">_ILocIndexer</span>
@@ -153,15 +175,27 @@
                                               <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                                               <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_empty_text</span>
+
+        <span class="c1"># index</span>
+        <span class="n">str_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="n">str_data</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">name</span><span class="p">,</span> <span class="n">shorten_data</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">_gather_data</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+        <span class="c1"># self data</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">str_data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">shorten_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">tabulate</span><span class="p">(</span><span class="n">str_data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="s1">&#39;keys&#39;</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">_comparison</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">comparison</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">is_scalar</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">Series</span><span class="p">(</span><span class="n">weld_compare</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
-                                       <span class="n">other</span><span class="p">,</span>
-                                       <span class="n">comparison</span><span class="p">,</span>
-                                       <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">),</span>
-                          <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
-                          <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">),</span>
-                          <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">other</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">other</span> <span class="o">=</span> <span class="n">default_missing_data_literal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">_series_compare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">comparison</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">is_scalar</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_series_compare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">comparison</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Can currently only compare with scalars&#39;</span><span class="p">)</span>
 
@@ -180,6 +214,14 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Can only apply operation with scalar or Series&#39;</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">astype</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dtype</span><span class="p">):</span>
+        <span class="n">check_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">),</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                      <span class="n">dtype</span><span class="p">,</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
 <div class="viewcode-block" id="Series.__getitem__"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.series.Series.__getitem__">[docs]</a>    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Select from the Series.</span>
 
@@ -192,12 +234,22 @@
 <span class="sd">        &gt;&gt;&gt; sr</span>
 <span class="sd">        Series(name=Test, dtype=float32)</span>
 <span class="sd">        &gt;&gt;&gt; print(sr.evaluate())</span>
-<span class="sd">        [1. 2. 3. 4.]</span>
+<span class="sd">               Test</span>
+<span class="sd">        ---  ------</span>
+<span class="sd">          1       1</span>
+<span class="sd">          2       2</span>
+<span class="sd">          3       3</span>
+<span class="sd">          4       4</span>
 <span class="sd">        &gt;&gt;&gt; sr = sr[(sr != 1) &amp; ~(sr &gt; 3)]</span>
 <span class="sd">        &gt;&gt;&gt; print(sr.evaluate())</span>
-<span class="sd">        [2. 3.]</span>
+<span class="sd">               Test</span>
+<span class="sd">        ---  ------</span>
+<span class="sd">          2       2</span>
+<span class="sd">          3       3</span>
 <span class="sd">        &gt;&gt;&gt; print(sr[:1].evaluate())</span>
-<span class="sd">        [2.]</span>
+<span class="sd">               Test</span>
+<span class="sd">        ---  ------</span>
+<span class="sd">          2       2</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">LazyArrayResult</span><span class="p">):</span>
@@ -263,7 +315,10 @@
 <span class="sd">        --------</span>
 <span class="sd">        &gt;&gt;&gt; sr = bl.Series(np.arange(3))</span>
 <span class="sd">        &gt;&gt;&gt; print(sr.head(2).evaluate())</span>
-<span class="sd">        [0 1]</span>
+<span class="sd">        &lt;BLANKLINE&gt;</span>
+<span class="sd">        ---  --</span>
+<span class="sd">          0   0</span>
+<span class="sd">          1   1</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span></div>
@@ -285,7 +340,10 @@
 <span class="sd">        --------</span>
 <span class="sd">        &gt;&gt;&gt; sr = bl.Series(np.arange(3))</span>
 <span class="sd">        &gt;&gt;&gt; print(sr.tail(2).evaluate())</span>
-<span class="sd">        [1 2]</span>
+<span class="sd">        &lt;BLANKLINE&gt;</span>
+<span class="sd">        ---  --</span>
+<span class="sd">          1   1</span>
+<span class="sd">          2   2</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -333,14 +391,220 @@
 
         <span class="n">new_index</span> <span class="o">=</span> <span class="n">Index</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">aggregations</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bytes_</span><span class="p">))</span>
 
-        <span class="k">return</span> <span class="n">_series_agg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aggregations</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span></div></div>
+        <span class="k">return</span> <span class="n">_series_agg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aggregations</span><span class="p">,</span> <span class="n">new_index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Series.unique"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.series.Series.unique">[docs]</a>    <span class="k">def</span> <span class="nf">unique</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return unique values in the Series.</span>
+
+<span class="sd">        Note that because it is hash-based, the result will NOT be in the same order (unlike pandas).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        LazyArrayResult</span>
+<span class="sd">            Unique values in random order.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">LazyArrayResult</span><span class="p">(</span><span class="n">weld_unique</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                                           <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">),</span>
+                               <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Series.dropna"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.series.Series.dropna">[docs]</a>    <span class="k">def</span> <span class="nf">dropna</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns Series without null values according to Baloo&#39;s convention.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+<span class="sd">            Series with no null values.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">notna</span><span class="p">()]</span></div>
+
+<div class="viewcode-block" id="Series.fillna"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.series.Series.fillna">[docs]</a>    <span class="k">def</span> <span class="nf">fillna</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns Series with missing values replaced with value.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        value : {int, float, bytes, bool}</span>
+<span class="sd">            Scalar value to replace missing values with.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+<span class="sd">            With missing values replaced.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_scalar</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Value to replace with is not a valid scalar&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Series</span><span class="p">(</span><span class="n">weld_replace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
+                                   <span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
+                                   <span class="n">default_missing_data_literal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">),</span>
+                                   <span class="n">value</span><span class="p">),</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Series.apply"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.series.Series.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">mapping</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">new_dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Apply an element-wise UDF to the Series.</span>
+
+<span class="sd">        There are currently 6 options for using a UDF. First 4 are lazy,</span>
+<span class="sd">        other 2 are eager and require the use of the raw decorator:</span>
+
+<span class="sd">        - One of the predefined functions in baloo.functions.</span>
+<span class="sd">        - Implementing a function which encodes the result. kwargs are automatically passed to it.</span>
+<span class="sd">        - Pure Weld code and mapping.</span>
+<span class="sd">        - Weld code and mapping along with a dynamically linked C++ lib containing the UDF.</span>
+<span class="sd">        - Using a NumPy function, which however is EAGER and hence requires self.values to be raw. Additionally, NumPy</span>
+<span class="sd">            does not support kwargs in (all) functions so must use raw decorator to strip away weld_type.</span>
+<span class="sd">        - Implementing an eager function with the same precondition as above. Use the raw decorator to check this.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        func : function or str</span>
+<span class="sd">            Weld code as a str to encode or function from baloo.functions.</span>
+<span class="sd">        mapping : dict, optional</span>
+<span class="sd">            Additional mappings in the weld_template to replace on execution.</span>
+<span class="sd">            self is added by default to reference to this Series.</span>
+<span class="sd">        new_dtype : numpy.dtype, optional</span>
+<span class="sd">            Specify the new dtype of the result Series.</span>
+<span class="sd">            If None, it assumes it&#39;s the same dtype as before the apply.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+<span class="sd">            With UDF result.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; import baloo as bl</span>
+<span class="sd">        &gt;&gt;&gt; sr = bl.Series([1, 2, 3])</span>
+<span class="sd">        &gt;&gt;&gt; weld_template = &#39;map({self}, |e| e + {scalar})&#39;</span>
+<span class="sd">        &gt;&gt;&gt; mapping = {&#39;scalar&#39;: &#39;2L&#39;}</span>
+<span class="sd">        &gt;&gt;&gt; print(sr.apply(weld_template, mapping).evaluate())</span>
+<span class="sd">        &lt;BLANKLINE&gt;</span>
+<span class="sd">        ---  --</span>
+<span class="sd">          0   3</span>
+<span class="sd">          1   4</span>
+<span class="sd">          2   5</span>
+<span class="sd">        &gt;&gt;&gt; weld_template2 = &#39;map({self}, |e| e + 3L)&#39;</span>
+<span class="sd">        &gt;&gt;&gt; print(sr.apply(weld_template2).evaluate())</span>
+<span class="sd">        &lt;BLANKLINE&gt;</span>
+<span class="sd">        ---  --</span>
+<span class="sd">          0   4</span>
+<span class="sd">          1   5</span>
+<span class="sd">          2   6</span>
+<span class="sd">        &gt;&gt;&gt; print(bl.Series([1., 4., 100.]).apply(bl.sqrt).evaluate())  # lazy predefined function</span>
+<span class="sd">        &lt;BLANKLINE&gt;</span>
+<span class="sd">        ---  --</span>
+<span class="sd">          0   1</span>
+<span class="sd">          1   2</span>
+<span class="sd">          2  10</span>
+<span class="sd">        &gt;&gt;&gt; sr = bl.Series([4, 2, 3, 1])</span>
+<span class="sd">        &gt;&gt;&gt; print(sr.apply(bl.sort, kind=&#39;q&#39;).evaluate())  # eager wrapper over np.sort (which uses raw decorator)</span>
+<span class="sd">        &lt;BLANKLINE&gt;</span>
+<span class="sd">        ---  --</span>
+<span class="sd">          0   1</span>
+<span class="sd">          1   2</span>
+<span class="sd">          2   3</span>
+<span class="sd">          3   4</span>
+<span class="sd">        &gt;&gt;&gt; print(sr.apply(bl.raw(np.sort, kind=&#39;q&#39;)).evaluate())  # np.sort directly</span>
+<span class="sd">        &lt;BLANKLINE&gt;</span>
+<span class="sd">        ---  --</span>
+<span class="sd">          0   1</span>
+<span class="sd">          1   2</span>
+<span class="sd">          2   3</span>
+<span class="sd">          3   4</span>
+<span class="sd">        &gt;&gt;&gt; print(sr.apply(bl.raw(lambda x: np.sort(x, kind=&#39;q&#39;))).evaluate())  # lambda also works, with x = np.array</span>
+<span class="sd">        &lt;BLANKLINE&gt;</span>
+<span class="sd">        ---  --</span>
+<span class="sd">          0   1</span>
+<span class="sd">          1   2</span>
+<span class="sd">          2   3</span>
+<span class="sd">          3   4</span>
+
+<span class="sd">        # check tests/core/cudf/* and tests/core/test_series.test_cudf for C UDF example</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Series</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                               <span class="n">weld_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">weld_type</span><span class="p">,</span>
+                               <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">check_type</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+            <span class="n">check_dtype</span><span class="p">(</span><span class="n">new_dtype</span><span class="p">)</span>
+
+            <span class="n">default_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;self&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">}</span>
+            <span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">mapping</span> <span class="o">=</span> <span class="n">default_mapping</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mapping</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">default_mapping</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">new_dtype</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">new_dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span>
+
+            <span class="k">return</span> <span class="n">Series</span><span class="p">(</span><span class="n">weld_udf</span><span class="p">(</span><span class="n">func</span><span class="p">,</span>
+                                   <span class="n">mapping</span><span class="p">),</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                          <span class="n">new_dtype</span><span class="p">,</span>
+                          <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Expected function or str defining a weld_template&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Series.from_pandas"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.series.Series.from_pandas">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_pandas</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">series</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create baloo Series from pandas Series.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        series : pandas.series.Series</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">pandas</span> <span class="k">import</span> <span class="n">Index</span> <span class="k">as</span> <span class="n">PandasIndex</span><span class="p">,</span> <span class="n">MultiIndex</span> <span class="k">as</span> <span class="n">PandasMultiIndex</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">PandasIndex</span><span class="p">):</span>
+            <span class="n">baloo_index</span> <span class="o">=</span> <span class="n">Index</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">PandasMultiIndex</span><span class="p">):</span>
+            <span class="n">baloo_index</span> <span class="o">=</span> <span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_pandas</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Cannot convert pandas index of type=</span><span class="si">{}</span><span class="s1"> to baloo&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="n">_series_from_pandas</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">baloo_index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Series.to_pandas"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.series.Series.to_pandas">[docs]</a>    <span class="k">def</span> <span class="nf">to_pandas</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert to pandas Series</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pandas.series.Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pandas_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">_series_to_pandas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pandas_index</span><span class="p">)</span></div></div>
 
 
-<span class="k">def</span> <span class="nf">_process_input_data</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_process_input</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">check_type</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">WeldObject</span><span class="p">))</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">WeldObject</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span>
+        <span class="n">check_dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">convert_to_numpy</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="n">inferred_dtype</span> <span class="o">=</span> <span class="n">infer_dtype</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">char</span> <span class="o">!=</span> <span class="n">inferred_dtype</span><span class="o">.</span><span class="n">char</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">inferred_dtype</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">inferred_dtype</span>
 
 
 <span class="k">def</span> <span class="nf">_process_index</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
@@ -348,6 +612,16 @@
         <span class="k">return</span> <span class="n">default_index</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">check_type</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">Index</span><span class="p">,</span> <span class="n">MultiIndex</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_series_compare</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">comparison</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Series</span><span class="p">(</span><span class="n">weld_compare</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">weld_expr</span><span class="p">,</span>
+                               <span class="n">other</span><span class="p">,</span>
+                               <span class="n">comparison</span><span class="p">,</span>
+                               <span class="n">series</span><span class="o">.</span><span class="n">weld_type</span><span class="p">),</span>
+                  <span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                  <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">),</span>
+                  <span class="n">series</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
 
 <span class="c1"># the following methods are shortcuts for DataFrame ops to avoid e.g. recomputing index</span>
@@ -420,6 +694,20 @@
                   <span class="n">new_index</span><span class="p">,</span>
                   <span class="n">series</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
                   <span class="n">series</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_series_from_pandas</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">baloo_index</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Series</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                  <span class="n">baloo_index</span><span class="p">,</span>
+                  <span class="n">series</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                  <span class="n">series</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_series_to_pandas</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">pandas_index</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">PandasSeries</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                        <span class="n">pandas_index</span><span class="p">,</span>
+                        <span class="n">series</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                        <span class="n">series</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 </pre></div>
 
           </div>

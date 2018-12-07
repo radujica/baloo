@@ -42,6 +42,8 @@
 <span class="c1"># Python3: str _is_ unicode -&gt; &#39;Bürgermeister&#39;.encode() =&gt; b&#39;B\xc3\xbcrgermeister&#39;</span>
 <span class="c1"># Python2: str is ascii -&gt; &#39;Bürgermeister&#39; does not exist; u&#39;Bürgermeister&#39;.encode() =&gt; &#39;B\xc3\xbcrgermeister&#39;</span>
 
+<span class="n">supported_dtype_chars</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="s1">&#39;l&#39;</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">,</span> <span class="s1">&#39;?&#39;</span><span class="p">,</span> <span class="s1">&#39;S&#39;</span><span class="p">}</span>
+
 <span class="c1"># TODO: datetime support</span>
 <span class="n">_numpy_to_weld_type_mapping</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;S&#39;</span><span class="p">:</span> <span class="n">WeldVec</span><span class="p">(</span><span class="n">WeldChar</span><span class="p">()),</span>
@@ -80,16 +82,15 @@
 <span class="sd">    &#39;bool&#39;</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">np_dtype</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">)):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">np_dtype</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="nb">type</span><span class="p">)):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Can only convert np.dtype or str&#39;</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">np_dtype</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">np_dtype</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="nb">type</span><span class="p">)):</span>
         <span class="n">np_dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np_dtype</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">_numpy_to_weld_type_mapping</span><span class="p">[</span><span class="n">np_dtype</span><span class="o">.</span><span class="n">char</span><span class="p">]</span></div>
 
 
-<span class="c1"># TODO: feels like this could be implemented more efficiently</span>
 <span class="n">_weld_to_numpy_type_mapping</span> <span class="o">=</span> <span class="p">{</span>
     <span class="n">WeldVec</span><span class="p">(</span><span class="n">WeldChar</span><span class="p">()):</span> <span class="s1">&#39;S&#39;</span><span class="p">,</span>
     <span class="n">WeldInt16</span><span class="p">():</span> <span class="s1">&#39;h&#39;</span><span class="p">,</span>
