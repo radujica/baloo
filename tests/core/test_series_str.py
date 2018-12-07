@@ -8,3 +8,9 @@ class TestSeriesStr(object):
         expected = Series([b'a', b'abc', b'goosfraba', b'   dc  ', b'secretariat'], index_i64)
 
         assert_series_equal(actual, expected)
+
+    def test_upper(self, series_str, index_i64):
+        actual = series_str.str.upper()
+        expected = Series([b'A', b'ABC', b'GOOSFRABA', b'   DC  ', b'SECRETARIAT'], index_i64)
+
+        assert_series_equal(actual, expected)
