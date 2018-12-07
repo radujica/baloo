@@ -60,9 +60,15 @@ class DataFrame(BinaryOps, BalooCommon):
       1   12    0
       2   14    6
     >>> print(df.min().evaluate())
-    [5 0]
+    <BLANKLINE>
+    ---  --
+    a     5
+    b     0
     >>> print(df.mean().evaluate())
-    [6. 1.]
+    <BLANKLINE>
+    ---  --
+    a     6
+    b     1
     >>> print(df.agg(['var', 'count']).evaluate())
              a    b
     -----  ---  ---
@@ -238,13 +244,14 @@ class DataFrame(BinaryOps, BalooCommon):
                                                  repr(self.index),
                                                  columns)
 
+    # TODO: extend tabulate to e.g. insert a line between index and values
     def __str__(self):
         if self.empty:
             return self._empty_text
 
         default_index_name = ' '
         str_data = OrderedDict()
-        str_data.update((name, data.values) for name, data in self.index._gather_data(default_index_name).items())
+        str_data.update((name, shorten_data(data.values)) for name, data in self.index._gather_data(default_index_name).items())
         str_data.update((column.name, shorten_data(column.values)) for column in self._iter())
 
         return tabulate(str_data, headers='keys')
@@ -320,8 +327,12 @@ class DataFrame(BinaryOps, BalooCommon):
         Examples
         --------
         >>> df = bl.DataFrame(OrderedDict({'a': np.arange(5, 8)}))
-        >>> print(df['a'])
-        [5 6 7]
+        >>> print(df['a'].evaluate())
+               a
+        ---  ---
+          0    5
+          1    6
+          2    7
         >>> print(df[['a']].evaluate())
                a
         ---  ---
