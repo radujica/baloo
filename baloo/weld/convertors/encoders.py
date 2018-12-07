@@ -47,10 +47,10 @@ def numpy_to_weld_type(np_dtype):
     'bool'
 
     """
-    if not isinstance(np_dtype, (str, bytes, np.dtype)):
+    if not isinstance(np_dtype, (str, bytes, np.dtype, type)):
         raise TypeError('Can only convert np.dtype or str')
 
-    if isinstance(np_dtype, (str, bytes)):
+    if isinstance(np_dtype, (str, bytes, type)):
         np_dtype = np.dtype(np_dtype)
 
     return _numpy_to_weld_type_mapping[np_dtype.char]
