@@ -100,8 +100,8 @@ class TestSeries(object):
         assert_series_equal(actual, expected)
 
     def test_filter_str(self, series_str):
-        actual = series_str[series_str != 'abc']
-        expected = Series(np.array(['a', 'goosfraba', '   dc  ', 'secretariat'], dtype=np.bytes_),
+        actual = series_str[series_str != 'Abc']
+        expected = Series(np.array(['a', 'goosfraba', '   dC  ', 'secrETariat'], dtype=np.bytes_),
                           Index(np.array([0, 2, 3, 4])), np.dtype(np.bytes_))
 
         assert_series_equal(actual, expected)

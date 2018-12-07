@@ -114,6 +114,10 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
 
         Supported iloc functionality exemplified below.
 
+        Returns
+        -------
+        _ILocIndexer
+
         Examples
         --------
         >>> sr = bl.Series(np.arange(3))
@@ -134,6 +138,31 @@ class Series(LazyArrayResult, BinaryOps, BitOps, BalooCommon):
         from .indexing import _ILocIndexer
 
         return _ILocIndexer(self)
+
+    @property
+    def str(self):
+        """Get Access to string functions.
+
+        Returns
+        -------
+        StringMethods
+
+        Examples
+        --------
+        >>> sr = bl.Series([b' aB ', b'GoOsfrABA'])
+        >>> print(sr.str.lower().evaluate())
+        <BLANKLINE>
+        ---  ---------
+          0   ab
+          1  goosfraba
+
+        """
+        if self.dtype.char != 'S':
+            raise AttributeError('Can only use .str when data is of type np.bytes_')
+
+        from .strings import StringMethods
+
+        return StringMethods(self)
 
     def __repr__(self):
         return "{}(name={}, dtype={})".format(self.__class__.__name__,
