@@ -30,3 +30,10 @@ baloo.core.generic module
 
 .. automodule:: baloo.core.generic
     :members:
+
+baloo.core.groupby module
+-------------------------
+
+.. automodule:: baloo.core.groupby
+    :members:
+    :undoc-members:
