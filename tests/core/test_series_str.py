@@ -39,3 +39,9 @@ class TestSeriesStr(object):
         expected = Series([b'a', b'Abc', b'dC', b'', b'secrET ariat'], index_i64)
 
         assert_series_equal(actual, expected)
+
+    def test_slice(self, series_str, index_i64):
+        actual = series_str.str.slice(1, 5, 2)
+        expected = Series([b'', b'b', b'os', b' d', b'er'], index_i64)
+
+        assert_series_equal(actual, expected)

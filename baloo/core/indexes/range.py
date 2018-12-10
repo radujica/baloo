@@ -39,6 +39,7 @@ class RangeIndex(Index):
     array([-1, -1, -1])
 
     """
+    # TODO: implement negative step!
     def __init__(self, start=None, stop=None, step=None, name=None):
         """Initialize a RangeIndex object.
 
@@ -99,6 +100,8 @@ class RangeIndex(Index):
 def _check_input(start, stop, step):
     if start is None and stop is None and step is None:
         raise TypeError('Must be called with at least one integer')
+    elif step is not None and step < 0:
+        raise ValueError('Only positive steps are currently supported')
     elif start is not None and stop is None and step is None:
         stop = start
         start = None

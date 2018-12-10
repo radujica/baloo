@@ -186,3 +186,53 @@ def weld_str_strip(array):
     weld_obj.weld_code = weld_template.format(array=obj_id)
 
     return weld_obj
+
+
+def _prepare_slice(i, default):
+    if i is None:
+        return default
+    else:
+        return to_weld_literal(i, WeldLong())
+
+
+# TODO: allow negative step ~ for(iter(data, start, stop, step))
+def weld_str_slice(array, start=None, stop=None, step=None):
+    """Slice each element.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input data.
+    start : int, optional
+    stop : int, optional
+    step : int, optional
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    obj_id, weld_obj = create_weld_object(array)
+    start = _prepare_slice(start, '0L')
+    stop = _prepare_slice(stop, 'len(e)')
+    step = _prepare_slice(step, '1L')
+
+    weld_template = """map(
+    {array},
+    |e: vec[i8]|
+        result(
+            for(rangeiter({start}, {stop}, {step}),
+                appender[i8],
+                |c: appender[i8], j: i64, f: i64| 
+                    merge(c, lookup(e, f))
+            )
+        ) 
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=obj_id,
+                                              start=start,
+                                              stop=stop,
+                                              step=step)
+
+    return weld_obj
