@@ -1,4 +1,7 @@
-from .weld_utils import create_weld_object
+from weld.types import WeldLong, WeldChar, WeldVec
+
+from .convertors import default_missing_data_literal
+from .weld_utils import create_weld_object, to_weld_literal, get_weld_obj_id
 
 
 # TODO: generalize if possible later
@@ -107,5 +110,45 @@ def weld_str_capitalize(array):
 )"""
 
     weld_obj.weld_code = weld_template.format(array=obj_id)
+
+    return weld_obj
+
+
+def weld_str_get(array, i):
+    """Retrieve character at index i.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input data.
+    i : int
+        Index of character to retrieve. If greater than length of string, returns None.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    obj_id, weld_obj = create_weld_object(array)
+    index_literal = to_weld_literal(i, WeldLong())
+    missing_literal = default_missing_data_literal(WeldVec(WeldChar()))
+    missing_literal_id = get_weld_obj_id(weld_obj, missing_literal)
+
+    weld_template = """map(
+    {array},
+    |e: vec[i8]|
+        let lenString = len(e);
+        if({i} >= lenString,
+            {missing},
+            if({i} > 0L,
+                result(merge(appender[i8], lookup(slice(e, 0L, lenString), {i}))),
+                result(merge(appender[i8], lookup(slice(e, lenString, {i}), {i})))
+            )
+        )
+)"""
+    weld_obj.weld_code = weld_template.format(array=obj_id,
+                                              i=index_literal,
+                                              missing=missing_literal_id)
 
     return weld_obj

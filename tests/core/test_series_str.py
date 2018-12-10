@@ -21,3 +21,15 @@ class TestSeriesStr(object):
         expected = Series([b'A', b'Abc', b'Goosfraba', b'   dC  ', b'SecrETariat'], index_i64)
 
         assert_series_equal(actual, expected)
+
+    def test_get(self, series_str, index_i64):
+        actual = series_str.str.get(1)
+        expected = Series([b'None', b'b', b'o', b' ', b'e'], index_i64)
+
+        assert_series_equal(actual, expected)
+
+    def test_get_negative(self, series_str, index_i64):
+        actual = series_str.str.get(-1)
+        expected = Series([b'a', b'c', b'a', b' ', b't'], index_i64)
+
+        assert_series_equal(actual, expected)
