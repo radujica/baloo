@@ -1,6 +1,6 @@
 from .series import Series
 from .utils import check_type
-from ..weld import weld_str_lower, weld_str_upper, weld_str_capitalize, weld_str_get
+from ..weld import weld_str_lower, weld_str_upper, weld_str_capitalize, weld_str_get, weld_str_strip
 
 
 class StringMethods(object):
@@ -27,6 +27,12 @@ class StringMethods(object):
 
     def get(self, i):
         return Series(weld_str_get(self._data.values, i),
+                      self._data.index,
+                      self._data.dtype,
+                      self._data.name)
+
+    def strip(self):
+        return Series(weld_str_strip(self._data.values),
                       self._data.index,
                       self._data.dtype,
                       self._data.name)

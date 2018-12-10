@@ -152,3 +152,37 @@ def weld_str_get(array, i):
                                               missing=missing_literal_id)
 
     return weld_obj
+
+
+def weld_str_strip(array):
+    """Strip whitespace from start and end of elements.
+
+    Note it currently only looks for whitespace (Ascii 32), not tabs or EOL.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input data.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    obj_id, weld_obj = create_weld_object(array)
+
+    # +3L = +1 compensate start_i already +1'ed, +1 compensate end_i already -1'ed, +1 compensate for slice with size
+    weld_template = """map(
+    {array},
+    |e: vec[i8]|
+        let lenString = len(e);
+        let res = appender[i8];
+        let start_i = iterate(0L, |p| {{p + 1L, lookup(e, p) == 32c}});
+        let end_i = iterate(lenString - 1L, |p| {{p - 1L, lookup(e, p) == 32c && p > 0L}});
+        slice(e, start_i - 1L, end_i - start_i + 3L)
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=obj_id)
+
+    return weld_obj

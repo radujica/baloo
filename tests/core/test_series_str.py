@@ -33,3 +33,9 @@ class TestSeriesStr(object):
         expected = Series([b'a', b'c', b'a', b' ', b't'], index_i64)
 
         assert_series_equal(actual, expected)
+
+    def test_strip(self, series_str, index_i64):
+        actual = Series([b' a', b'Abc ', b'  dC   ', b'  ', b'secrET ariat'], index_i64).str.strip()
+        expected = Series([b'a', b'Abc', b'dC', b'', b'secrET ariat'], index_i64)
+
+        assert_series_equal(actual, expected)
