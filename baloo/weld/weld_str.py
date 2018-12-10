@@ -195,7 +195,7 @@ def _prepare_slice(i, default):
         return to_weld_literal(i, WeldLong())
 
 
-# TODO: allow negative step ~ for(iter(data, start, stop, step))
+# TODO: allow negative step
 def weld_str_slice(array, start=None, stop=None, step=None):
     """Slice each element.
 
@@ -215,17 +215,19 @@ def weld_str_slice(array, start=None, stop=None, step=None):
     """
     obj_id, weld_obj = create_weld_object(array)
     start = _prepare_slice(start, '0L')
-    stop = _prepare_slice(stop, 'len(e)')
+    stop = _prepare_slice(stop, 'lenString')
     step = _prepare_slice(step, '1L')
 
     weld_template = """map(
     {array},
     |e: vec[i8]|
+        let lenString = len(e);
+        let stop = if({stop} > lenString, lenString, {stop});
         result(
-            for(rangeiter({start}, {stop}, {step}),
+            for(iter(e, {start}, stop, {step}),
                 appender[i8],
-                |c: appender[i8], j: i64, f: i64| 
-                    merge(c, lookup(e, f))
+                |c: appender[i8], j: i64, f: i8| 
+                    merge(c, f)
             )
         ) 
 )"""
