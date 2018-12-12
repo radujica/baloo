@@ -241,7 +241,7 @@ def weld_str_slice(array, start=None, stop=None, step=None):
 
 
 def weld_str_contains(array, pat):
-    """Slice each element.
+    """Check which elements contain pat.
 
     Parameters
     ----------
@@ -292,6 +292,106 @@ result(
                 merge(b, words_iter_res)
             )
     )
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=obj_id,
+                                              pat=pat_id)
+
+    return weld_obj
+
+
+def weld_str_startswith(array, pat):
+    """Check which elements start with pattern.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input data.
+    pat : str
+        To check for.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    obj_id, weld_obj = create_weld_object(array)
+    pat_id = get_weld_obj_id(weld_obj, pat)
+
+    """alternative implementation for reference
+    let res = result(
+        for(zip(slice(e, 0L, lenPat), {pat}),
+            merger[i64, +],
+            |b: merger[i64, +], i: i64, e: {{i8, i8}}|
+                if(e.$0 == e.$1, 
+                    merge(b, 1L), 
+                    merge(b, 0L)
+                )
+        )
+    );
+    res == lenPat
+    """
+
+    weld_template = """let lenPat = len({pat});
+map({array},
+    |e: vec[i8]|
+        let lenString = len(e);
+        if(lenPat > lenString,
+            false,
+            iterate({{0L, true}}, 
+                |q| 
+                    let found = lookup(e, q.$0) == lookup({pat}, q.$0);
+                    {{
+                        {{q.$0 + 1L, found}}, 
+                        q.$0 + 1L < lenPat &&
+                        found == true
+                    }}
+            ).$1
+        )
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=obj_id,
+                                              pat=pat_id)
+
+    return weld_obj
+
+
+def weld_str_endswith(array, pat):
+    """Check which elements end with pattern.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input data.
+    pat : str
+        To check for.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    obj_id, weld_obj = create_weld_object(array)
+    pat_id = get_weld_obj_id(weld_obj, pat)
+
+    weld_template = """let lenPat = len({pat});
+map({array},
+    |e: vec[i8]|
+        let lenString = len(e);
+        if(lenPat > lenString,
+            false,
+            iterate({{lenString - lenPat, 0L, true}}, 
+                |q| 
+                    let found = lookup(e, q.$0) == lookup({pat}, q.$1);
+                    {{
+                        {{q.$0 + 1L, q.$1 + 1L, found}}, 
+                        q.$1 + 1L < lenPat &&
+                        found == true
+                    }}
+            ).$2
+        )
 )"""
 
     weld_obj.weld_code = weld_template.format(array=obj_id,

@@ -1,7 +1,7 @@
 from .series import Series
 from .utils import check_type
 from ..weld import weld_str_lower, weld_str_upper, weld_str_capitalize, weld_str_get, weld_str_strip, weld_str_slice, \
-    weld_str_contains, weld_to_numpy_dtype, WeldBit
+    weld_str_contains, weld_to_numpy_dtype, WeldBit, weld_str_startswith, weld_str_endswith
 
 
 # TODO: docs
@@ -58,6 +58,22 @@ class StringMethods(object):
         check_type(pat, str)
 
         return Series(weld_str_contains(self._data.values, pat),
+                      self._data.index,
+                      weld_to_numpy_dtype(WeldBit()),
+                      self._data.name)
+
+    def startswith(self, pat):
+        check_type(pat, str)
+
+        return Series(weld_str_startswith(self._data.values, pat),
+                      self._data.index,
+                      weld_to_numpy_dtype(WeldBit()),
+                      self._data.name)
+
+    def endswith(self, pat):
+        check_type(pat, str)
+
+        return Series(weld_str_endswith(self._data.values, pat),
                       self._data.index,
                       weld_to_numpy_dtype(WeldBit()),
                       self._data.name)

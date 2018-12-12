@@ -51,3 +51,15 @@ class TestSeriesStr(object):
         expected = Series([True, True, True, True, False], index_i64)
 
         assert_series_equal(actual, expected)
+
+    def test_startswith(self, series_str, index_i64):
+        actual = Series([b'abz', b'zabz', b'zab', b' ab  ', b'a']).str.startswith('za')
+        expected = Series([False, True, True, False, False], index_i64)
+
+        assert_series_equal(actual, expected)
+
+    def test_endswith(self, series_str, index_i64):
+        actual = Series([b'abz', b'zabz', b'zab', b' ab  ', b'a']).str.endswith('bz')
+        expected = Series([True, True, False, False, False], index_i64)
+
+        assert_series_equal(actual, expected)
