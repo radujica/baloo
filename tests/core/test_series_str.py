@@ -46,20 +46,33 @@ class TestSeriesStr(object):
 
         assert_series_equal(actual, expected)
 
+    # TODO: make fixture?
     def test_contains(self, series_str, index_i64):
-        actual = Series([b'abz', b'zabz', b'zab', b' ab  ', b'a']).str.contains('ab')
+        actual = Series([b'abz', b'zabz', b'zab', b'  ab  ', b'a']).str.contains('ab')
         expected = Series([True, True, True, True, False], index_i64)
 
         assert_series_equal(actual, expected)
 
     def test_startswith(self, series_str, index_i64):
-        actual = Series([b'abz', b'zabz', b'zab', b' ab  ', b'a']).str.startswith('za')
+        actual = Series([b'abz', b'zabz', b'zab', b'  ab  ', b'a']).str.startswith('za')
         expected = Series([False, True, True, False, False], index_i64)
 
         assert_series_equal(actual, expected)
 
     def test_endswith(self, series_str, index_i64):
-        actual = Series([b'abz', b'zabz', b'zab', b' ab  ', b'a']).str.endswith('bz')
+        actual = Series([b'abz', b'zabz', b'zab', b'  ab  ', b'a']).str.endswith('bz')
         expected = Series([True, True, False, False, False], index_i64)
+
+        assert_series_equal(actual, expected)
+
+    def test_find(self, series_str, index_i64):
+        actual = Series([b'abz', b'zabz', b'zab', b'  ab  ', b'a']).str.find('ab')
+        expected = Series([0, 1, 1, 2, -1], index_i64)
+
+        assert_series_equal(actual, expected)
+
+    def test_find_with_args(self, series_str, index_i64):
+        actual = Series([b'abz', b'zabz', b'zab', b'  ab  ', b'a']).str.find('ab', start=1, end=3)
+        expected = Series([-1, 1, 1, -1, -1], index_i64)
 
         assert_series_equal(actual, expected)

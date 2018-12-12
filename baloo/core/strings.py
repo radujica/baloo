@@ -1,7 +1,7 @@
 from .series import Series
 from .utils import check_type
 from ..weld import weld_str_lower, weld_str_upper, weld_str_capitalize, weld_str_get, weld_str_strip, weld_str_slice, \
-    weld_str_contains, weld_to_numpy_dtype, WeldBit, weld_str_startswith, weld_str_endswith
+    weld_str_contains, weld_to_numpy_dtype, WeldBit, weld_str_startswith, weld_str_endswith, weld_str_find, WeldLong
 
 
 # TODO: docs
@@ -76,4 +76,17 @@ class StringMethods(object):
         return Series(weld_str_endswith(self._data.values, pat),
                       self._data.index,
                       weld_to_numpy_dtype(WeldBit()),
+                      self._data.name)
+
+    def find(self, sub, start=0, end=None):
+        check_type(sub, str)
+        check_type(start, int)
+        check_type(end, int)
+
+        if end is not None and start >= end:
+            raise ValueError('End must be greater than start')
+
+        return Series(weld_str_find(self._data.values, sub, start, end),
+                      self._data.index,
+                      weld_to_numpy_dtype(WeldLong()),
                       self._data.name)
