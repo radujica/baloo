@@ -149,6 +149,10 @@
 
 <span class="sd">        Supported iloc functionality exemplified below.</span>
 
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _ILocIndexer</span>
+
 <span class="sd">        Examples</span>
 <span class="sd">        --------</span>
 <span class="sd">        &gt;&gt;&gt; sr = bl.Series(np.arange(3))</span>
@@ -169,6 +173,31 @@
         <span class="kn">from</span> <span class="nn">.indexing</span> <span class="k">import</span> <span class="n">_ILocIndexer</span>
 
         <span class="k">return</span> <span class="n">_ILocIndexer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">str</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get Access to string functions.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        StringMethods</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; sr = bl.Series([b&#39; aB &#39;, b&#39;GoOsfrABA&#39;])</span>
+<span class="sd">        &gt;&gt;&gt; print(sr.str.lower().evaluate())</span>
+<span class="sd">        &lt;BLANKLINE&gt;</span>
+<span class="sd">        ---  ---------</span>
+<span class="sd">          0   ab</span>
+<span class="sd">          1  goosfraba</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">char</span> <span class="o">!=</span> <span class="s1">&#39;S&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s1">&#39;Can only use .str when data is of type np.bytes_&#39;</span><span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">.strings</span> <span class="k">import</span> <span class="n">StringMethods</span>
+
+        <span class="k">return</span> <span class="n">StringMethods</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">(name=</span><span class="si">{}</span><span class="s2">, dtype=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>

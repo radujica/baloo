@@ -44,26 +44,54 @@ The core data structure at the surface level (API) is still the Numpy
 <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html">ndarray</a>,
 despite it being converted to other structures internally by Weld. For efficiency reasons, only arrays of 1 dimension
 are expected (please check <cite>baloo/weld/convertors/numpy.cpp</cite> for malloc reasons why).</p>
+<div class="section" id="usability">
+<h2>Usability<a class="headerlink" href="#usability" title="Permalink to this headline">¶</a></h2>
+<p>Pandas is an immense library with a lot of implemented functionality. Baloo cannot replace it but only speed up
+common operations through Weld. To facilitate the interaction between the libraries, the pandas API has been mimicked
+as much as possible. Thus, it might be possible to simply replace the import statements from pandas to baloo. However,
+there are also <cite>from_pandas</cite> and <cite>to_pandas</cite> methods available to freely move from one to the other. Nevertheless,
+for baloo to be useful, most operations should go through it.</p>
+</div>
+<div class="section" id="functionality-overview">
+<h2>Functionality Overview<a class="headerlink" href="#functionality-overview" title="Permalink to this headline">¶</a></h2>
+<p>Baloo contains documentation and examples for all the supported operations. However, as a first look into Baloo,
+here is some of the implemented functionality:</p>
+<ul class="simple">
+<li>Numerical operations, such as <cite>+</cite> or <cite>*</cite>.</li>
+<li>Unary operations, such as <cite>sqrt</cite> or <cite>log</cite>.</li>
+<li>Filters, bool operations, and sub-setting, including <cite>head</cite> and <cite>tail</cite>.</li>
+<li>Aggregations, such as <cite>max</cite>, <cite>mean</cite>, or <cite>std</cite>.</li>
+<li>DataFrame joins, including all of <cite>inner</cite>, <cite>left</cite>, <cite>right</cite>, <cite>outer</cite>.</li>
+<li>GroupBy and aggregations.</li>
+<li>Multiple kinds of UDFs.</li>
+<li>To/from Pandas conversion.</li>
+<li>Missing values support, such as <cite>dropna</cite> and <cite>fillna</cite>.</li>
+<li><cite>iloc</cite>.</li>
+<li>String manipulation through <cite>.str</cite> for methods, such as <cite>split</cite> or <cite>contains</cite>.</li>
+</ul>
+<p>… and more.</p>
+</div>
 <div class="section" id="data-types">
 <h2>Data Types<a class="headerlink" href="#data-types" title="Permalink to this headline">¶</a></h2>
 <p>Baloo currently accepts the following NumPy dtypes:</p>
 <ul class="simple">
 <li>int16, int32, int64</li>
 <li>float32, float64</li>
-<li>bool</li>
+<li>bool/bool_ *</li>
 <li>S/bytes_</li>
 </ul>
-<p>Note that strings require their byte versions, therefore unicode is not currently supported (at the Weld level(?)).</p>
+<p>Note that strings require their byte versions, therefore unicode is not currently supported (at the Weld level(?)).
+* Bool is internally converted to np.bool_ s.t. its module points to NumPy and not builtins.</p>
 </div>
 <div class="section" id="missing-data">
 <h2>Missing Data<a class="headerlink" href="#missing-data" title="Permalink to this headline">¶</a></h2>
 <p>Unlike Pandas, there are currently no special NaN/NA/NaT values for missing data. If NumPy accepts it, then it’s valid.
-In practice, this means that:</p>
+For Baloo, the following were chosen as defaults:</p>
 <ul class="simple">
-<li>floats have the special <cite>np.nan</cite> value,</li>
-<li>integers must use some arbitrary value, e.g. <cite>-999</cite></li>
-<li>same for strings, e.g. <cite>b’None’</cite></li>
-<li>booleans can use <cite>False</cite></li>
+<li>floats : -999.</li>
+<li>integers : -999</li>
+<li>S/bytes_ : b’None’</li>
+<li>bool : false</li>
 </ul>
 </div>
 <div class="section" id="lazy-evaluation">
@@ -78,12 +106,13 @@ In practice, this means that:</p>
 </div>
 <div class="section" id="type-casting">
 <h2>Type Casting<a class="headerlink" href="#type-casting" title="Permalink to this headline">¶</a></h2>
-<p>Unlike Pandas, there are currently no automatic type casts for array types, e.g. <cite>[1, 2] + [2.35, 3.54]</cite> is likely to
-fail. Similarly, when creating a Series using data of some dtype but specifying a different dtype in the constructor,
-it will <em>not</em> convert to that dtype. These are usability details that shall be tackled later.</p>
-<p>Note, however, that literal/scalar values are an exception and do get casted to the <cite>dtype</cite> of the array, e.g.
-<cite>[1, 2] &lt; 2.0</cite> is interpreted as <cite>[1, 2] &lt; 2</cite>. Lastly, aggregation results get converted to <cite>float64</cite> if possible, like
-in Pandas.</p>
+<p>Unlike Pandas, there are currently no automatic type casts for array types, e.g. <cite>Series([1, 2]) + Series([2.35, 3.54])</cite>
+is likely to fail. Casting is lazily available through the <cite>astype</cite> operator. Note that on Series creation, data can be
+automatically casted to given dtype only if the data is raw. If lazy, encode it through astype.</p>
+<p>Note that literal/scalar values are an exception and do get casted to the <cite>dtype</cite> of the array, e.g.
+<cite>Series([1, 2]) &lt; 2.0</cite> is interpreted as <cite>Series([1, 2]) &lt; 2</cite>. Lastly, aggregation results get converted to <cite>float64</cite>
+however currently post-aggregation, not before, e.g. <cite>Series([1, 2]).sum()</cite> first computes the integer sum
+then casts the result to float.</p>
 </div>
 </div>
 
@@ -106,6 +135,8 @@ in Pandas.</p>
 <h3>Navigation</h3>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Intro to Baloo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#usability">Usability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#functionality-overview">Functionality Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#data-types">Data Types</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#missing-data">Missing Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#lazy-evaluation">Lazy Evaluation</a></li>

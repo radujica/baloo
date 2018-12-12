@@ -1,0 +1,340 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>baloo.core.strings &#8212; Baloo 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for baloo.core.strings</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.series</span> <span class="k">import</span> <span class="n">Series</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">check_type</span>
+<span class="kn">from</span> <span class="nn">..weld</span> <span class="k">import</span> <span class="n">weld_str_lower</span><span class="p">,</span> <span class="n">weld_str_upper</span><span class="p">,</span> <span class="n">weld_str_capitalize</span><span class="p">,</span> <span class="n">weld_str_get</span><span class="p">,</span> <span class="n">weld_str_strip</span><span class="p">,</span> <span class="n">weld_str_slice</span><span class="p">,</span> \
+    <span class="n">weld_str_contains</span><span class="p">,</span> <span class="n">weld_to_numpy_dtype</span><span class="p">,</span> <span class="n">WeldBit</span><span class="p">,</span> <span class="n">weld_str_startswith</span><span class="p">,</span> <span class="n">weld_str_endswith</span><span class="p">,</span> <span class="n">weld_str_find</span><span class="p">,</span> <span class="n">WeldLong</span><span class="p">,</span> \
+    <span class="n">weld_str_replace</span><span class="p">,</span> <span class="n">weld_str_split</span>
+
+
+<div class="viewcode-block" id="StringMethods"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.strings.StringMethods">[docs]</a><span class="k">class</span> <span class="nc">StringMethods</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">check_type</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Series</span><span class="p">)</span>
+
+<div class="viewcode-block" id="StringMethods.lower"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.strings.StringMethods.lower">[docs]</a>    <span class="k">def</span> <span class="nf">lower</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert all characters to lowercase.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_series_str_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weld_str_lower</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StringMethods.upper"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.strings.StringMethods.upper">[docs]</a>    <span class="k">def</span> <span class="nf">upper</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert all characters to uppercase.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_series_str_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weld_str_upper</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StringMethods.capitalize"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.strings.StringMethods.capitalize">[docs]</a>    <span class="k">def</span> <span class="nf">capitalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert first character to uppercase and remainder to lowercase.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_series_str_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weld_str_capitalize</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StringMethods.get"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.strings.StringMethods.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extract i&#39;th character of each element.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        i : int</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_series_str_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weld_str_get</span><span class="p">,</span> <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StringMethods.strip"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.strings.StringMethods.strip">[docs]</a>    <span class="k">def</span> <span class="nf">strip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Strip whitespace from start and end of each element.</span>
+
+<span class="sd">        Note it currently only looks for whitespace (ASCII 32), not tabs or EOL.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_series_str_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weld_str_strip</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StringMethods.slice"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.strings.StringMethods.slice">[docs]</a>    <span class="k">def</span> <span class="nf">slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Slice substrings from each element.</span>
+
+<span class="sd">        Note that negative step is currently not supported.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        start : int</span>
+<span class="sd">        stop : int</span>
+<span class="sd">        step : int</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">step</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">step</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Only positive steps are currently supported&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_series_str_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weld_str_slice</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StringMethods.contains"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.strings.StringMethods.contains">[docs]</a>    <span class="k">def</span> <span class="nf">contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pat</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Test if pat is included within elements.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pat : str</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">pat</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_series_bool_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weld_str_contains</span><span class="p">,</span> <span class="n">pat</span><span class="o">=</span><span class="n">pat</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StringMethods.startswith"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.strings.StringMethods.startswith">[docs]</a>    <span class="k">def</span> <span class="nf">startswith</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pat</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Test if elements start with pat.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pat : str</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">pat</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_series_bool_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weld_str_startswith</span><span class="p">,</span> <span class="n">pat</span><span class="o">=</span><span class="n">pat</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StringMethods.endswith"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.strings.StringMethods.endswith">[docs]</a>    <span class="k">def</span> <span class="nf">endswith</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pat</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Test if elements end with pat.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pat : str</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">pat</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_series_bool_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weld_str_endswith</span><span class="p">,</span> <span class="n">pat</span><span class="o">=</span><span class="n">pat</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StringMethods.find"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.strings.StringMethods.find">[docs]</a>    <span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sub</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Test if elements contain substring.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sub : str</span>
+<span class="sd">        start : int, optional</span>
+<span class="sd">            Index to start searching from.</span>
+<span class="sd">        end : int, optional</span>
+<span class="sd">            Index to stop searching from.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="n">end</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;End must be greater than start&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Series</span><span class="p">(</span><span class="n">weld_str_find</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">sub</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">),</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                      <span class="n">weld_to_numpy_dtype</span><span class="p">(</span><span class="n">WeldLong</span><span class="p">()),</span>
+                      <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">name</span><span class="p">)</span></div>
+
+    <span class="c1"># TODO: replace multiple occurrences, not just first</span>
+<div class="viewcode-block" id="StringMethods.replace"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.strings.StringMethods.replace">[docs]</a>    <span class="k">def</span> <span class="nf">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pat</span><span class="p">,</span> <span class="n">rep</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Replace first occurrence of pat with rep in each element.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pat : str</span>
+<span class="sd">        rep : str</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">pat</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">rep</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_series_str_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weld_str_replace</span><span class="p">,</span> <span class="n">pat</span><span class="o">=</span><span class="n">pat</span><span class="p">,</span> <span class="n">rep</span><span class="o">=</span><span class="n">rep</span><span class="p">)</span></div>
+
+    <span class="c1"># TODO: rsplit</span>
+<div class="viewcode-block" id="StringMethods.split"><a class="viewcode-back" href="../../../baloo.core.html#baloo.core.strings.StringMethods.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pat</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Split once each element from the left and select a side to return.</span>
+
+<span class="sd">        Note this is unlike pandas split in that it essentially combines the split with a select.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pat : str</span>
+<span class="sd">        side : {&#39;left&#39;, &#39;right&#39;}</span>
+<span class="sd">            Which side of the split to select and return in each element.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Series</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">pat</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+        <span class="n">check_type</span><span class="p">(</span><span class="n">side</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+
+        <span class="c1"># don&#39;t want this made with the object</span>
+        <span class="n">_split_mapping</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;left&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s1">&#39;right&#39;</span><span class="p">:</span> <span class="mi">1</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">side</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_split_mapping</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Can only select left or right side of split&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_series_str_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">weld_str_split</span><span class="p">,</span> <span class="n">pat</span><span class="o">=</span><span class="n">pat</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="n">_split_mapping</span><span class="p">[</span><span class="n">side</span><span class="p">])</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_series_str_result</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Series</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+                  <span class="n">series</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                  <span class="n">series</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                  <span class="n">series</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_series_bool_result</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Series</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+                  <span class="n">series</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                  <span class="n">weld_to_numpy_dtype</span><span class="p">(</span><span class="n">WeldBit</span><span class="p">()),</span>
+                  <span class="n">series</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">Baloo</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intro.html">Intro to Baloo</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../baloo.html">Baloo Library</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Radu Jica.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

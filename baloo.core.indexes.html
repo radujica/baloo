@@ -16,7 +16,7 @@
     <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="baloo.weld package" href="baloo.weld.html" />
+    <link rel="next" title="baloo.functions package" href="baloo.functions.html" />
     <link rel="prev" title="baloo.core package" href="baloo.core.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -41,7 +41,7 @@
 <dl class="class">
 <dt id="baloo.core.indexes.base.Index">
 <em class="property">class </em><code class="descclassname">baloo.core.indexes.base.</code><code class="descname">Index</code><span class="sig-paren">(</span><em>data</em>, <em>dtype=None</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/base.html#Index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.base.Index" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="baloo.weld.html#baloo.weld.lazy_result.LazyArrayResult" title="baloo.weld.lazy_result.LazyArrayResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.weld.lazy_result.LazyArrayResult</span></code></a>, <a class="reference internal" href="baloo.core.html#baloo.core.generic.BinaryOps" title="baloo.core.generic.BinaryOps"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.core.generic.BinaryOps</span></code></a>, <a class="reference internal" href="baloo.core.html#baloo.core.generic.IndexCommon" title="baloo.core.generic.IndexCommon"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.core.generic.IndexCommon</span></code></a>, <a class="reference internal" href="baloo.core.html#baloo.core.generic.BalooCommon" title="baloo.core.generic.BalooCommon"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.core.generic.BalooCommon</span></code></a></p>
+<dd><p>Bases: <a class="reference internal" href="baloo.weld.html#baloo.weld.lazy_result.LazyArrayResult" title="baloo.weld.lazy_result.LazyArrayResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.weld.lazy_result.LazyArrayResult</span></code></a>, <a class="reference internal" href="baloo.core.html#baloo.core.generic.BinaryOps" title="baloo.core.generic.BinaryOps"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.core.generic.BinaryOps</span></code></a>, <a class="reference internal" href="baloo.core.html#baloo.core.generic.BitOps" title="baloo.core.generic.BitOps"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.core.generic.BitOps</span></code></a>, <a class="reference internal" href="baloo.core.html#baloo.core.generic.IndexCommon" title="baloo.core.generic.IndexCommon"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.core.generic.IndexCommon</span></code></a>, <a class="reference internal" href="baloo.core.html#baloo.core.generic.BalooCommon" title="baloo.core.generic.BalooCommon"><code class="xref py py-class docutils literal notranslate"><span class="pre">baloo.core.generic.BalooCommon</span></code></a></p>
 <p>Weld-ed Pandas Index.</p>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
@@ -103,7 +103,7 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray or WeldObject</span></dt>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.ndarray or WeldObject or list</span></dt>
 <dd><p class="first last">Raw data or Weld expression.</p>
 </dd>
 <dt><strong>dtype</strong> <span class="classifier-delimiter">:</span> <span class="classifier">np.dtype, optional</span></dt>
@@ -111,6 +111,25 @@
 </dd>
 <dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
 <dd><p class="first last">Name of the Index.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.indexes.base.Index.dropna">
+<code class="descname">dropna</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/base.html#Index.dropna"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.base.Index.dropna" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns Index without null values according to Baloo’s convention.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Index</strong></dt>
+<dd><p class="first last">Index with no null values.</p>
 </dd>
 </dl>
 </td>
@@ -132,6 +151,56 @@
 <dt><strong>Index</strong></dt>
 <dd><p class="first last">Index with evaluated data.</p>
 </dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.indexes.base.Index.fillna">
+<code class="descname">fillna</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/base.html#Index.fillna"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.base.Index.fillna" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns Index with missing values replaced with value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>value</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{int, float, bytes, bool}</span></dt>
+<dd><p class="first last">Scalar value to replace missing values with.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Index</strong></dt>
+<dd><p class="first last">With missing values replaced.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="baloo.core.indexes.base.Index.from_pandas">
+<em class="property">classmethod </em><code class="descname">from_pandas</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/base.html#Index.from_pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.base.Index.from_pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create baloo Index from pandas Index.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">pandas.base.Index</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Index</strong></dt>
+<dd></dd>
 </dl>
 </td>
 </tr>
@@ -220,6 +289,24 @@
 <span class="go">[1. 2.]</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.indexes.base.Index.to_pandas">
+<code class="descname">to_pandas</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/base.html#Index.to_pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.base.Index.to_pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert to pandas Index.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>pandas.base.Index</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -354,7 +441,7 @@ and hence does not follow the labels/levels approach of Pandas.</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">baloo</span> <span class="k">as</span> <span class="nn">bl</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">MultiIndex</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)],</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;i1&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">MultiIndex</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)],</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;i1&#39;</span><span class="p">,</span> <span class="s1">&#39;i2&#39;</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">ind</span>  <span class="c1"># repr</span>
 <span class="go">MultiIndex(names=[&#39;i1&#39;, &#39;i2&#39;], dtypes=[dtype(&#39;int64&#39;), dtype(&#39;float64&#39;)])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">ind</span><span class="p">)</span>  <span class="c1"># str</span>
@@ -415,7 +502,7 @@ and hence does not follow the labels/levels approach of Pandas.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of numpy.ndarray or list of Index</span></dt>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of (numpy.ndarray or Index or list)</span></dt>
 <dd><p class="first last">The internal data.</p>
 </dd>
 <dt><strong>names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of str, optional</span></dt>
@@ -441,6 +528,25 @@ it will be eagerly computed.</p>
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
 <dt><strong>int</strong></dt>
 <dd><p class="first last">Length of the MultiIndex.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.indexes.multi.MultiIndex.dropna">
+<code class="descname">dropna</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/multi.html#MultiIndex.dropna"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.multi.MultiIndex.dropna" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns MultiIndex without any rows containing null values according to Baloo’s convention.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>MultiIndex</strong></dt>
+<dd><p class="first last">MultiIndex with no null values.</p>
 </dd>
 </dl>
 </td>
@@ -487,6 +593,30 @@ it will be eagerly computed.</p>
 </table>
 </dd></dl>
 
+<dl class="classmethod">
+<dt id="baloo.core.indexes.multi.MultiIndex.from_pandas">
+<em class="property">classmethod </em><code class="descname">from_pandas</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/multi.html#MultiIndex.from_pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.multi.MultiIndex.from_pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create baloo MultiIndex from pandas MultiIndex.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">pandas.multi.MultiIndex</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>MultiIndex</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="baloo.core.indexes.multi.MultiIndex.name">
 <code class="descname">name</code><a class="headerlink" href="#baloo.core.indexes.multi.MultiIndex.name" title="Permalink to this definition">¶</a></dt>
@@ -525,6 +655,24 @@ it will be eagerly computed.</p>
 <dt><strong>MultiIndex</strong></dt>
 <dd><p class="first last">MultiIndex containing the last n values in each column.</p>
 </dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.indexes.multi.MultiIndex.to_pandas">
+<code class="descname">to_pandas</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/indexes/multi.html#MultiIndex.to_pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.indexes.multi.MultiIndex.to_pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert to pandas MultiIndex.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>pandas.base.MultiIndex</strong></dt>
+<dd></dd>
 </dl>
 </td>
 </tr>
@@ -580,6 +728,8 @@ it will be eagerly computed.</p>
 <li class="toctree-l1 current"><a class="reference internal" href="baloo.html">Baloo Library</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="baloo.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="baloo.core.html">baloo.core package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baloo.functions.html">baloo.functions package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baloo.io.html">baloo.io package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baloo.weld.html">baloo.weld package</a></li>
 </ul>
 </li>
@@ -594,7 +744,7 @@ it will be eagerly computed.</p>
   <li><a href="baloo.html">Baloo Library</a><ul>
   <li><a href="baloo.core.html">baloo.core package</a><ul>
       <li>Previous: <a href="baloo.core.html" title="previous chapter">baloo.core package</a></li>
-      <li>Next: <a href="baloo.weld.html" title="next chapter">baloo.weld package</a></li>
+      <li>Next: <a href="baloo.functions.html" title="next chapter">baloo.functions package</a></li>
   </ul></li>
   </ul></li>
   </ul></li>

@@ -67,7 +67,7 @@
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">baloo</span> <span class="k">as</span> <span class="nn">bl</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">(((</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])))))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">(((</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)),</span> <span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]))))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">index</span>  <span class="c1"># repr</span>
 <span class="go">RangeIndex(start=0, stop=3, step=1)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">df</span>  <span class="c1"># repr</span>
@@ -93,9 +93,15 @@
 <span class="go">  1   12    0</span>
 <span class="go">  2   14    6</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">[5 0]</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">a     5</span>
+<span class="go">b     0</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">[6. 1.]</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">a     6</span>
+<span class="go">b     1</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">agg</span><span class="p">([</span><span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="s1">&#39;count&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
 <span class="go">         a    b</span>
 <span class="go">-----  ---  ---</span>
@@ -127,7 +133,26 @@
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">df2</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
 <span class="go">  b    index_x    a    index_y</span>
 <span class="go">---  ---------  ---  ---------</span>
+<span class="go">  0          1    6          0</span>
 <span class="go">  2          2    7          1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df3</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="o">-</span><span class="mf">999.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">]},</span> <span class="n">bl</span><span class="o">.</span><span class="n">Index</span><span class="p">([</span><span class="o">-</span><span class="mi">999</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df3</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">        a</span>
+<span class="go">----  ---</span>
+<span class="go">-999    1</span>
+<span class="go">   2    3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df3</span><span class="o">.</span><span class="n">fillna</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">15</span><span class="p">})</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">        a</span>
+<span class="go">----  ---</span>
+<span class="go">-999    1</span>
+<span class="go">   1   15</span>
+<span class="go">   2    3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]})</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">  a    b</span>
+<span class="go">---  ---</span>
+<span class="go">  0    1</span>
+<span class="go">  2    4</span>
+<span class="go">  1    5</span>
 </pre></div>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
@@ -158,8 +183,12 @@
 <p>Supported functionality exemplified below.</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">OrderedDict</span><span class="p">({</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">)}))</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">])</span>
-<span class="go">[5 6 7]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">       a</span>
+<span class="go">---  ---</span>
+<span class="go">  0    5</span>
+<span class="go">  1    6</span>
+<span class="go">  2    7</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="p">[[</span><span class="s1">&#39;a&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
 <span class="go">       a</span>
 <span class="go">---  ---</span>
@@ -179,13 +208,16 @@
 <dt id="baloo.core.frame.DataFrame.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><em>data=None</em>, <em>index=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.__init__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.__init__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Initialize a DataFrame object.</p>
+<p>Note that (unlike pandas) there’s currently no index inference or alignment between the indexes of any Series
+passed as data. That is, all data, be it raw or Series, inherits the index of the DataFrame. Alignment
+is currently restricted to setitem</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
 <dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
-<dd><p class="first last">Data as a dict of str -&gt; np.ndarray or Series.</p>
+<dd><p class="first last">Data as a dict of str -&gt; np.ndarray or Series or list.</p>
 </dd>
 <dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Index or RangeIndex or MultiIndex, optional</span></dt>
 <dd><p class="first last">Index linked to the data; it is assumed to be of the same length.
@@ -223,6 +255,11 @@ it will be eagerly computed.</p>
 <dt id="baloo.core.frame.DataFrame.__setitem__">
 <code class="descname">__setitem__</code><span class="sig-paren">(</span><em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.__setitem__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.__setitem__" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add/update DataFrame column.</p>
+<p>Note that for raw data, it does NOT check for the same length with the DataFrame due to possibly not knowing
+the length before evaluation. Hence, columns of different lengths are possible if using raw data which might
+lead to unexpected behavior. To avoid this, use the more expensive setitem by wrapping with a Series.
+This, in turn, means that if knowing the indexes match and the data has the same length as the DataFrame,
+it is more efficient to setitem using the raw data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -232,9 +269,8 @@ it will be eagerly computed.</p>
 <dd><p class="first last">Column name.</p>
 </dd>
 <dt><strong>value</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.ndarray or Series</span></dt>
-<dd><p class="first last">Note that it does NOT check for the same length as the other columns due to possibly not knowing
-the length before evaluation. Also note that for Series, it currently does NOT match Index as in a join but
-the Series inherits the index of the DataFrame.</p>
+<dd><p class="first last">If a Series, the data will be aligned based on the index of the DataFrame,
+i.e. df.index left join sr.index.</p>
 </dd>
 </dl>
 </td>
@@ -272,6 +308,32 @@ the Series inherits the index of the DataFrame.</p>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
 <dt><strong>DataFrame</strong></dt>
 <dd><p class="first last">DataFrame with the aggregations per column.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.astype">
+<code class="descname">astype</code><span class="sig-paren">(</span><em>dtype</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.astype"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.astype" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cast DataFrame columns to given dtype.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>dtype</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.dtype or dict</span></dt>
+<dd><p class="first last">Dtype or column_name -&gt; dtype mapping to cast columns to. Note index is excluded.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">With casted columns.</p>
 </dd>
 </dl>
 </td>
@@ -318,6 +380,64 @@ without raising an exception.</p>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
 <dt><strong>DataFrame</strong></dt>
 <dd><p class="first last">A new DataFrame without these columns.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.drop_duplicates">
+<code class="descname">drop_duplicates</code><span class="sig-paren">(</span><em>subset=None</em>, <em>keep='min'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.drop_duplicates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.drop_duplicates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return DataFrame with duplicate rows (excluding index) removed,
+optionally only considering subset columns.</p>
+<p>Note that the row order is NOT maintained due to hashing.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>subset</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of str, optional</span></dt>
+<dd><p class="first last">Which columns to consider</p>
+</dd>
+<dt><strong>keep</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘+’, ‘*’, ‘min’, ‘max’}, optional</span></dt>
+<dd><p class="first last">What to select from the duplicate rows. These correspond to the possible merge operations in Weld.
+Note that ‘+’ and ‘-‘ might produce unexpected results for strings.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">DataFrame without duplicate rows.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.dropna">
+<code class="descname">dropna</code><span class="sig-paren">(</span><em>subset=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.dropna"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.dropna" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove missing values according to Baloo’s convention.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>subset</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of str, optional</span></dt>
+<dd><p class="first last">Which columns to check for missing values in.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">DataFrame with no null values in columns.</p>
 </dd>
 </dl>
 </td>
@@ -374,6 +494,84 @@ without raising an exception.</p>
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
 <dt><strong>DataFrame</strong></dt>
 <dd><p class="first last">DataFrame with evaluated data and index.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.fillna">
+<code class="descname">fillna</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.fillna"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.fillna" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns DataFrame with missing values replaced with value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>value</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{int, float, bytes, bool} or dict</span></dt>
+<dd><p class="first last">Scalar value to replace missing values with. If dict, replaces missing values
+only in the key columns with the value scalar.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd><p class="first last">With missing values replaced.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="baloo.core.frame.DataFrame.from_pandas">
+<em class="property">classmethod </em><code class="descname">from_pandas</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.from_pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.from_pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create baloo DataFrame from pandas DataFrame.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>df</strong> <span class="classifier-delimiter">:</span> <span class="classifier">pandas.frame.DataFrame</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrame</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.groupby">
+<code class="descname">groupby</code><span class="sig-paren">(</span><em>by</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.groupby"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.groupby" title="Permalink to this definition">¶</a></dt>
+<dd><p>Group by certain columns, excluding index.</p>
+<p>Simply reset_index if desiring to group by some index column too.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>by</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str or list of str</span></dt>
+<dd><p class="first last">Column(s) to groupby.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>DataFrameGroupBy</strong></dt>
+<dd><p class="first last">Object encoding the groupby operation.</p>
 </dd>
 </dl>
 </td>
@@ -511,10 +709,9 @@ If None, will join on the index if it has the same name.</p>
 
 <dl class="method">
 <dt id="baloo.core.frame.DataFrame.merge">
-<code class="descname">merge</code><span class="sig-paren">(</span><em>other</em>, <em>how='inner'</em>, <em>on=None</em>, <em>suffixes=('_x'</em>, <em>'_y')</em>, <em>algorithm='merge'</em>, <em>is_on_sorted=True</em>, <em>is_on_unique=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.merge" title="Permalink to this definition">¶</a></dt>
+<code class="descname">merge</code><span class="sig-paren">(</span><em>other</em>, <em>how='inner'</em>, <em>on=None</em>, <em>suffixes=('_x'</em>, <em>'_y')</em>, <em>algorithm='merge'</em>, <em>is_on_sorted=False</em>, <em>is_on_unique=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.merge" title="Permalink to this definition">¶</a></dt>
 <dd><p>Database-like join this DataFrame with the other DataFrame.</p>
-<p>Currently assumes the <cite>on</cite> columns are sorted and the on-column(s) values are unique!
-Next work handles the other cases.</p>
+<p>Currently assumes the on-column(s) values are unique!</p>
 <p>Note there’s no automatic cast if the type of the on columns differs.</p>
 <p>Algorithms and limitations:</p>
 <ul class="simple">
@@ -558,7 +755,8 @@ If None, will join on the index if it has the same name.</p>
 <dd><p class="first last">Which algorithm to use. Note that for ‘hash’, the <cite>other</cite> DataFrame is the one hashed.</p>
 </dd>
 <dt><strong>is_on_sorted</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd><p class="first last">If we know that the on columns are already sorted, can employ faster algorithm.</p>
+<dd><p class="first last">If we know that the on columns are already sorted, can employ faster algorithm. If False,
+the DataFrame will first be sorted by the on columns.</p>
 </dd>
 <dt><strong>is_on_unique</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
 <dd><p class="first last">If we know that the values are unique, can employ faster algorithm.</p>
@@ -743,6 +941,58 @@ Note this is an expensive operation (brings all data to Weld).</p>
 </div>
 </dd></dl>
 
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.to_csv">
+<code class="descname">to_csv</code><span class="sig-paren">(</span><em>filepath</em>, <em>sep='</em>, <em>'</em>, <em>header=True</em>, <em>index=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.to_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save DataFrame as csv.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>filepath</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd></dd>
+<dt><strong>sep</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
+<dd><p class="first last">Separator used between values.</p>
+</dd>
+<dt><strong>header</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">Whether to save the header.</p>
+</dd>
+<dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">Whether to save the index columns.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>None</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.frame.DataFrame.to_pandas">
+<code class="descname">to_pandas</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/frame.html#DataFrame.to_pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.frame.DataFrame.to_pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert to pandas DataFrame.</p>
+<p>Note the data is expected to be evaluated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>pandas.frame.DataFrame</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="baloo.core.frame.DataFrame.values">
 <code class="descname">values</code><a class="headerlink" href="#baloo.core.frame.DataFrame.values" title="Permalink to this definition">¶</a></dt>
@@ -782,7 +1032,7 @@ Note this is an expensive operation (brings all data to Weld).</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">baloo</span> <span class="k">as</span> <span class="nn">bl</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span>
 <span class="go">Series(name=None, dtype=int64)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span><span class="o">.</span><span class="n">index</span>
@@ -791,7 +1041,11 @@ Note this is an expensive operation (brings all data to Weld).</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span>  <span class="c1"># repr</span>
 <span class="go">Series(name=None, dtype=int64)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="p">)</span>  <span class="c1"># str</span>
-<span class="go">[0 1 2]</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">  0   0</span>
+<span class="go">  1   1</span>
+<span class="go">  2   2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span><span class="o">.</span><span class="n">index</span>
 <span class="go">Index(name=None, dtype=int64)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
@@ -809,7 +1063,10 @@ Note this is an expensive operation (brings all data to Weld).</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">var</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
 <span class="go">1.0</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">agg</span><span class="p">([</span><span class="s1">&#39;min&#39;</span><span class="p">,</span> <span class="s1">&#39;std&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">[0. 1.]</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">min   0</span>
+<span class="go">std   1</span>
 </pre></div>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
@@ -842,12 +1099,22 @@ Note this is an expensive operation (brings all data to Weld).</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span>
 <span class="go">Series(name=Test, dtype=float32)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">[1. 2. 3. 4.]</span>
+<span class="go">       Test</span>
+<span class="go">---  ------</span>
+<span class="go">  1       1</span>
+<span class="go">  2       2</span>
+<span class="go">  3       3</span>
+<span class="go">  4       4</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">sr</span><span class="p">[(</span><span class="n">sr</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="o">~</span><span class="p">(</span><span class="n">sr</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">)]</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">[2. 3.]</span>
+<span class="go">       Test</span>
+<span class="go">---  ------</span>
+<span class="go">  2       2</span>
+<span class="go">  3       3</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">[2.]</span>
+<span class="go">       Test</span>
+<span class="go">---  ------</span>
+<span class="go">  2       2</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -861,15 +1128,18 @@ Note this is an expensive operation (brings all data to Weld).</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.ndarray or WeldObject, optional</span></dt>
+<dt><strong>data</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.ndarray or WeldObject or list, optional</span></dt>
 <dd><p class="first last">Raw data or Weld expression.</p>
 </dd>
 <dt><strong>index</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Index or RangeIndex or MultiIndex, optional</span></dt>
 <dd><p class="first last">Index linked to the data; it is assumed to be of the same length.
 RangeIndex by default.</p>
 </dd>
-<dt><strong>dtype</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.dtype, optional</span></dt>
-<dd><p class="first last">Numpy dtype of the elements. Inferred from <cite>data</cite> by default.</p>
+<dt><strong>dtype</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.dtype or type, optional</span></dt>
+<dd><p class="first last">Desired Numpy dtype for the elements. If type, it must be a NumPy type, e.g. np.float32.
+If data is np.ndarray with a dtype different to dtype argument,
+it is astype’d to the argument dtype. Note that if data is WeldObject, one must explicitly astype
+to convert type. Inferred from <cite>data</cite> by default.</p>
 </dd>
 <dt><strong>name</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
 <dd><p class="first last">Name of the Series.</p>
@@ -908,6 +1178,122 @@ RangeIndex by default.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="baloo.core.series.Series.apply">
+<code class="descname">apply</code><span class="sig-paren">(</span><em>func</em>, <em>mapping=None</em>, <em>new_dtype=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply an element-wise UDF to the Series.</p>
+<p>There are currently 6 options for using a UDF. First 4 are lazy,
+other 2 are eager and require the use of the raw decorator:</p>
+<ul class="simple">
+<li>One of the predefined functions in baloo.functions.</li>
+<li>Implementing a function which encodes the result. kwargs are automatically passed to it.</li>
+<li>Pure Weld code and mapping.</li>
+<li>Weld code and mapping along with a dynamically linked C++ lib containing the UDF.</li>
+<li><dl class="first docutils">
+<dt>Using a NumPy function, which however is EAGER and hence requires self.values to be raw. Additionally, NumPy</dt>
+<dd>does not support kwargs in (all) functions so must use raw decorator to strip away weld_type.</dd>
+</dl>
+</li>
+<li>Implementing an eager function with the same precondition as above. Use the raw decorator to check this.</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>func</strong> <span class="classifier-delimiter">:</span> <span class="classifier">function or str</span></dt>
+<dd><p class="first last">Weld code as a str to encode or function from baloo.functions.</p>
+</dd>
+<dt><strong>mapping</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict, optional</span></dt>
+<dd><p class="first last">Additional mappings in the weld_template to replace on execution.
+self is added by default to reference to this Series.</p>
+</dd>
+<dt><strong>new_dtype</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy.dtype, optional</span></dt>
+<dd><p class="first last">Specify the new dtype of the result Series.
+If None, it assumes it’s the same dtype as before the apply.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd><p class="first last">With UDF result.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">baloo</span> <span class="k">as</span> <span class="nn">bl</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">weld_template</span> <span class="o">=</span> <span class="s1">&#39;map(</span><span class="si">{self}</span><span class="s1">, |e| e + </span><span class="si">{scalar}</span><span class="s1">)&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;scalar&#39;</span><span class="p">:</span> <span class="s1">&#39;2L&#39;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">weld_template</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">  0   3</span>
+<span class="go">  1   4</span>
+<span class="go">  2   5</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">weld_template2</span> <span class="o">=</span> <span class="s1">&#39;map(</span><span class="si">{self}</span><span class="s1">, |e| e + 3L)&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">weld_template2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">  0   4</span>
+<span class="go">  1   5</span>
+<span class="go">  2   6</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="mf">100.</span><span class="p">])</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">bl</span><span class="o">.</span><span class="n">sqrt</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>  <span class="c1"># lazy predefined function</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">  0   1</span>
+<span class="go">  1   2</span>
+<span class="go">  2  10</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">bl</span><span class="o">.</span><span class="n">sort</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;q&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>  <span class="c1"># eager wrapper over np.sort (which uses raw decorator)</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">  0   1</span>
+<span class="go">  1   2</span>
+<span class="go">  2   3</span>
+<span class="go">  3   4</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">bl</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;q&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>  <span class="c1"># np.sort directly</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">  0   1</span>
+<span class="go">  1   2</span>
+<span class="go">  2   3</span>
+<span class="go">  3   4</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">bl</span><span class="o">.</span><span class="n">raw</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;q&#39;</span><span class="p">)))</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>  <span class="c1"># lambda also works, with x = np.array</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">  0   1</span>
+<span class="go">  1   2</span>
+<span class="go">  2   3</span>
+<span class="go">  3   4</span>
+</pre></div>
+</div>
+<p># check tests/core/cudf/* and tests/core/test_series.test_cudf for C UDF example</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.series.Series.dropna">
+<code class="descname">dropna</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.dropna"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.dropna" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns Series without null values according to Baloo’s convention.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd><p class="first last">Series with no null values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="baloo.core.series.Series.evaluate">
 <code class="descname">evaluate</code><span class="sig-paren">(</span><em>verbose=False</em>, <em>decode=True</em>, <em>passes=None</em>, <em>num_threads=1</em>, <em>apply_experimental=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.evaluate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.evaluate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Evaluates by creating a Series containing evaluated data and index.</p>
@@ -933,6 +1319,56 @@ RangeIndex by default.</p>
 <span class="go">array([False,  True,  True])</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.series.Series.fillna">
+<code class="descname">fillna</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.fillna"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.fillna" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns Series with missing values replaced with value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>value</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{int, float, bytes, bool}</span></dt>
+<dd><p class="first last">Scalar value to replace missing values with.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd><p class="first last">With missing values replaced.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="baloo.core.series.Series.from_pandas">
+<em class="property">classmethod </em><code class="descname">from_pandas</code><span class="sig-paren">(</span><em>series</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.from_pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.from_pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create baloo Series from pandas Series.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>series</strong> <span class="classifier-delimiter">:</span> <span class="classifier">pandas.series.Series</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -962,7 +1398,10 @@ RangeIndex by default.</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">[0 1]</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">  0   0</span>
+<span class="go">  1   1</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -972,14 +1411,59 @@ RangeIndex by default.</p>
 <code class="descname">iloc</code><a class="headerlink" href="#baloo.core.series.Series.iloc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Retrieve Indexer by index.</p>
 <p>Supported iloc functionality exemplified below.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>_ILocIndexer</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
 <span class="go">2</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">[0 1]</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">  0   0</span>
+<span class="go">  1   1</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]))]</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">[0 2]</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">  0   0</span>
+<span class="go">  2   2</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="baloo.core.series.Series.str">
+<code class="descname">str</code><a class="headerlink" href="#baloo.core.series.Series.str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get Access to string functions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>StringMethods</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="sa">b</span><span class="s1">&#39; aB &#39;</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;GoOsfrABA&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  ---------</span>
+<span class="go">  0   ab</span>
+<span class="go">  1  goosfraba</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -1011,9 +1495,50 @@ RangeIndex by default.</p>
 <p class="rubric">Examples</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sr</span> <span class="o">=</span> <span class="n">bl</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">sr</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">evaluate</span><span class="p">())</span>
-<span class="go">[1 2]</span>
+<span class="go">&lt;BLANKLINE&gt;</span>
+<span class="go">---  --</span>
+<span class="go">  1   1</span>
+<span class="go">  2   2</span>
 </pre></div>
 </div>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.series.Series.to_pandas">
+<code class="descname">to_pandas</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.to_pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.to_pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert to pandas Series</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>pandas.series.Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.series.Series.unique">
+<code class="descname">unique</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/series.html#Series.unique"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.series.Series.unique" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return unique values in the Series.</p>
+<p>Note that because it is hash-based, the result will NOT be in the same order (unlike pandas).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>LazyArrayResult</strong></dt>
+<dd><p class="first last">Unique values in random order.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -1091,6 +1616,345 @@ RangeIndex by default.</p>
 </dd></dl>
 
 </div>
+<div class="section" id="module-baloo.core.groupby">
+<span id="baloo-core-groupby-module"></span><h2>baloo.core.groupby module<a class="headerlink" href="#module-baloo.core.groupby" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="baloo.core.groupby.DataFrameGroupBy">
+<em class="property">class </em><code class="descclassname">baloo.core.groupby.</code><code class="descname">DataFrameGroupBy</code><span class="sig-paren">(</span><em>df</em>, <em>by: list</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/groupby.html#DataFrameGroupBy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.groupby.DataFrameGroupBy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Object encoding a groupby operation.</p>
+<dl class="method">
+<dt id="baloo.core.groupby.DataFrameGroupBy.max">
+<code class="descname">max</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/groupby.html#DataFrameGroupBy.max"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.groupby.DataFrameGroupBy.max" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.groupby.DataFrameGroupBy.mean">
+<code class="descname">mean</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/groupby.html#DataFrameGroupBy.mean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.groupby.DataFrameGroupBy.mean" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.groupby.DataFrameGroupBy.min">
+<code class="descname">min</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/groupby.html#DataFrameGroupBy.min"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.groupby.DataFrameGroupBy.min" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.groupby.DataFrameGroupBy.prod">
+<code class="descname">prod</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/groupby.html#DataFrameGroupBy.prod"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.groupby.DataFrameGroupBy.prod" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.groupby.DataFrameGroupBy.size">
+<code class="descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/groupby.html#DataFrameGroupBy.size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.groupby.DataFrameGroupBy.size" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.groupby.DataFrameGroupBy.std">
+<code class="descname">std</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/groupby.html#DataFrameGroupBy.std"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.groupby.DataFrameGroupBy.std" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.groupby.DataFrameGroupBy.sum">
+<code class="descname">sum</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/groupby.html#DataFrameGroupBy.sum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.groupby.DataFrameGroupBy.sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.groupby.DataFrameGroupBy.var">
+<code class="descname">var</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/groupby.html#DataFrameGroupBy.var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.groupby.DataFrameGroupBy.var" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-baloo.core.strings">
+<span id="baloo-core-strings-module"></span><h2>baloo.core.strings module<a class="headerlink" href="#module-baloo.core.strings" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="baloo.core.strings.StringMethods">
+<em class="property">class </em><code class="descclassname">baloo.core.strings.</code><code class="descname">StringMethods</code><span class="sig-paren">(</span><em>data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/strings.html#StringMethods"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.strings.StringMethods" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="baloo.core.strings.StringMethods.capitalize">
+<code class="descname">capitalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/strings.html#StringMethods.capitalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.strings.StringMethods.capitalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert first character to uppercase and remainder to lowercase.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.strings.StringMethods.contains">
+<code class="descname">contains</code><span class="sig-paren">(</span><em>pat</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/strings.html#StringMethods.contains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.strings.StringMethods.contains" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if pat is included within elements.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>pat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.strings.StringMethods.endswith">
+<code class="descname">endswith</code><span class="sig-paren">(</span><em>pat</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/strings.html#StringMethods.endswith"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.strings.StringMethods.endswith" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if elements end with pat.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>pat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.strings.StringMethods.find">
+<code class="descname">find</code><span class="sig-paren">(</span><em>sub</em>, <em>start=0</em>, <em>end=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/strings.html#StringMethods.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.strings.StringMethods.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if elements contain substring.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>sub</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd></dd>
+<dt><strong>start</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">Index to start searching from.</p>
+</dd>
+<dt><strong>end</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">Index to stop searching from.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.strings.StringMethods.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>i</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/strings.html#StringMethods.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.strings.StringMethods.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract i’th character of each element.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>i</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.strings.StringMethods.lower">
+<code class="descname">lower</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/strings.html#StringMethods.lower"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.strings.StringMethods.lower" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert all characters to lowercase.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.strings.StringMethods.replace">
+<code class="descname">replace</code><span class="sig-paren">(</span><em>pat</em>, <em>rep</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/strings.html#StringMethods.replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.strings.StringMethods.replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace first occurrence of pat with rep in each element.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>pat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd></dd>
+<dt><strong>rep</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.strings.StringMethods.slice">
+<code class="descname">slice</code><span class="sig-paren">(</span><em>start=None</em>, <em>stop=None</em>, <em>step=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/strings.html#StringMethods.slice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.strings.StringMethods.slice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Slice substrings from each element.</p>
+<p>Note that negative step is currently not supported.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>start</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd></dd>
+<dt><strong>stop</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd></dd>
+<dt><strong>step</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.strings.StringMethods.split">
+<code class="descname">split</code><span class="sig-paren">(</span><em>pat</em>, <em>side='left'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/strings.html#StringMethods.split"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.strings.StringMethods.split" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split once each element from the left and select a side to return.</p>
+<p>Note this is unlike pandas split in that it essentially combines the split with a select.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>pat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd></dd>
+<dt><strong>side</strong> <span class="classifier-delimiter">:</span> <span class="classifier">{‘left’, ‘right’}</span></dt>
+<dd><p class="first last">Which side of the split to select and return in each element.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.strings.StringMethods.startswith">
+<code class="descname">startswith</code><span class="sig-paren">(</span><em>pat</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/strings.html#StringMethods.startswith"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.strings.StringMethods.startswith" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if elements start with pat.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>pat</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.strings.StringMethods.strip">
+<code class="descname">strip</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/strings.html#StringMethods.strip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.strings.StringMethods.strip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Strip whitespace from start and end of each element.</p>
+<p>Note it currently only looks for whitespace (ASCII 32), not tabs or EOL.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="baloo.core.strings.StringMethods.upper">
+<code class="descname">upper</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/baloo/core/strings.html#StringMethods.upper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#baloo.core.strings.StringMethods.upper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert all characters to uppercase.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Series</strong></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -1117,6 +1981,8 @@ RangeIndex by default.</p>
 <li class="toctree-l1 current"><a class="reference internal" href="baloo.html">Baloo Library</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="baloo.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#">baloo.core package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baloo.functions.html">baloo.functions package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="baloo.io.html">baloo.io package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="baloo.weld.html">baloo.weld package</a></li>
 </ul>
 </li>
