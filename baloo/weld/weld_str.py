@@ -260,38 +260,34 @@ def weld_str_contains(array, pat):
     pat_id = get_weld_obj_id(weld_obj, pat)
 
     weld_template = """let lenPat = len({pat});
-result(
-    for(
-        {array},
-        appender[bool],
-        |b: appender[bool], i: i64, e: vec[i8]|
-            let lenString = len(e);
-            if(lenPat > lenString,
-                merge(b, false),
-                # start by assuming pat is not found, until proven it is
-                let words_iter_res = iterate({{0L, false}}, 
-                    |p| 
-                        let e_i = p.$0;
-                        let pat_i = 0L;
-                        # start by assuming the substring and pat are the same, until proven otherwise
-                        let word_check_res = iterate({{e_i, pat_i, true}}, 
-                            |q| 
-                                let found = lookup(e, q.$0) == lookup({pat}, q.$1);
-                                {{
-                                    {{q.$0 + 1L, q.$1 + 1L, found}}, 
-                                    q.$1 + 1L < lenPat &&
-                                    found == true
-                                }}
-                        ).$2;
-                        {{
-                            {{p.$0 + 1L, word_check_res}}, 
-                            p.$0 + lenPat < lenString &&
-                            word_check_res == false
-                        }}
-                ).$1;
-                merge(b, words_iter_res)
-            )
-    )
+map({array},
+    |e: vec[i8]|
+        let lenString = len(e);
+        if(lenPat > lenString,
+            false,
+            # start by assuming pat is not found, until proven it is
+            let words_iter_res = iterate({{0L, false}}, 
+                |p| 
+                    let e_i = p.$0;
+                    let pat_i = 0L;
+                    # start by assuming the substring and pat are the same, until proven otherwise
+                    let word_check_res = iterate({{e_i, pat_i, true}}, 
+                        |q| 
+                            let found = lookup(e, q.$0) == lookup({pat}, q.$1);
+                            {{
+                                {{q.$0 + 1L, q.$1 + 1L, found}}, 
+                                q.$1 + 1L < lenPat &&
+                                found == true
+                            }}
+                    ).$2;
+                    {{
+                        {{p.$0 + 1L, word_check_res}}, 
+                        p.$0 + lenPat < lenString &&
+                        word_check_res == false
+                    }}
+            ).$1;
+            words_iter_res
+        )
 )"""
 
     weld_obj.weld_code = weld_template.format(array=obj_id,
@@ -432,44 +428,40 @@ def weld_str_find(array, sub, start, end):
 
     # TODO: maybe be more friendly and fix end >= len(e) to be len(e) - 1?
     weld_template = """let lenSub = len({sub});
-result(
-    for(
-        {array},
-        appender[i64],
-        |b: appender[i64], i: i64, e: vec[i8]|
-            let start = {start};
-            let size = {end} - start;
-            let string = slice(e, start, size);
-            let lenString = len(string);
-            if(lenSub > lenString,
-                merge(b, -1L),
-                # start by assuming sub is not found, until proven it is
-                let words_iter_res = iterate({{0L, false}}, 
-                    |p| 
-                        let e_i = p.$0;
-                        let pat_i = 0L;
-                        # start by assuming the substring and sub are the same, until proven otherwise
-                        let word_check_res = iterate({{e_i, pat_i, true}}, 
-                            |q| 
-                                let found = lookup(string, q.$0) == lookup({sub}, q.$1);
-                                {{
-                                    {{q.$0 + 1L, q.$1 + 1L, found}}, 
-                                    q.$1 + 1L < lenSub &&
-                                    found == true
-                                }}
-                        ).$2;
-                        {{
-                            {{p.$0 + 1L, word_check_res}}, 
-                            p.$0 + lenSub < lenString &&
-                            word_check_res == false
-                        }}
-                );
-                if(words_iter_res.$1 == true,
-                    merge(b, words_iter_res.$0 - 1L + start),
-                    merge(b, -1L)
-                )
+map({array},
+    |e: vec[i8]|
+        let start = {start};
+        let size = {end} - start;
+        let string = slice(e, start, size);
+        let lenString = len(string);
+        if(lenSub > lenString,
+            -1L,
+            # start by assuming sub is not found, until proven it is
+            let words_iter_res = iterate({{0L, false}}, 
+                |p| 
+                    let e_i = p.$0;
+                    let pat_i = 0L;
+                    # start by assuming the substring and sub are the same, until proven otherwise
+                    let word_check_res = iterate({{e_i, pat_i, true}}, 
+                        |q| 
+                            let found = lookup(string, q.$0) == lookup({sub}, q.$1);
+                            {{
+                                {{q.$0 + 1L, q.$1 + 1L, found}}, 
+                                q.$1 + 1L < lenSub &&
+                                found == true
+                            }}
+                    ).$2;
+                    {{
+                        {{p.$0 + 1L, word_check_res}}, 
+                        p.$0 + lenSub < lenString &&
+                        word_check_res == false
+                    }}
+            );
+            if(words_iter_res.$1 == true,
+                words_iter_res.$0 - 1L + start,
+                -1L
             )
-    )
+        )
 )"""
 
     weld_obj.weld_code = weld_template.format(array=obj_id,
