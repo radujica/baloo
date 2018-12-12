@@ -29,7 +29,6 @@ class StringMethods(object):
         """
         return _series_str_result(self, weld_str_upper)
 
-    # TODO: fix this to do the latter
     def capitalize(self):
         """Convert first character to uppercase and remainder to lowercase.
 

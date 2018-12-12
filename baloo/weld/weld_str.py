@@ -103,7 +103,10 @@ def weld_str_capitalize(array):
                 for(slice(e, 1L, lenString - 1L),
                     res,
                     |c: appender[i8], j: i64, f: i8|
-                        merge(c, f)
+                        if(f > 64c && f < 91c,
+                            merge(c, f + 32c),
+                            merge(c, f)
+                        )
                 )
             ),
             e)

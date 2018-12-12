@@ -18,7 +18,7 @@ class TestSeriesStr(object):
 
     def test_capitalize(self, series_str, index_i64):
         actual = series_str.str.capitalize()
-        expected = Series([b'A', b'Abc', b'Goosfraba', b'   dC  ', b'SecrETariat'], index_i64)
+        expected = Series([b'A', b'Abc', b'Goosfraba', b'   dc  ', b'Secretariat'], index_i64)
 
         assert_series_equal(actual, expected)
 
