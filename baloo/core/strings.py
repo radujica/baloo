@@ -1,8 +1,10 @@
 from .series import Series
 from .utils import check_type
-from ..weld import weld_str_lower, weld_str_upper, weld_str_capitalize, weld_str_get, weld_str_strip, weld_str_slice
+from ..weld import weld_str_lower, weld_str_upper, weld_str_capitalize, weld_str_get, weld_str_strip, weld_str_slice, \
+    weld_str_contains, weld_to_numpy_dtype, WeldBit
 
 
+# TODO: docs
 class StringMethods(object):
     def __init__(self, data):
         self._data = check_type(data, Series)
@@ -50,4 +52,12 @@ class StringMethods(object):
         return Series(weld_str_slice(self._data.values, start, stop, step),
                       self._data.index,
                       self._data.dtype,
+                      self._data.name)
+
+    def contains(self, pat):
+        check_type(pat, str)
+
+        return Series(weld_str_contains(self._data.values, pat),
+                      self._data.index,
+                      weld_to_numpy_dtype(WeldBit()),
                       self._data.name)
