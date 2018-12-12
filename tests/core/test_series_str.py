@@ -82,3 +82,15 @@ class TestSeriesStr(object):
         expected = Series([b'xz', b'zxz', b'zx', b'  x  ', b'a'], index_i64)
 
         assert_series_equal(actual, expected)
+
+    def test_split_left(self, series_str, index_i64):
+        actual = Series([b'abz', b'zabz', b'zab', b'  ab  ', b'a']).str.split('ab', 'left')
+        expected = Series([b'', b'z', b'z', b'  ', b'a'], index_i64)
+
+        assert_series_equal(actual, expected)
+
+    def test_split_right(self, series_str, index_i64):
+        actual = Series([b'abz', b'zabz', b'zab', b'  ab  ', b'a']).str.split('ab', 'right')
+        expected = Series([b'z', b'z', b'', b'  ', b'a'], index_i64)
+
+        assert_series_equal(actual, expected)

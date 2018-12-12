@@ -2,7 +2,7 @@ from .series import Series
 from .utils import check_type
 from ..weld import weld_str_lower, weld_str_upper, weld_str_capitalize, weld_str_get, weld_str_strip, weld_str_slice, \
     weld_str_contains, weld_to_numpy_dtype, WeldBit, weld_str_startswith, weld_str_endswith, weld_str_find, WeldLong, \
-    weld_str_replace
+    weld_str_replace, weld_str_split
 
 
 # TODO: docs
@@ -92,12 +92,30 @@ class StringMethods(object):
                       weld_to_numpy_dtype(WeldLong()),
                       self._data.name)
 
-    # TODO: replace multiple occurrences
+    # TODO: replace multiple occurrences, not just 1
     def replace(self, pat, rep):
         check_type(pat, str)
         check_type(rep, str)
 
         return Series(weld_str_replace(self._data.values, pat, rep),
+                      self._data.index,
+                      self._data.dtype,
+                      self._data.name)
+
+    _split_mapping = {
+        'left': 0,
+        'right': 1
+    }
+
+    # TODO: rsplit
+    def split(self, pat, side='left'):
+        check_type(pat, str)
+        check_type(side, str)
+
+        if side not in self._split_mapping:
+            raise ValueError('Can only select left or right side of split')
+
+        return Series(weld_str_split(self._data.values, pat, self._split_mapping[side]),
                       self._data.index,
                       self._data.dtype,
                       self._data.name)
