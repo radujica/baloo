@@ -4,7 +4,6 @@ from .convertors import default_missing_data_literal
 from .weld_utils import create_weld_object, to_weld_literal, get_weld_obj_id
 
 
-# TODO: generalize if possible later
 def weld_str_lower(array):
     """Convert values to lowercase.
 
@@ -198,7 +197,7 @@ def _prepare_slice(i, default):
         return to_weld_literal(i, WeldLong())
 
 
-# TODO: allow negative step ~ requires Weld fix
+# TODO: check & allow negative step ~ requires Weld fix
 def weld_str_slice(array, start=None, stop=None, step=None):
     """Slice each element.
 

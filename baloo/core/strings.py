@@ -168,7 +168,7 @@ class StringMethods(object):
                       weld_to_numpy_dtype(WeldLong()),
                       self._data.name)
 
-    # TODO: replace multiple occurrences, not just 1
+    # TODO: replace multiple occurrences, not just first
     def replace(self, pat, rep):
         """Replace first occurrence of pat with rep in each element.
 

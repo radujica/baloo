@@ -36,6 +36,11 @@ def series_str(data_str, index_i64):
 
 
 @pytest.fixture(scope='module')
+def series_str_2(index_i64):
+    return Series([b'abz', b'zabz', b'zab', b'  ab  ', b'a'], index_i64, np.bytes_)
+
+
+@pytest.fixture(scope='module')
 def index_i64():
     return Index(np.arange(5), np.dtype(np.int64))
 
