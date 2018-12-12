@@ -11,36 +11,21 @@ class StringMethods(object):
         self._data = check_type(data, Series)
 
     def lower(self):
-        return Series(weld_str_lower(self._data.values),
-                      self._data.index,
-                      self._data.dtype,
-                      self._data.name)
+        return _series_str_result(self, weld_str_lower)
 
     def upper(self):
-        return Series(weld_str_upper(self._data.values),
-                      self._data.index,
-                      self._data.dtype,
-                      self._data.name)
+        return _series_str_result(self, weld_str_upper)
 
     def capitalize(self):
-        return Series(weld_str_capitalize(self._data.values),
-                      self._data.index,
-                      self._data.dtype,
-                      self._data.name)
+        return _series_str_result(self, weld_str_capitalize)
 
     def get(self, i):
         check_type(i, int)
 
-        return Series(weld_str_get(self._data.values, i),
-                      self._data.index,
-                      self._data.dtype,
-                      self._data.name)
+        return _series_str_result(self, weld_str_get, i=i)
 
     def strip(self):
-        return Series(weld_str_strip(self._data.values),
-                      self._data.index,
-                      self._data.dtype,
-                      self._data.name)
+        return _series_str_result(self, weld_str_strip)
 
     def slice(self, start=None, stop=None, step=None):
         check_type(start, int)
@@ -50,34 +35,22 @@ class StringMethods(object):
         if step is not None and step < 0:
             raise ValueError('Only positive steps are currently supported')
 
-        return Series(weld_str_slice(self._data.values, start, stop, step),
-                      self._data.index,
-                      self._data.dtype,
-                      self._data.name)
+        return _series_str_result(self, weld_str_slice, start=start, stop=stop, step=step)
 
     def contains(self, pat):
         check_type(pat, str)
 
-        return Series(weld_str_contains(self._data.values, pat),
-                      self._data.index,
-                      weld_to_numpy_dtype(WeldBit()),
-                      self._data.name)
+        return _series_bool_result(self, weld_str_contains, pat=pat)
 
     def startswith(self, pat):
         check_type(pat, str)
 
-        return Series(weld_str_startswith(self._data.values, pat),
-                      self._data.index,
-                      weld_to_numpy_dtype(WeldBit()),
-                      self._data.name)
+        return _series_bool_result(self, weld_str_startswith, pat=pat)
 
     def endswith(self, pat):
         check_type(pat, str)
 
-        return Series(weld_str_endswith(self._data.values, pat),
-                      self._data.index,
-                      weld_to_numpy_dtype(WeldBit()),
-                      self._data.name)
+        return _series_bool_result(self, weld_str_endswith, pat=pat)
 
     def find(self, sub, start=0, end=None):
         check_type(sub, str)
@@ -97,25 +70,34 @@ class StringMethods(object):
         check_type(pat, str)
         check_type(rep, str)
 
-        return Series(weld_str_replace(self._data.values, pat, rep),
-                      self._data.index,
-                      self._data.dtype,
-                      self._data.name)
-
-    _split_mapping = {
-        'left': 0,
-        'right': 1
-    }
+        return _series_str_result(self, weld_str_replace, pat=pat, rep=rep)
 
     # TODO: rsplit
     def split(self, pat, side='left'):
         check_type(pat, str)
         check_type(side, str)
 
-        if side not in self._split_mapping:
+        # don't want this made with the object
+        _split_mapping = {
+            'left': 0,
+            'right': 1
+        }
+
+        if side not in _split_mapping:
             raise ValueError('Can only select left or right side of split')
 
-        return Series(weld_str_split(self._data.values, pat, self._split_mapping[side]),
-                      self._data.index,
-                      self._data.dtype,
-                      self._data.name)
+        return _series_str_result(self, weld_str_split, pat=pat, side=_split_mapping[side])
+
+
+def _series_str_result(series, func, **kwargs):
+    return Series(func(series._data.values, **kwargs),
+                  series._data.index,
+                  series._data.dtype,
+                  series._data.name)
+
+
+def _series_bool_result(series, func, **kwargs):
+    return Series(func(series._data.values, **kwargs),
+                  series._data.index,
+                  weld_to_numpy_dtype(WeldBit()),
+                  series._data.name)
