@@ -76,3 +76,9 @@ class TestSeriesStr(object):
         expected = Series([-1, 1, 1, -1, -1], index_i64)
 
         assert_series_equal(actual, expected)
+
+    def test_replace(self, series_str, index_i64):
+        actual = Series([b'abz', b'zabz', b'zab', b'  ab  ', b'a']).str.replace('ab', 'x')
+        expected = Series([b'xz', b'zxz', b'zx', b'  x  ', b'a'], index_i64)
+
+        assert_series_equal(actual, expected)

@@ -470,3 +470,84 @@ map({array},
                                               end=end)
 
     return weld_obj
+
+
+def weld_str_replace(array, pat, rep):
+    """Replace first occurence of pat with rep.
+
+    Parameters
+    ----------
+    array : numpy.ndarray or WeldObject
+        Input data.
+    pat : str
+        To find.
+    rep : str
+        To replace with.
+
+    Returns
+    -------
+    WeldObject
+        Representation of this computation.
+
+    """
+    obj_id, weld_obj = create_weld_object(array)
+    pat_id = get_weld_obj_id(weld_obj, pat)
+    rep_id = get_weld_obj_id(weld_obj, rep)
+
+    weld_template = """let lenPat = len({pat});
+map({array},
+    |e: vec[i8]|
+        let lenString = len(e);
+        if(lenPat > lenString,
+            e,
+            # start by assuming sub is not found, until proven it is
+            let words_iter_res = iterate({{0L, false}}, 
+                |p| 
+                    let e_i = p.$0;
+                    let pat_i = 0L;
+                    # start by assuming the substring and sub are the same, until proven otherwise
+                    let word_check_res = iterate({{e_i, pat_i, true}}, 
+                        |q| 
+                            let found = lookup(e, q.$0) == lookup({pat}, q.$1);
+                            {{
+                                {{q.$0 + 1L, q.$1 + 1L, found}}, 
+                                q.$1 + 1L < lenPat &&
+                                found == true
+                            }}
+                    ).$2;
+                    {{
+                        {{p.$0 + 1L, word_check_res}}, 
+                        p.$0 + lenPat < lenString &&
+                        word_check_res == false
+                    }}
+            );
+            if(words_iter_res.$1 == true,
+                let rep_from = words_iter_res.$0 - 1L;
+                let rep_to = rep_from + lenPat;
+                let res = appender[i8];
+                let res = for(slice(e, 0L, rep_from),
+                    res,
+                    |c: appender[i8], j: i64, f: i8|
+                        merge(c, f)                    
+                );
+                let res = for({rep},
+                    res,
+                    |c: appender[i8], j: i64, f: i8|
+                        merge(c, f)                    
+                );
+                let res = for(slice(e, rep_to, lenString),
+                    res,
+                    |c: appender[i8], j: i64, f: i8|
+                        merge(c, f)                    
+                );
+                result(res),
+                e
+            )
+        )
+)"""
+
+    weld_obj.weld_code = weld_template.format(array=obj_id,
+                                              pat=pat_id,
+                                              rep=rep_id)
+
+    return weld_obj
