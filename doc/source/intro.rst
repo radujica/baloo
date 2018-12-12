@@ -21,6 +21,37 @@ there are also `from_pandas` and `to_pandas` methods available to freely move fr
 for baloo to be useful, most operations should go through it.
 
 
+Functionality Overview
+----------------------
+
+Baloo contains documentation and examples for all the supported operations. However, as a first look into Baloo,
+here is some of the implemented functionality:
+
+* Numerical operations, such as `+` or `*`.
+
+* Unary operations, such as `sqrt` or `log`.
+
+* Filters, bool operations, and sub-setting, including `head` and `tail`.
+
+* Aggregations, such as `max`, `mean`, or `std`.
+
+* DataFrame joins, including all of `inner`, `left`, `right`, `outer`.
+
+* GroupBy and aggregations.
+
+* Multiple kinds of UDFs.
+
+* To/from Pandas conversion.
+
+* Missing values support, such as `dropna` and `fillna`.
+
+* `iloc`.
+
+* String manipulation through `.str` for methods, such as `split` or `contains`.
+
+... and more.
+
+
 Data Types
 ----------
 

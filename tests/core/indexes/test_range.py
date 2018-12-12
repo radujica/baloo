@@ -36,6 +36,11 @@ class TestRangeIndex(object):
 
         assert_range_equal(actual, range_index)
 
+    # TODO: change when implemented
+    def test_init_negative_step(self):
+        with pytest.raises(ValueError):
+            RangeIndex(5, 0, -1)
+
     def test_evaluate(self, index_i64, range_index):
         actual = range_index.evaluate()
         expected = index_i64

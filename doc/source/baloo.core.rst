@@ -37,3 +37,10 @@ baloo.core.groupby module
 .. automodule:: baloo.core.groupby
     :members:
     :undoc-members:
+
+baloo.core.strings module
+-------------------------
+
+.. automodule:: baloo.core.strings
+    :members:
+    :undoc-members:

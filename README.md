@@ -47,6 +47,7 @@ Shall be later published on pypi.
     
     // the following require running through pipenv shell for correct python and path
     cd baloo/weld/convertors && make            // make the convertors
+    // baloo-docs/html should have baloo repo as remote on gh-pages branch s.t. new docs can be pushed
     cd doc && make html                         // generate documentation in baloo-adjacent dir baloo-docs
     cd doc && make doctest                      // run doc examples
     cd benchmarks && python run.py              // run benchmarks ~ correctness checks, plots, and memory profile

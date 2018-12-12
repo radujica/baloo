@@ -95,7 +95,7 @@ class TestDataFrame(object):
         data = [2, 3]
         expected = DataFrame(OrderedDict((('a', np.array(data, dtype=np.float32)),
                                           ('b', np.array(data)),
-                                          ('c', np.array(['abc', 'goosfraba'], dtype=np.dtype('|S11'))))),
+                                          ('c', np.array(['Abc', 'goosfraba'], dtype=np.dtype('|S11'))))),
                              Index(np.array([1, 2])))
 
         assert_dataframe_equal(actual, expected)
@@ -105,7 +105,7 @@ class TestDataFrame(object):
         data = [2, 3]
         expected = DataFrame(OrderedDict((('a', np.array(data, dtype=np.float32)),
                                           ('b', np.array(data)),
-                                          ('c', np.array(['abc', 'goosfraba'], dtype=np.dtype('|S11'))))),
+                                          ('c', np.array(['Abc', 'goosfraba'], dtype=np.dtype('|S11'))))),
                              Index(np.array([1, 2])))
 
         assert_dataframe_equal(actual, expected)
@@ -158,7 +158,7 @@ class TestDataFrame(object):
         data = [1, 2]
         expected = DataFrame(OrderedDict((('a', np.array(data, dtype=np.float32)),
                                           ('b', np.array(data)),
-                                          ('c', np.array(['a', 'abc'], dtype=np.dtype('|S11'))))),
+                                          ('c', np.array(['a', 'Abc'], dtype=np.dtype('|S11'))))),
                              Index(np.array([0, 1])))
 
         assert_dataframe_equal(actual, expected)
@@ -168,7 +168,7 @@ class TestDataFrame(object):
         data = [4, 5]
         expected = DataFrame(OrderedDict((('a', np.array(data, dtype=np.float32)),
                                           ('b', np.array(data)),
-                                          ('c', np.array(['   dc  ', 'secretariat'], dtype=np.dtype('|S11'))))),
+                                          ('c', np.array(['   dC  ', 'secrETariat'], dtype=np.dtype('|S11'))))),
                              Index(np.array([3, 4])))
 
         assert_dataframe_equal(actual, expected)
@@ -180,7 +180,7 @@ class TestDataFrame(object):
         data = [1, 3, 4]
         expected = DataFrame(OrderedDict((('a', np.array(data, dtype=np.float32)),
                                           ('b', np.array(data)),
-                                          ('c', np.array(['a', 'goosfraba', '   dc  '], dtype=np.dtype('|S11'))))),
+                                          ('c', np.array(['a', 'goosfraba', '   dC  '], dtype=np.dtype('|S11'))))),
                              Index(np.array([0, 2, 3])))
 
         assert_dataframe_equal(actual, expected)
