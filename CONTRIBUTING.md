@@ -46,7 +46,9 @@ Install pipenv:
     cd benchmarks && python run.py              // correctness checks, plots, and memory profile
     
 ## Distribution
+    pipenv shell
     python setup.py bdist_wheel                 // build wheel distribution ~ binary
-    TODO: mention how to setup pypi
+    twine upload -r pypi --username <ask-me> dist/*.whl
     
-Source code distribution, i.e. through `sdist`, not currently implemented.
+- Source code distribution, i.e. through `sdist`, not currently implemented.
+- pypi-test does not have tabulate so can't test there

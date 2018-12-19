@@ -23,16 +23,7 @@ Weld is, indeed, expected to scale well due to features such as vectorization, h
 the improved computation time for small datasets. Nevertheless, Baloo currently only supports a very limited subset of
 Pandas. More work coming soon!
 
-## Requirements
-Ideally, a `pip install pyweld` would be enough. However, the pyweld package is not currently maintained on pypi 
-so need to build ourselves:
-
-1) Build Weld. Follow instructions [here](https://github.com/weld-project/weld). 
-Latest work is being done on llvm-st branch.
-2) pyweld (included in Weld ^): `pip install <path-to-pyweld-setup.py>` 
-
-## Install ~ users
-    git clone https://github.com/radujica/baloo.git
-    cd baloo && python setup.py install
+## Install
+    pip install baloo
     
-Shall be later published on pypi.
+Note that currently it has only tested on Python 3.5.2.
