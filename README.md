@@ -36,20 +36,3 @@ Latest work is being done on llvm-st branch.
     cd baloo && python setup.py install
     
 Shall be later published on pypi.
-
-## Develop
-    git clone https://github.com/radujica/baloo.git && cd baloo
-    // update path to pyweld in Pipfile
-    pipenv install --dev                        // install all requirements
-    pipenv run pip install -e <path-to-baloo>   // install baloo in editable mode
-    
-    pipenv run pytest                           // run tests
-    
-    // the following require running through pipenv shell for correct python and path
-    cd baloo/weld/convertors && make            // make the convertors
-    // baloo-docs/html should have baloo repo as remote on gh-pages branch s.t. new docs can be pushed
-    cd doc && make html                         // generate documentation in baloo-adjacent dir baloo-docs
-    cd doc && make doctest                      // run doc examples
-    cd benchmarks && python run.py              // run benchmarks ~ correctness checks, plots, and memory profile
-    python setup.py sdist                       // source distribution
-    python setup.py bdist_wheel                 // wheel distribution ~ built package; requires pip install wheel
