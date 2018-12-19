@@ -4,12 +4,22 @@ Whether or not you state this explicitly, by submitting any copyrighted material
 pull request, email, or other means you agree to license the material under the 
 project's open source license and warrant that you have the legal authority to do so.
 
-# Notes about development
+# Contributing
 
-I used Python 3.5.2, different versions require more testing ~ (TODO) setup tox.
-Similarly, only built on my Mint 64bit distribution. Should work on other 64bit Linux but
-needs checks for 32bit and MAC (TODO). Windows won't work due to linux threads and other
-problems; check relevant issue on Weld project attempting to make it work.
+With that out of the way, if interested to contribute there are many smaller or larger
+patches that need to be done:
+ 
+- The code itself has several TODOs that can be checked/implemented. Most importantly, 
+    there are several places where the Weld code can be optimized (e.g. through annotations) but
+    also the Python code (e.g. by restricting the number of new objects created and caching)
+- Need to setup tox and/or manylinux project for different Python versions but also linux 32bit and MAC.
+    Windows would be amazing however it has proved very difficult to make it work (check Weld issues)
+- Some other deployment steps could also be automated with travis, e.g. publishing documentation or pypi.
+- Could also add coveralls or landscape.
+- Many new features are desired and most of them are tracked in the github project. Contact me if
+interested.
+
+# Development
 
 Install pipenv:
 
@@ -49,6 +59,9 @@ Install pipenv:
     cd benchmarks && python run.py              // correctness checks, plots, and memory profile
     
 ## Distribution
+Travis is set to build Weld from scratch and test with that, however the pypi deployment contains only
+specific binaries for Weld and the converters. Currently, the latest Weld master has been used.
+
     pipenv shell
     // build wheel distribution ~ binary
     python setup.py bdist_wheel (-p posix)?            
@@ -59,3 +72,7 @@ Install pipenv:
     
 - Source code distribution, i.e. through `sdist`, not currently implemented.
 - pypi-test does not have tabulate so can't test there
+
+## Other Notes
+
+I used Python 3.5.2 and built on Mint 64bit distribution.
