@@ -251,7 +251,8 @@ class DataFrame(BinaryOps, BalooCommon):
 
         default_index_name = ' '
         str_data = OrderedDict()
-        str_data.update((name, shorten_data(data.values)) for name, data in self.index._gather_data(default_index_name).items())
+        str_data.update((name, shorten_data(data.values))
+                        for name, data in self.index._gather_data(default_index_name).items())
         str_data.update((column.name, shorten_data(column.values)) for column in self._iter())
 
         return tabulate(str_data, headers='keys')

@@ -1,8 +1,7 @@
-from weld.types import WeldInt16, WeldLong, WeldFloat, WeldBit, WeldDouble, WeldInt
-from weld.weldobject import WeldObject
-
 from .cache import Cache
 from .convertors import NumPyEncoder, NumPyDecoder
+from .pyweld.types import WeldInt16, WeldLong, WeldFloat, WeldBit, WeldDouble, WeldInt
+from .pyweld.weldobject import WeldObject
 
 _encoder = NumPyEncoder()
 _decoder = NumPyDecoder()

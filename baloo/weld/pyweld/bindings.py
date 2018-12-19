@@ -1,23 +1,10 @@
 import copy
-import platform
 from ctypes import *
 
-import pkg_resources
+from ...config import WELD_PATH
 
 # Implements a wrapper around the Weld API.
-system = platform.system()
-if system == 'Linux':
-    lib_file = "libweld.so"
-elif system == 'Windows':
-    lib_file = "libweld.dll"
-elif system == 'Darwin':
-    lib_file = "libweld.dylib"
-else:
-    raise OSError("Unsupported platform {}", system)
-
-lib_file = pkg_resources.resource_filename(__name__, lib_file)
-
-weld = CDLL(lib_file, mode=RTLD_GLOBAL)
+weld = CDLL(WELD_PATH, mode=RTLD_GLOBAL)
 
 
 # Used for some type checking carried out by ctypes

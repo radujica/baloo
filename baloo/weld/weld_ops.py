@@ -1,7 +1,8 @@
 import numpy as np
 
 from .convertors import default_missing_data_literal
-from .lazy_result import WeldVec, WeldChar, WeldLong, LazyArrayResult, WeldObject, LazyStructOfVecResult
+from .lazy_result import LazyArrayResult, LazyStructOfVecResult
+from .pyweld import WeldVec, WeldChar, WeldLong, WeldObject
 from .weld_utils import get_weld_obj_id, create_weld_object, to_weld_literal, create_empty_weld_object, \
     weld_arrays_to_vec_of_struct, weld_vec_of_struct_to_struct_of_vec, Cache, weld_select_from_struct, \
     extract_placeholder_weld_objects, struct_of

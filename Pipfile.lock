@@ -343,7 +343,7 @@
                 "sha256:25199318e8cc3c25dcb45cbe084cc061051336d5a9ea2a12448d3d8cb748f742",
                 "sha256:5887121d7f7df3603bca2f710e7219f3eca0eb69e0b7cc6e0a022e155ac931a7"
             ],
-            "markers": "python_version < '3.6'",
+            "markers": "python_version != '3.1.*' and python_version >= '2.6' and python_version != '3.0.*'",
             "version": "==2.3.3"
         },
         "pluggy": {

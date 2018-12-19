@@ -1,6 +1,7 @@
 from .cache import Cache
 from .convertors import default_missing_data_literal
-from .lazy_result import LazyStructOfVecResult, WeldLong, WeldStruct, LazyStructResult, WeldVec, WeldChar
+from .lazy_result import LazyStructOfVecResult, LazyStructResult
+from .pyweld import WeldLong, WeldStruct, WeldVec, WeldChar
 from .weld_utils import weld_arrays_to_vec_of_struct, create_empty_weld_object, get_weld_obj_id, \
     extract_placeholder_weld_objects, extract_placeholder_weld_objects_from_index, weld_data_to_dict, struct_of
 

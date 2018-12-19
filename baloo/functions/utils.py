@@ -2,7 +2,7 @@ from ctypes import CDLL
 from functools import wraps
 from os import RTLD_GLOBAL
 
-from weld.weldobject import WeldObject
+from ..weld import WeldObject
 
 
 def load_cudf(path_to_so):

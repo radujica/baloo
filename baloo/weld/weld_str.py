@@ -1,6 +1,5 @@
-from weld.types import WeldLong, WeldChar, WeldVec
-
 from .convertors import default_missing_data_literal
+from .pyweld import WeldLong, WeldVec, WeldChar
 from .weld_utils import create_weld_object, to_weld_literal, get_weld_obj_id
 
 

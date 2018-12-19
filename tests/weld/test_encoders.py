@@ -1,10 +1,8 @@
 import numpy as np
 import pytest
-from weld.types import *
-from weld.weldobject import WeldObject
 
-from baloo.weld.convertors import NumPyEncoder, NumPyDecoder
-from baloo.weld.lazy_result import LazyResult
+from baloo.weld import LazyResult, NumPyEncoder, NumPyDecoder
+from baloo.weld.pyweld import *
 
 
 # TODO: should be restricted to the encoders, i.e. not through LazyResult/WeldObject

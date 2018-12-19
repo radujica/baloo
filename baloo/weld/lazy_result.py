@@ -1,8 +1,8 @@
-from weld.weldobject import *
-
 from .cache import Cache
 from .convertors import numpy_to_weld_type
 from .convertors.utils import to_weld_vec
+from .pyweld.types import WeldStruct, WeldVec, WeldLong, WeldDouble
+from .pyweld.weldobject import WeldObject
 from .weld_aggs import weld_aggregate, weld_count
 from .weld_utils import weld_cast_array
 

@@ -1,5 +1,6 @@
 OS=$(shell uname -s)
 LLVM_VERSION=$(shell llvm-config --version | cut -d . -f 1,2)
+OUTPUT_FILE="../libs/numpy_weld_convertor"
 
 ifndef EXEC
   EXEC=python
@@ -35,7 +36,7 @@ else
 endif
 
 convertor:
-	${CLANG} ${DFLAGS} -w -march=native $(PYTHON_LDFLAGS) numpy.cpp -o numpy_weld_convertor${DYLIB_SUFFIX}  ${PYTHON_INCLUDES}
+	${CLANG} ${DFLAGS} -w -march=native $(PYTHON_LDFLAGS) numpy.cpp -o ${OUTPUT_FILE}${DYLIB_SUFFIX}  ${PYTHON_INCLUDES}
 
 clean:
-	rm -rf run numpy_weld_convertor${DYLIB_SUFFIX} *.pyc
+	rm -rf run ${OUTPUT_FILE}${DYLIB_SUFFIX} *.pyc

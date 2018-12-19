@@ -1,6 +1,6 @@
 import sys
 
-from weld.types import *
+from ..pyweld.types import WeldVec
 
 
 def to_weld_vec(weld_type, ndim):
