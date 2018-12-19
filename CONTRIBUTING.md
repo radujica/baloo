@@ -7,6 +7,9 @@ project's open source license and warrant that you have the legal authority to d
 # Notes about development
 
 I used Python 3.5.2, different versions require more testing ~ (TODO) setup tox.
+Similarly, only built on my Mint 64bit distribution. Should work on other 64bit Linux but
+needs checks for 32bit and MAC (TODO). Windows won't work due to linux threads and other
+problems; check relevant issue on Weld project attempting to make it work.
 
 Install pipenv:
 
@@ -47,8 +50,12 @@ Install pipenv:
     
 ## Distribution
     pipenv shell
-    python setup.py bdist_wheel                 // build wheel distribution ~ binary
-    twine upload -r pypi --username <ask-me> dist/*.whl
+    // build wheel distribution ~ binary
+    python setup.py bdist_wheel (-p posix)?            
+    // upload on pypi
+    twine upload -r pypi --username <ask-me> dist/<wheel>.whl
+    // check long-description aka README rendering
+    twine check dist/<wheel>.whl
     
 - Source code distribution, i.e. through `sdist`, not currently implemented.
 - pypi-test does not have tabulate so can't test there

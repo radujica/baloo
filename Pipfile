@@ -16,3 +16,4 @@ matplotlib = "*"
 memory-profiler = "*"
 wheel = "*"
 twine = "*"
+readme-renderer = {version = "*", extras = ["md"]}

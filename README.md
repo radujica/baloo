@@ -26,4 +26,4 @@ Pandas. More work coming soon!
 ## Install
     pip install baloo
     
-Note that currently it has only tested on Python 3.5.2.
+Note that currently it has only been tested on Python 3.5.2.
