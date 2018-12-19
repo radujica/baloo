@@ -7,7 +7,6 @@ verify_ssl = true
 
 [packages]
 "baloo" = {path = ".", editable = true}
-"local_pyweld" = {path = "/home/dimebag/Workspace/weldr/weld/python/pyweld", editable = true}
 
 [dev-packages]
 sphinx = "*"

@@ -1,8 +1,3 @@
-#
-# WeldObject
-#
-# Holds an object that can be evaluated.
-#
 from __future__ import print_function
 
 import ctypes
@@ -13,45 +8,36 @@ from .types import *
 
 
 class WeldObjectEncoder(object):
-    """
-    An abstract class that must be overwridden by libraries. This class
-    is used to marshall objects from Python types to Weld types.
-    """
+    """An abstract class that must be overridden by libraries. This class
+    is used to marshall objects from Python types to Weld types."""
     def encode(self, obj):
-        """
-        Encodes an object. All objects encodable by this encoder should return
-        a valid Weld type using py_to_weld_type.
-        """
+        """Encodes an object. All objects encode-able by this encoder should return
+        a valid Weld type using py_to_weld_type."""
         raise NotImplementedError
 
     def py_to_weld_type(self, obj):
-        """
-        Returns a WeldType corresponding to a Python object
-        """
+        """Returns a WeldType corresponding to a Python object."""
         raise NotImplementedError
 
 
 class WeldObjectDecoder(object):
-    """
-    An abstract class that must be overwridden by libraries. This class
-    is used to marshall objects from Weld types to Python types.
-    """
+    """An abstract class that must be overridden by libraries. This class
+    is used to marshall objects from Weld types to Python types."""
     def decode(self, obj, restype):
-        """
-        Decodes obj, assuming object is of type `restype`. obj's Python
-        type is ctypes.POINTER(restype.ctype_class).
-        """
+        """Decodes obj, assuming object is of type `restype`. obj's Python
+        type is ctypes.POINTER(restype.ctype_class)."""
         raise NotImplementedError
 
 
 class WeldObject(object):
-    """
-    Holds a Weld program to be lazily compiled and evaluated,
+    """Holds a Weld program to be lazily compiled and evaluated,
     along with any context required to evaluate the program.
+
     Libraries that use the Weld API return WeldObjects, which represent
     "lazy executions" of programs. WeldObjects can build on top of each other,
     i.e. libraries should be implemented so they can accept both their
     native types and WeldObjects.
+
     An WeldObject contains a Weld program as a string, along with a context.
     The context maps names in the Weld program to concrete values.
     When a WeldObject is evaluated, it uses its encode and decode functions to
@@ -101,8 +87,9 @@ class WeldObject(object):
         return name
 
     def update(self, value, tys=None, override=True):
-        """
-        Update this context. if value is another context,
+        """Update this context.
+
+        If value is another context,
         the names from that context are added into this one.
         Otherwise, a new name is assigned and returned.
         TODO tys for inputs.
@@ -119,6 +106,7 @@ class WeldObject(object):
             self.context[name] = value
             if tys is not None and not override:
                 self.argtypes[name] = tys
+
             return name
 
     def get_let_statements(self):
@@ -137,8 +125,8 @@ class WeldObject(object):
             for key in sorted(cur_obj.dependencies.keys()):
                 queue.append(cur_obj.dependencies[key])
             visited.add(cur_obj_id)
-        let_statements.sort()  # To ensure that let statements are in the right
-        # order in the final generated program
+        let_statements.sort()  # To ensure that let statements are in the right order in the final generated program
+
         return "\n".join(let_statements)
 
     def to_weld_func(self):
@@ -148,16 +136,18 @@ class WeldObject(object):
                     for name in names]
         header = "|" + ", ".join(arg_strs) + "|"
         text = header + " " + self.get_let_statements() + "\n" + self.weld_code
+
         return text
 
     def evaluate(self, restype, verbose=True, decode=True, passes=None,
                  num_threads=1, apply_experimental_transforms=False):
-        function = self.to_weld_func()
+        func = self.to_weld_func()
 
         # Returns a wrapped ctypes Structure
-        def args_factory(encoded):
+        def args_factory(encoded_fields):
             class Args(ctypes.Structure):
-                _fields_ = [e for e in encoded]
+                _fields_ = [e for e in encoded_fields]
+
             return Args
 
         # Encode each input argument. This is the positional argument list
@@ -176,11 +166,12 @@ class WeldObject(object):
                     self.context[name]).ctype_class)
                 encoded.append(self.encoder.encode(self.context[name]))
         end = time.time()
+
         if verbose:
             print("Python->Weld:", end - start)
 
-        Args = args_factory(zip(names, argtypes))
-        weld_args = Args()
+        args = args_factory(zip(names, argtypes))
+        weld_args = args()
         for name, value in zip(names, encoded):
             setattr(weld_args, name, value)
 
@@ -196,11 +187,12 @@ class WeldObject(object):
             if passes != "":
                 conf.set("weld.optimization.passes", passes)
 
-        module = cweld.WeldModule(function, conf, err)
+        module = cweld.WeldModule(func, conf, err)
         if err.code() != 0:
             raise ValueError("Could not compile function {}: {}".format(
-                function, err.message()))
+                func, err.message()))
         end = time.time()
+
         if verbose:
             print("Weld compile time:", end - start)
 
@@ -215,10 +207,11 @@ class WeldObject(object):
         if err.code() != 0:
             raise ValueError(("Error while running function,\n{}\n\n"
                               "Error message: {}").format(
-                function, err.message()))
+                func, err.message()))
         ptrtype = POINTER(restype.ctype_class)
         data = ctypes.cast(weld_ret.data(), ptrtype)
         end = time.time()
+
         if verbose:
             print("Weld:", end - start)
 
@@ -230,6 +223,7 @@ class WeldObject(object):
             result = ctypes.cast(data, ctypes.POINTER(
                 ctypes.c_int64)).contents.value
         end = time.time()
+
         if verbose:
             print("Weld->Python:", end - start)
 

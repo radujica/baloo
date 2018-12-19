@@ -26,7 +26,6 @@ class BinaryDistribution(Distribution):
 
 DESCRIPTION = 'Implementing the bare necessities of Pandas with the lazy evaluating and optimizing Weld framemework.'
 
-# TODO: should have pyweld at install_requires however not yet published; so use local one for now (in pipenv)
 setup(name='baloo',
       description=DESCRIPTION,
       version='0.0.1',

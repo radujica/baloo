@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "8f2f3005dcba4a1e2d112d3efa8d491711a3295e3b06c8130dd713bee8ef2b01"
+            "sha256": "4344d2dfee1488cb69b978510d2a3bb2a4aa49bb3dd9b77101a981d5c81ceb63"
         },
         "pipfile-spec": 6,
         "requires": {},
@@ -17,10 +17,6 @@
         "baloo": {
             "editable": true,
             "path": "."
-        },
-        "local-pyweld": {
-            "editable": true,
-            "path": "/home/dimebag/Workspace/weldr/weld/python/pyweld"
         },
         "numpy": {
             "hashes": [
