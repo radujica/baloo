@@ -107,7 +107,7 @@ let res = iterate({{0L, 0L, appender[i64], appender[i64]}},
     return weld_obj
 
 
-def weld_merge_join(arrays_self: list, weld_types_self: list, arrays_other: list, weld_types_other: list,
+def weld_merge_join(arrays_self, weld_types_self, arrays_other, weld_types_other,
                     how, is_on_sorted, is_on_unique, readable_text):
     """Applies merge-join on the arrays returning indices from each to keep in the resulting
 
@@ -229,7 +229,7 @@ let res = if (res.$1 < len2, iterate(res,
     return weld_obj
 
 
-def weld_merge_outer_join(arrays_self: list, weld_types_self: list, arrays_other: list, weld_types_other: list,
+def weld_merge_outer_join(arrays_self, weld_types_self, arrays_other, weld_types_other,
                           how, is_on_sorted, is_on_unique, readable_text):
     """Applies merge-join on the arrays returning indices from each to keep in the resulting
 
@@ -286,8 +286,8 @@ def weld_merge_outer_join(arrays_self: list, weld_types_self: list, arrays_other
     return weld_objects_indexes + [weld_objects_new_index]
 
 
-def weld_align(df_index_arrays: list, df_index_weld_types: list,
-               series_index_arrays: list, series_index_weld_types: list,
+def weld_align(df_index_arrays, df_index_weld_types,
+               series_index_arrays, series_index_weld_types,
                series_data, series_weld_type):
     """Returns the data from the Series aligned to the DataFrame index.
 

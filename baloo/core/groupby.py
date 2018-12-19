@@ -12,7 +12,7 @@ class DataFrameGroupBy(object):
     """Object encoding a groupby operation."""
     _dictmerger_aggregations = {'+', '*', 'min', 'max'}
 
-    def __init__(self, df, by: list):
+    def __init__(self, df, by):
         """Create a groupby object.
 
         Parameters
