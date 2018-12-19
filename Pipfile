@@ -6,9 +6,8 @@ verify_ssl = true
 [requires]
 
 [packages]
-"-e ." = "*"
+"baloo" = {path = ".", editable = true}
 "local_pyweld" = {path = "/home/dimebag/Workspace/weldr/weld/python/pyweld", editable = true}
-tabulate = "*"
 
 [dev-packages]
 sphinx = "*"
@@ -16,3 +15,4 @@ pytest = "*"
 numpydoc = "*"
 matplotlib = "*"
 memory-profiler = "*"
+wheel = "*"
