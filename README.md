@@ -4,6 +4,11 @@ Implementing the [*bare necessities*](https://www.youtube.com/watch?v=08NlhjpVFs
 of [Pandas](https://pandas.pydata.org/) with the *lazy* evaluating
 and optimizing [Weld](https://github.com/weld-project/weld) framework.
 
+[![PyPI version](https://badge.fury.io/py/baloo.svg)](https://badge.fury.io/py/baloo)
+[![Build Status](https://travis-ci.com/radujica/baloo.svg?branch=master)](https://travis-ci.com/radujica/baloo)
+
+### Documentation [here](https://radujica.github.io/baloo/)
+
 ## Benchmarks
 Preliminary benchmark results over seeded randomized data are shown below. 
 The generated data consists of 4 columns of different numerical types, each a NumPy array of different numerical types. 
