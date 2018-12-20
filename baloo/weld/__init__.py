@@ -1,6 +1,7 @@
 from .cache import Cache
 from .convertors import *
 from .lazy_result import *
+from .pyweld import *
 from .weld_aggs import *
 from .weld_group import *
 from .weld_joins import *

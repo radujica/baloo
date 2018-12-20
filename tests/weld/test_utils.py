@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
-from weld.types import *
 
 from baloo.weld.convertors import numpy_to_weld_type, weld_to_numpy_dtype
 from baloo.weld.convertors.encoders import _numpy_to_weld_type_mapping
 from baloo.weld.convertors.utils import to_weld_vec
 from baloo.weld.lazy_result import LazyResult, LazyArrayResult
+from baloo.weld.pyweld import *
 from baloo.weld.weld_utils import weld_cast_scalar, weld_cast_array
 
 

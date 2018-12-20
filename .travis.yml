@@ -9,10 +9,9 @@ before_install:
   - sh travis/build_weld.sh
 
 install:
-  # not sure why setup.py doesn't seem to install tabulate
-  - pip install tabulate sphinx pytest numpydoc matplotlib memory-profiler wheel
+  - pip install pipenv
   - sh travis/build_baloo.sh
 
 script:
-  - pytest tests
-  - make -C doc doctest
+  - pipenv run pytest tests
+  - pipenv run make -C doc doctest

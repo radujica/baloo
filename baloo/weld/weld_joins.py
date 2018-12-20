@@ -1,6 +1,7 @@
 from .cache import Cache
 from .convertors import default_missing_data_literal
-from .lazy_result import LazyStructOfVecResult, WeldLong, WeldStruct, LazyStructResult, WeldVec, WeldChar
+from .lazy_result import LazyStructOfVecResult, LazyStructResult
+from .pyweld import WeldLong, WeldStruct, WeldVec, WeldChar
 from .weld_utils import weld_arrays_to_vec_of_struct, create_empty_weld_object, get_weld_obj_id, \
     extract_placeholder_weld_objects, extract_placeholder_weld_objects_from_index, weld_data_to_dict, struct_of
 
@@ -106,7 +107,7 @@ let res = iterate({{0L, 0L, appender[i64], appender[i64]}},
     return weld_obj
 
 
-def weld_merge_join(arrays_self: list, weld_types_self: list, arrays_other: list, weld_types_other: list,
+def weld_merge_join(arrays_self, weld_types_self, arrays_other, weld_types_other,
                     how, is_on_sorted, is_on_unique, readable_text):
     """Applies merge-join on the arrays returning indices from each to keep in the resulting
 
@@ -228,7 +229,7 @@ let res = if (res.$1 < len2, iterate(res,
     return weld_obj
 
 
-def weld_merge_outer_join(arrays_self: list, weld_types_self: list, arrays_other: list, weld_types_other: list,
+def weld_merge_outer_join(arrays_self, weld_types_self, arrays_other, weld_types_other,
                           how, is_on_sorted, is_on_unique, readable_text):
     """Applies merge-join on the arrays returning indices from each to keep in the resulting
 
@@ -285,8 +286,8 @@ def weld_merge_outer_join(arrays_self: list, weld_types_self: list, arrays_other
     return weld_objects_indexes + [weld_objects_new_index]
 
 
-def weld_align(df_index_arrays: list, df_index_weld_types: list,
-               series_index_arrays: list, series_index_weld_types: list,
+def weld_align(df_index_arrays, df_index_weld_types,
+               series_index_arrays, series_index_weld_types,
                series_data, series_weld_type):
     """Returns the data from the Series aligned to the DataFrame index.
 

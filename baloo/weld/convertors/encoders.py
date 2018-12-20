@@ -1,8 +1,11 @@
-import numpy as np
-import pkg_resources
-from weld.weldobject import *
+import ctypes
 
-from .utils import to_shared_lib, to_weld_vec
+import numpy as np
+
+from .utils import to_weld_vec
+from ..pyweld.types import *
+from ..pyweld.weldobject import WeldObjectDecoder, WeldObjectEncoder, cweld
+from ...config import ENCODERS_PATH
 
 # Python3: str _is_ unicode -> 'Bürgermeister'.encode() => b'B\xc3\xbcrgermeister'
 # Python2: str is ascii -> 'Bürgermeister' does not exist; u'Bürgermeister'.encode() => 'B\xc3\xbcrgermeister'
@@ -132,9 +135,7 @@ def default_missing_data_literal(weld_type):
 
 class NumPyEncoder(WeldObjectEncoder):
     def __init__(self):
-        lib = to_shared_lib('numpy_weld_convertor')
-        lib_file = pkg_resources.resource_filename(__name__, lib)
-        self.utils = ctypes.PyDLL(lib_file)
+        self.utils = ctypes.PyDLL(ENCODERS_PATH)
 
     def py_to_weld_type(self, obj):
         if isinstance(obj, np.ndarray):
@@ -204,9 +205,7 @@ class NumPyEncoder(WeldObjectEncoder):
 
 class NumPyDecoder(WeldObjectDecoder):
     def __init__(self):
-        lib = to_shared_lib('numpy_weld_convertor')
-        lib_file = pkg_resources.resource_filename(__name__, lib)
-        self.utils = ctypes.PyDLL(lib_file)
+        self.utils = ctypes.PyDLL(ENCODERS_PATH)
 
     def _try_decode_scalar(self, data, restype):
         if restype == WeldInt16():

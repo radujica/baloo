@@ -1,10 +1,8 @@
 import numpy as np
 import pytest
-from weld.types import WeldLong
-from weld.weldobject import WeldObject
 
 from baloo import RangeIndex, Index
-from baloo.weld import create_placeholder_weld_object
+from baloo.weld import create_placeholder_weld_object, WeldObject, WeldLong
 from .test_base import assert_index_equal
 
 

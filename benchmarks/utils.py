@@ -42,10 +42,10 @@ def timer(runs=5, file=sys.stdout):
                 start = time.time()
                 return_value = func(*args, **kwargs)
                 end = time.time()
-                runtimes.append(end - start)
+                runtimes.append(float(end) - start)
                 return_values.append(return_value)
 
-            msg = '{func}: {time:.6f} seconds'
+            msg = '{func}: {time:.8f} seconds'
             print(msg.format(func=func.__name__,
                              time=sum(runtimes) / runs,
                              runs=runs),
@@ -117,26 +117,28 @@ def verbose_baloo(operation, scale=1, runs=5):
 # only checks if series are equal, which makes sense given the sum aggregation
 def check_correctness(operation, scale=1):
     print('Checking correctness of: {}'.format(operation))
-    data = generate_data(scale=scale)
+    generated_data = generate_data(scale=scale)
 
-    def pandas():
+    def pandas(op, data):
         df = pd.DataFrame(data)
-        exec(operation)
+        exec(op)
         df = df.sum()
 
         return df.values
 
-    def baloo():
+    def baloo(op, data):
         df = bl.DataFrame(data)
-        exec(operation)
+        # temp workaround
+        op = op.replace('np', 'bl')
+        exec(op)
         df = df.sum()
 
         return df.evaluate().values
 
-    result_pandas = pandas()
-    result_baloo = baloo()
+    result_pandas = pandas(operation, generated_data)
+    result_baloo = baloo(operation, generated_data)
 
-    np.testing.assert_array_almost_equal(result_pandas, result_baloo, decimal=4)
+    np.testing.assert_allclose(result_pandas, result_baloo)
 
     print('All good!\n')
 
@@ -149,30 +151,32 @@ def run_correctness_checks(operations, scale=1):
 # runs the operation on both pandas and baloo while profiling memory usage
 def profile_memory_usage(operation, scale=1):
     print('Running memory profiling on: {}'.format(operation))
-    data = generate_data(scale=scale)
+    generated_data = generate_data(scale=scale)
 
     @profile
-    def pandas():
+    def pandas(op, data):
         df = pd.DataFrame(data)
-        exec(operation)
+        exec(op)
         df = df.sum()
 
         with contextlib.redirect_stdout(None):
             print(df.values)
 
     @profile
-    def baloo():
+    def baloo(op, data):
         df = bl.DataFrame(data)
-        exec(operation)
+        # temp workaround
+        op = op.replace('np', 'bl')
+        exec(op)
         df = df.sum()
 
         with contextlib.redirect_stdout(None):
             print(df.evaluate().values)
 
     print('pandas:')
-    pandas()
+    pandas(operation, generated_data)
     print('baloo:')
-    baloo()
+    baloo(operation, generated_data)
 
 
 # evaluation is forced by performing a sum aggregation;
@@ -184,30 +188,32 @@ def benchmark(operation, scale=1, runs=5, file=sys.stdout):
 
     print('Running benchmark on: {}'.format(operation))
     print('Averaging over {} runs'.format((str(runs))))
-    data = generate_data(scale=scale)
+    generated_data = generate_data(scale=scale)
 
     @timer(runs=runs, file=file)
-    def pandas():
+    def pandas(op, data):
         df = pd.DataFrame(data)
-        exec(operation)
+        exec(op)
         df = df.sum()
 
         with contextlib.redirect_stdout(None):
             print(df.values)
 
     @timer(runs=runs, file=file)
-    def baloo():
+    def baloo(op, data):
         df = bl.DataFrame(data)
-        exec(operation)
+        # temp workaround
+        op = op.replace('np', 'bl')
+        exec(op)
         df = df.sum()
 
         with contextlib.redirect_stdout(None):
             print(df.evaluate().values)
 
-    pandas()
-    baloo()
+    pandas(operation, generated_data)
+    baloo(operation, generated_data)
 
-    print('')
+    print('Done')
 
 
 def run_benchmarks(operations, scale=1, runs=5, file=sys.stdout):

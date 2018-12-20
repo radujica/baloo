@@ -11,17 +11,17 @@ from benchmarks.utils import run_benchmarks, benchmark, run_correctness_checks, 
 
 operations = [
     "df = df[(df['col1'] > 0) & (df['col2'] >= 10) & (df['col3'] < 30)]",
-    "df = df.max()",
     "df = df.agg(['min', 'prod', 'mean', 'std'])",
-    "df['col4'] = df['col1'] * 2",
-    "df['col4'] = df['col1'] * 2 + 1 - 23"
+    "df['col4'] = df['col1'] * 2 + 1 - 23",
+    "df['col5'] = df['col1'].apply(np.exp)",
+    "df = df.groupby(['col2', 'col4']).var()",
+    "df = df[['col3', 'col1']].join(df[['col3', 'col2']], on='col3', rsuffix='_r')"
 ]
 
 
-def plot_scalability():
-    scales = [1, 10, 100, 1000, 10000, 20000]
-    sizes = [0.028, 0.28, 2.8, 28., 280., 560.]  # modify this if changing the generated data!
-    operation = operations[0]
+def plot_scalability(operation):
+    scales = [1, 10, 100, 1000, 10000, 20000, 40000]
+    sizes = [0.028, 0.28, 2.8, 28., 280., 560., 1120.]  # modify this if changing the generated data!
     output_file = io.StringIO()
     for scale in scales:
         benchmark(operation, scale, 5, output_file)
@@ -42,17 +42,16 @@ def plot_scalability():
     ax.set_xlabel('Scale (MB)')
     ax.set_xticks(data['pandas'].index.values)
     ax.set_xticklabels(sizes)
-    ax.set_title('Average execution time of filter operation')
+    ax.set_title('Average execution time of 3x operations')
     ax.legend((scatter1[0], scatter2[0]), ('pandas', 'baloo'))
 
     # plt.show()
     plt.savefig('scalability.png')
 
 
-def plot_benchmarks():
+def plot_benchmarks(scale=1, runs=5):
     output_file = io.StringIO()
-    scale = 10000
-    run_benchmarks(operations, scale=scale, runs=1, file=output_file)
+    run_benchmarks(operations, scale=scale, runs=runs, file=output_file)
     output = output_file.getvalue()
     df = pd.DataFrame(output.split('\n'), columns=['output'])
     df['op'], df['time'] = df['output'].str.split(':', 1).str
@@ -69,15 +68,15 @@ def plot_benchmarks():
     ax.set_ylabel('Time (s)')
     ax.set_title('Average execution time for specific operations')
     ax.set_xticks(data['pandas'].index + width / 2)
-    ax.set_xticklabels(('filter', 'max', '4x agg', 'op', '3x op'))
+    ax.set_xticklabels(('filter', '4x agg', '3x op', 'udf', 'groupby', 'join'))
 
     ax.legend((rects1[0], rects2[0]), ('pandas', 'baloo'))
 
     # plt.show()
-    plt.savefig('benchmarks.png')
+    plt.savefig('benchmarks-{}.png'.format(str(scale)))
 
 
-run_correctness_checks(operations, scale=10000)
-plot_benchmarks()
-plot_scalability()
-profile_memory_usage(operations[0], scale=10000)
+# run_correctness_checks(operations, scale=20000)
+# plot_benchmarks(scale=20000)
+# plot_scalability(operations[2])
+# profile_memory_usage(operations[5], scale=20000)
