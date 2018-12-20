@@ -24,13 +24,9 @@ def pandas_pipeline(data):
 
     df = DataFrame(data)
 
-    df.head(10)
-
     df = df[(df['col1'] > 0) & (df['col2'] >= 10) & (df['col3'] < 30)]
     df['col5'] = (df['col1'] + df['col2']) * 0.1
     df['col6'] = df['col5'].apply(exp)
-
-    df.agg(['min', 'prod', 'mean', 'std'])
 
     df.groupby(['col2', 'col4']).var()
 
@@ -40,13 +36,9 @@ def baloo_pipeline(data):
 
     df = DataFrame(data)
 
-    df.head(10).evaluate()
-
     df = df[(df['col1'] > 0) & (df['col2'] >= 10) & (df['col3'] < 30)]
     df['col5'] = (df['col1'] + df['col2']) * 0.1
     df['col6'] = df['col5'].apply(exp)
-
-    df.agg(['min', 'prod', 'mean', 'std']).evaluate()
 
     df.groupby(['col2', 'col4']).var().evaluate()
 
@@ -54,14 +46,15 @@ def baloo_pipeline(data):
 data_setup = """
 from __main__ import generate_data
 
-data = generate_data(scale=100)"""
+data = generate_data(scale=20000)"""
 
 pandas_setup = "from __main__ import pandas_pipeline"
 baloo_setup = "from __main__ import baloo_pipeline"
 
 
+# TODO: this is not finished
 if __name__ == '__main__':
-    number = 5
+    number = 2
 
     pandas_time = timeit.timeit("pandas_pipeline(data)", setup=pandas_setup + data_setup, number=number)
     print("Pandas: {time}".format(time=pandas_time / number))

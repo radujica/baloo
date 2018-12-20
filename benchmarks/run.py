@@ -19,10 +19,9 @@ operations = [
 ]
 
 
-def plot_scalability():
-    scales = [1, 10, 100, 1000, 10000, 20000]
-    sizes = [0.028, 0.28, 2.8, 28., 280., 560.]  # modify this if changing the generated data!
-    operation = operations[2]
+def plot_scalability(operation):
+    scales = [1, 10, 100, 1000, 10000, 20000, 40000]
+    sizes = [0.028, 0.28, 2.8, 28., 280., 560., 1120.]  # modify this if changing the generated data!
     output_file = io.StringIO()
     for scale in scales:
         benchmark(operation, scale, 5, output_file)
@@ -46,13 +45,13 @@ def plot_scalability():
     ax.set_title('Average execution time of 3x operations')
     ax.legend((scatter1[0], scatter2[0]), ('pandas', 'baloo'))
 
-    plt.show()
-    # plt.savefig('scalability.png')
+    # plt.show()
+    plt.savefig('scalability.png')
 
 
-def plot_benchmarks(scale=1):
+def plot_benchmarks(scale=1, runs=5):
     output_file = io.StringIO()
-    run_benchmarks(operations, scale=scale, runs=1, file=output_file)
+    run_benchmarks(operations, scale=scale, runs=runs, file=output_file)
     output = output_file.getvalue()
     df = pd.DataFrame(output.split('\n'), columns=['output'])
     df['op'], df['time'] = df['output'].str.split(':', 1).str
@@ -73,11 +72,11 @@ def plot_benchmarks(scale=1):
 
     ax.legend((rects1[0], rects2[0]), ('pandas', 'baloo'))
 
-    plt.show()
-    # plt.savefig('benchmarks.png')
+    # plt.show()
+    plt.savefig('benchmarks-{}.png'.format(str(scale)))
 
 
 # run_correctness_checks(operations, scale=20000)
 # plot_benchmarks(scale=20000)
-# plot_scalability()
-# profile_memory_usage(operations[1], scale=20000)
+# plot_scalability(operations[2])
+# profile_memory_usage(operations[5], scale=20000)
