@@ -15,11 +15,12 @@ The generated data consists of 4 columns of different numerical types, each a Nu
 For the first plot, the data is 280MB in total. 
 The operations are:
 
-    df = df[(df['col1'] > 0) & (df['col2'] >= 10) & (df['col3'] < 30)]  # filter
-    df = df.max()                                                       # max
-    df = df.agg(['min', 'prod', 'mean', 'std'])                         # 4x agg
-    df['col4'] = df['col1'] * 2                                         # op
-    df['col4'] = df['col1'] * 2 + 1 - 23                                # 3x op
+    df = df[(df['col1'] > 0) & (df['col2'] >= 10) & (df['col3'] < 30)]              # filter                                                      # max
+    df = df.agg(['min', 'prod', 'mean', 'std'])                                     # 4x agg
+    df['col4'] = df['col1'] * 2 + 1 - 23                                            # 3x op
+    df['col5'] = df['col1'].apply(np.exp)                                           # udf
+    df = df.groupby(['col2', 'col4']).var()                                         # groupby
+    df = df[['col3', 'col1']].join(df[['col3', 'col2']], on='col3', rsuffix='_r')   # join
     
 ![benchmark results](benchmarks/benchmarks.png)
 ![benchmark scalability](benchmarks/scalability.png)
