@@ -2,6 +2,7 @@ import os
 
 import tabulate
 
+# While not explicit, the code here gets executed on baloo import because of pyweld and convertors importing from here
 tabulate.PRESERVE_WHITESPACE = True
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
