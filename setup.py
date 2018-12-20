@@ -12,7 +12,7 @@ setup(
     description='Implementing the bare necessities of Pandas with the lazy evaluating and optimizing Weld framework.',
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
-    version='0.0.3',
+    version='0.0.4',
     license='BSD 3-Clause',
     packages=find_packages(),
     package_data={'baloo.weld.libs': ['libweld.so', 'numpy_weld_convertor.so']},
